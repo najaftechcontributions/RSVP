@@ -61,7 +61,7 @@ get_header();
 							'return' => home_url('/host-dashboard/?event_created=success'),
 							'submit_value' => $is_edit_mode ? '✓ Update Event' : '✓ Create Event',
 							'updated_message' => $is_edit_mode ? 'Event updated successfully! Redirecting...' : 'Event created successfully! Redirecting...',
-							'html_before_fields' => '<div class="acf-event-form">',
+							'html_before_fields' => '<div class="acf-event-form"><input type="hidden" id="event_featured_image_id" name="event_featured_image_id" value="">',
 							'html_after_fields' => '</div>',
 							'uploader' => 'wp',
 							'honeypot' => true,
@@ -191,11 +191,16 @@ jQuery(document).ready(function($) {
 						if (response.success) {
 							location.reload();
 						} else {
-							alert('Failed to set featured image. Please try again.');
+							alert('Failed to set featured image: ' + (response.data || 'Unknown error'));
 						}
+					},
+					error: function() {
+						alert('Failed to set featured image. Please try again.');
 					}
 				});
 			} else {
+				$('#event_featured_image_id').val(attachment.id);
+
 				$('.featured-image-preview').html('<div class="current-featured-image"><img src="' + attachment.url + '" alt="Featured Image Preview" /></div>');
 				$('#upload-featured-image').text('📷 Change Featured Image');
 				
@@ -228,11 +233,15 @@ jQuery(document).ready(function($) {
 					if (response.success) {
 						location.reload();
 					} else {
-						alert('Failed to remove featured image. Please try again.');
+						alert('Failed to remove featured image: ' + (response.data || 'Unknown error'));
 					}
+				},
+				error: function() {
+					alert('Failed to remove featured image. Please try again.');
 				}
 			});
 		} else {
+			$('#event_featured_image_id').val('');
 			$('.featured-image-preview').html('');
 			$('#upload-featured-image').text('📷 Upload Featured Image');
 			$('#remove-featured-image').remove();

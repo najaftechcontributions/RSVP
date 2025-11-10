@@ -305,7 +305,7 @@ foreach ($all_user_events as $event) {
 								👁️ View
 							</a>
 							<a href="<?php echo admin_url('?action=export_attendees&event_id=' . $event_id); ?>" class="action-button action-export">
-								📥 Export
+								�� Export
 							</a>
 						</div>
 					</article>
@@ -352,7 +352,10 @@ document.addEventListener('DOMContentLoaded', function() {
 			.then(response => response.json())
 			.then(data => {
 				if (data.success) {
-					alert('QR code email sent successfully!');
+					const successMsg = 'QR code email sent successfully!\n\n' +
+						'Sent to: ' + (data.data.email || 'N/A') + '\n' +
+						'Time: ' + (data.data.sent_time || 'Just now');
+					alert(successMsg);
 					this.innerHTML = '<span>✓</span>';
 					setTimeout(() => {
 						this.innerHTML = '<span>📧</span>';

@@ -453,3 +453,126 @@ function event_rsvp_change_ad_location() {
 	));
 }
 add_action('wp_ajax_event_rsvp_change_ad_location', 'event_rsvp_change_ad_location');
+
+function event_rsvp_resend_qr_email() {
+	check_ajax_referer('event_rsvp_resend_qr', 'nonce');
+
+	if (!current_user_can('edit_posts')) {
+		wp_send_json_error('Unauthorized');
+		return;
+	}
+
+	$attendee_id = intval($_POST['attendee_id'] ?? 0);
+
+	if (!$attendee_id) {
+		wp_send_json_error('Invalid attendee ID');
+		return;
+	}
+
+	$attendee = get_post($attendee_id);
+	if (!$attendee || $attendee->post_type !== 'attendee') {
+		wp_send_json_error('Attendee not found');
+		return;
+	}
+
+	$event_id = get_post_meta($attendee_id, 'linked_event', true);
+	$event = get_post($event_id);
+
+	if (!current_user_can('administrator') && get_current_user_id() != $event->post_author) {
+		wp_send_json_error('You do not have permission to send emails for this event');
+		return;
+	}
+
+	$result = event_rsvp_send_qr_email_now($attendee_id);
+
+	if ($result) {
+		$email = get_post_meta($attendee_id, 'attendee_email', true);
+		$sent_time = get_post_meta($attendee_id, 'email_sent_time', true);
+		wp_send_json_success(array(
+			'message' => 'QR code email sent successfully!',
+			'email' => $email,
+			'sent_time' => $sent_time ? date('M j, Y g:i A', strtotime($sent_time)) : current_time('M j, Y g:i A')
+		));
+	} else {
+		wp_send_json_error('Failed to send email. Please check email configuration.');
+	}
+}
+add_action('wp_ajax_event_rsvp_resend_qr_email', 'event_rsvp_resend_qr_email');
+
+function event_rsvp_set_featured_image() {
+	check_ajax_referer('set_featured_image', 'nonce');
+
+	if (!current_user_can('edit_posts')) {
+		wp_send_json_error('Unauthorized');
+		return;
+	}
+
+	$event_id = intval($_POST['event_id'] ?? 0);
+	$attachment_id = intval($_POST['attachment_id'] ?? 0);
+
+	if (!$event_id || !$attachment_id) {
+		wp_send_json_error('Invalid parameters');
+		return;
+	}
+
+	$event = get_post($event_id);
+	if (!$event || $event->post_type !== 'event') {
+		wp_send_json_error('Event not found');
+		return;
+	}
+
+	if (!current_user_can('administrator') && get_current_user_id() != $event->post_author) {
+		wp_send_json_error('You do not have permission to edit this event');
+		return;
+	}
+
+	$result = set_post_thumbnail($event_id, $attachment_id);
+
+	if ($result) {
+		wp_send_json_success(array(
+			'message' => 'Featured image set successfully!',
+			'thumbnail_url' => get_the_post_thumbnail_url($event_id, 'large')
+		));
+	} else {
+		wp_send_json_error('Failed to set featured image');
+	}
+}
+add_action('wp_ajax_set_event_featured_image', 'event_rsvp_set_featured_image');
+
+function event_rsvp_remove_featured_image() {
+	check_ajax_referer('remove_featured_image', 'nonce');
+
+	if (!current_user_can('edit_posts')) {
+		wp_send_json_error('Unauthorized');
+		return;
+	}
+
+	$event_id = intval($_POST['event_id'] ?? 0);
+
+	if (!$event_id) {
+		wp_send_json_error('Invalid event ID');
+		return;
+	}
+
+	$event = get_post($event_id);
+	if (!$event || $event->post_type !== 'event') {
+		wp_send_json_error('Event not found');
+		return;
+	}
+
+	if (!current_user_can('administrator') && get_current_user_id() != $event->post_author) {
+		wp_send_json_error('You do not have permission to edit this event');
+		return;
+	}
+
+	$result = delete_post_thumbnail($event_id);
+
+	if ($result) {
+		wp_send_json_success(array(
+			'message' => 'Featured image removed successfully!'
+		));
+	} else {
+		wp_send_json_error('Failed to remove featured image');
+	}
+}
+add_action('wp_ajax_remove_event_featured_image', 'event_rsvp_remove_featured_image');

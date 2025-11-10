@@ -40,7 +40,14 @@ while ( have_posts() ) :
 
 			<?php if (isset($_GET['rsvp']) && $_GET['rsvp'] === 'success') : ?>
 				<div class="success-notice">
-					✓ RSVP submitted successfully! Check your email for confirmation.
+					✓ RSVP submitted successfully!
+					<?php if (isset($_GET['email']) && $_GET['email'] === 'sent') : ?>
+						<br>📧 Confirmation email with QR code sent successfully. Please check your inbox.
+					<?php elseif (isset($_GET['email']) && $_GET['email'] === 'failed') : ?>
+						<br>⚠️ RSVP recorded but email failed to send. Please contact the event organizer.
+					<?php else : ?>
+						<br>Check your email for confirmation.
+					<?php endif; ?>
 				</div>
 				<div style="height:20px" aria-hidden="true"></div>
 			<?php endif; ?>
@@ -156,8 +163,11 @@ while ( have_posts() ) :
 												$rsvp_status = get_post_meta($attendee->ID, 'rsvp_status', true);
 												$checked_in = get_post_meta($attendee->ID, 'checkin_status', true);
 												$checkin_time = get_post_meta($attendee->ID, 'checkin_time', true);
+												$qr_data = get_post_meta($attendee->ID, 'qr_data', true);
+												$email_sent = get_post_meta($attendee->ID, 'email_sent', true);
+												$email_sent_time = get_post_meta($attendee->ID, 'email_sent_time', true);
 												?>
-												<div class="attendee-card">
+												<div class="attendee-card" data-attendee-id="<?php echo esc_attr($attendee->ID); ?>">
 													<div class="attendee-info">
 														<h4 class="attendee-name"><?php echo esc_html(get_the_title($attendee->ID)); ?></h4>
 														<p class="attendee-email">📧 <?php echo esc_html($email); ?></p>
@@ -185,6 +195,34 @@ while ( have_posts() ) :
 																<?php endif; ?>
 															</span>
 														<?php endif; ?>
+													</div>
+													<div class="attendee-email-status">
+														<?php if ($email_sent) : ?>
+															<span class="email-status-sent">
+																✓ Email Sent
+																<?php if ($email_sent_time) : ?>
+																	<small>(<?php echo date('M j, g:i A', strtotime($email_sent_time)); ?>)</small>
+																<?php endif; ?>
+															</span>
+														<?php else : ?>
+															<span class="email-status-not-sent">⚠️ Email Not Sent</span>
+														<?php endif; ?>
+													</div>
+													<div class="attendee-actions">
+														<?php if (!empty($qr_data)) : ?>
+															<a href="<?php echo esc_url(home_url('/qr-view/?qr=' . urlencode($qr_data))); ?>" target="_blank" class="attendee-action-btn view-qr-btn" title="View QR Code">
+																<span class="btn-icon">🔍</span>
+																<span class="btn-text">View QR</span>
+															</a>
+															<button type="button" class="attendee-action-btn download-qr-btn" data-qr-data="<?php echo esc_attr($qr_data); ?>" data-attendee-name="<?php echo esc_attr(get_the_title($attendee->ID)); ?>" title="Download QR Code">
+																<span class="btn-icon">⬇️</span>
+																<span class="btn-text">Download QR</span>
+															</button>
+														<?php endif; ?>
+														<button type="button" class="attendee-action-btn send-email-btn" data-attendee-id="<?php echo esc_attr($attendee->ID); ?>" title="Send/Resend Email">
+															<span class="btn-icon">📧</span>
+															<span class="btn-text"><?php echo $email_sent ? 'Resend Email' : 'Send Email'; ?></span>
+														</button>
 													</div>
 												</div>
 											<?php endforeach; ?>
@@ -446,6 +484,87 @@ while ( have_posts() ) :
 
 		</div>
 	</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+	const tabBtns = document.querySelectorAll('.attendee-tab-btn');
+	const tabContents = document.querySelectorAll('.attendee-tab-content');
+
+	tabBtns.forEach(btn => {
+		btn.addEventListener('click', function() {
+			const targetTab = this.getAttribute('data-tab');
+
+			tabBtns.forEach(b => b.classList.remove('active'));
+			this.classList.add('active');
+
+			tabContents.forEach(content => {
+				content.classList.remove('active');
+				if (content.id === 'tab-' + targetTab) {
+					content.classList.add('active');
+				}
+			});
+		});
+	});
+
+	const refreshBtn = document.getElementById('refresh-checked-in');
+	if (refreshBtn) {
+		refreshBtn.addEventListener('click', function() {
+			loadCheckedInAttendees();
+		});
+	}
+
+	function loadCheckedInAttendees() {
+		const container = document.getElementById('event-checked-in-attendees');
+		if (!container) return;
+
+		const eventId = container.getAttribute('data-event-id');
+		container.innerHTML = '<div class="loading-mini">Loading...</div>';
+
+		fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+			body: new URLSearchParams({
+				action: 'event_rsvp_get_checked_in_attendees',
+				event_id: eventId,
+				nonce: '<?php echo wp_create_nonce('event_rsvp_checkin'); ?>'
+			})
+		})
+		.then(response => response.json())
+		.then(data => {
+			if (data.success && data.data.attendees) {
+				const attendees = data.data.attendees;
+
+				if (attendees.length === 0) {
+					container.innerHTML = '<div class="no-checked-in">No attendees checked in yet.</div>';
+					return;
+				}
+
+				let html = '<div class="checked-in-mini-list">';
+				attendees.forEach(attendee => {
+					html += '<div class="checked-in-mini-item">';
+					html += '<div class="attendee-mini-name">' + attendee.name + '</div>';
+					html += '<div class="attendee-mini-time">' + attendee.checkin_time + '</div>';
+					html += '</div>';
+				});
+				html += '</div>';
+
+				container.innerHTML = html;
+			} else {
+				container.innerHTML = '<div class="error-mini">Failed to load attendees.</div>';
+			}
+		})
+		.catch(error => {
+			container.innerHTML = '<div class="error-mini">Error loading attendees.</div>';
+		});
+	}
+
+	if (document.getElementById('event-checked-in-attendees')) {
+		loadCheckedInAttendees();
+	}
+});
+</script>
 
 <?php
 endwhile;
