@@ -322,3 +322,134 @@ function event_rsvp_register_user() {
 }
 add_action('wp_ajax_nopriv_event_rsvp_register_user', 'event_rsvp_register_user');
 add_action('wp_ajax_event_rsvp_register_user', 'event_rsvp_register_user');
+
+function event_rsvp_approve_ad() {
+	check_ajax_referer('event_rsvp_ad_management', 'nonce');
+
+	if (!current_user_can('administrator')) {
+		wp_send_json_error('Unauthorized');
+		return;
+	}
+
+	$ad_id = intval($_POST['ad_id'] ?? 0);
+
+	if (!$ad_id) {
+		wp_send_json_error('Invalid ad ID');
+		return;
+	}
+
+	update_post_meta($ad_id, 'ad_approval_status', 'approved');
+
+	wp_send_json_success(array(
+		'message' => 'Ad approved successfully!'
+	));
+}
+add_action('wp_ajax_event_rsvp_approve_ad', 'event_rsvp_approve_ad');
+
+function event_rsvp_reject_ad() {
+	check_ajax_referer('event_rsvp_ad_management', 'nonce');
+
+	if (!current_user_can('administrator')) {
+		wp_send_json_error('Unauthorized');
+		return;
+	}
+
+	$ad_id = intval($_POST['ad_id'] ?? 0);
+
+	if (!$ad_id) {
+		wp_send_json_error('Invalid ad ID');
+		return;
+	}
+
+	update_post_meta($ad_id, 'ad_approval_status', 'rejected');
+
+	wp_send_json_success(array(
+		'message' => 'Ad rejected successfully!'
+	));
+}
+add_action('wp_ajax_event_rsvp_reject_ad', 'event_rsvp_reject_ad');
+
+function event_rsvp_toggle_ad_status() {
+	check_ajax_referer('event_rsvp_ad_management', 'nonce');
+
+	if (!current_user_can('administrator')) {
+		wp_send_json_error('Unauthorized');
+		return;
+	}
+
+	$ad_id = intval($_POST['ad_id'] ?? 0);
+	$status = sanitize_text_field($_POST['status'] ?? '');
+
+	if (!$ad_id || !in_array($status, array('activate', 'deactivate'))) {
+		wp_send_json_error('Invalid parameters');
+		return;
+	}
+
+	$new_status = ($status === 'activate') ? 'active' : 'inactive';
+	update_post_meta($ad_id, 'ad_status', $new_status);
+
+	$message = ($status === 'activate') ? 'Ad activated successfully!' : 'Ad deactivated successfully!';
+
+	wp_send_json_success(array(
+		'message' => $message
+	));
+}
+add_action('wp_ajax_event_rsvp_toggle_ad_status', 'event_rsvp_toggle_ad_status');
+
+function event_rsvp_delete_ad() {
+	check_ajax_referer('event_rsvp_ad_management', 'nonce');
+
+	if (!current_user_can('administrator')) {
+		wp_send_json_error('Unauthorized');
+		return;
+	}
+
+	$ad_id = intval($_POST['ad_id'] ?? 0);
+
+	if (!$ad_id) {
+		wp_send_json_error('Invalid ad ID');
+		return;
+	}
+
+	$result = wp_delete_post($ad_id, true);
+
+	if ($result) {
+		wp_send_json_success(array(
+			'message' => 'Ad deleted successfully!'
+		));
+	} else {
+		wp_send_json_error('Failed to delete ad');
+	}
+}
+add_action('wp_ajax_event_rsvp_delete_ad', 'event_rsvp_delete_ad');
+
+function event_rsvp_change_ad_location() {
+	check_ajax_referer('event_rsvp_ad_management', 'nonce');
+
+	if (!current_user_can('administrator')) {
+		wp_send_json_error('Unauthorized');
+		return;
+	}
+
+	$ad_id = intval($_POST['ad_id'] ?? 0);
+	$location = sanitize_text_field($_POST['location'] ?? '');
+
+	if (!$ad_id || empty($location)) {
+		wp_send_json_error('Invalid parameters');
+		return;
+	}
+
+	$valid_locations = array('sidebar', 'footer', 'homepage', 'header', 'event_single', 'event_archive', 'between_content');
+
+	if (!in_array($location, $valid_locations)) {
+		wp_send_json_error('Invalid location');
+		return;
+	}
+
+	update_post_meta($ad_id, 'slot_location', $location);
+
+	wp_send_json_success(array(
+		'message' => 'Ad location changed successfully!'
+	));
+}
+add_action('wp_ajax_event_rsvp_change_ad_location', 'event_rsvp_change_ad_location');

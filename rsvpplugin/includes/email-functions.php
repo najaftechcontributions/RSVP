@@ -98,21 +98,119 @@ function event_rsvp_get_email_template($attendee_id) {
 	return ob_get_clean();
 }
 
+function event_rsvp_configure_smtp($phpmailer) {
+	$smtp_enabled = get_option('event_rsvp_smtp_enabled', false);
+
+	if (!$smtp_enabled) {
+		return;
+	}
+
+	$smtp_host = get_option('event_rsvp_smtp_host', 'smtp.gmail.com');
+	$smtp_port = get_option('event_rsvp_smtp_port', 587);
+	$smtp_username = get_option('event_rsvp_smtp_username', '');
+	$smtp_password = get_option('event_rsvp_smtp_password', '');
+	$smtp_from_email = get_option('event_rsvp_smtp_from_email', '');
+	$smtp_from_name = get_option('event_rsvp_smtp_from_name', 'Event RSVP');
+	$smtp_secure = get_option('event_rsvp_smtp_secure', 'tls');
+
+	if (empty($smtp_host) || empty($smtp_username) || empty($smtp_password)) {
+		error_log('Event RSVP: SMTP credentials not configured properly');
+		return;
+	}
+
+	try {
+		$phpmailer->isSMTP();
+		$phpmailer->Host = $smtp_host;
+		$phpmailer->SMTPAuth = true;
+		$phpmailer->Port = intval($smtp_port);
+		$phpmailer->Username = $smtp_username;
+		$phpmailer->Password = $smtp_password;
+		$phpmailer->SMTPSecure = $smtp_secure;
+		$phpmailer->From = !empty($smtp_from_email) ? $smtp_from_email : $smtp_username;
+		$phpmailer->FromName = $smtp_from_name;
+		$phpmailer->CharSet = 'UTF-8';
+
+		$phpmailer->SMTPOptions = array(
+			'ssl' => array(
+				'verify_peer' => false,
+				'verify_peer_name' => false,
+				'allow_self_signed' => true
+			)
+		);
+
+		$phpmailer->Timeout = 30;
+		$phpmailer->SMTPKeepAlive = true;
+
+		if (defined('WP_DEBUG') && WP_DEBUG) {
+			$phpmailer->SMTPDebug = 2;
+			$phpmailer->Debugoutput = function($str, $level) {
+				error_log("SMTP Debug [{$level}]: {$str}");
+			};
+		}
+	} catch (Exception $e) {
+		error_log('Event RSVP SMTP Configuration Error: ' . $e->getMessage());
+	}
+}
+add_action('phpmailer_init', 'event_rsvp_configure_smtp');
+
 function event_rsvp_send_qr_email_now($attendee_id) {
 	$attendee_email = get_post_meta($attendee_id, 'attendee_email', true);
 	$event_id = get_post_meta($attendee_id, 'linked_event', true);
 	$event_title = get_the_title($event_id);
+	$attendee_name = get_the_title($attendee_id);
+
+	if (empty($attendee_email)) {
+		error_log("RSVP Email Error: No email address for attendee {$attendee_id}");
+		return false;
+	}
+
+	if (!is_email($attendee_email)) {
+		error_log("RSVP Email Error: Invalid email address '{$attendee_email}' for attendee {$attendee_id}");
+		return false;
+	}
 
 	$subject = sprintf('✓ RSVP Confirmed: %s', $event_title);
 	$message = event_rsvp_get_email_template($attendee_id);
 
+	$smtp_from_email = get_option('event_rsvp_smtp_from_email', '');
+	$smtp_from_name = get_option('event_rsvp_smtp_from_name', 'Event RSVP');
+
+	if (!empty($smtp_from_email) && is_email($smtp_from_email)) {
+		$from_header = sprintf('From: %s <%s>', $smtp_from_name, $smtp_from_email);
+	} else {
+		$site_email = get_option('admin_email');
+		$from_header = sprintf('From: %s <%s>', $smtp_from_name, $site_email);
+	}
+
 	$headers = array(
 		'Content-Type: text/html; charset=UTF-8',
-		'From: Event RSVP <noreply@' . $_SERVER['HTTP_HOST'] . '>'
+		$from_header,
+		'Reply-To: ' . ($smtp_from_email ?: get_option('admin_email'))
 	);
 
-	wp_mail($attendee_email, $subject, $message, $headers);
+	add_action('wp_mail_failed', 'event_rsvp_log_mail_error', 10, 1);
+
+	$result = wp_mail($attendee_email, $subject, $message, $headers);
+
+	remove_action('wp_mail_failed', 'event_rsvp_log_mail_error', 10);
+
+	if ($result) {
+		error_log("RSVP Email sent successfully to {$attendee_email} ({$attendee_name}) for event {$event_title}");
+		update_post_meta($attendee_id, 'email_sent', true);
+		update_post_meta($attendee_id, 'email_sent_time', current_time('mysql'));
+	} else {
+		error_log("RSVP Email failed to send to {$attendee_email} ({$attendee_name}) for event {$event_title}");
+		update_post_meta($attendee_id, 'email_sent', false);
+		update_post_meta($attendee_id, 'email_error', 'Failed to send');
+	}
+
+	return $result;
 }
+
+function event_rsvp_log_mail_error($wp_error) {
+	error_log('WP Mail Error: ' . $wp_error->get_error_message());
+}
+
 add_action('event_rsvp_send_qr_email', 'event_rsvp_send_qr_email_now');
 
 function event_rsvp_schedule_qr_email($attendee_id, $event_id) {

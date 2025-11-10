@@ -119,6 +119,180 @@ while ( have_posts() ) :
 						</div>
 					<?php endif; ?>
 
+					<?php if (is_user_logged_in() && (get_current_user_id() == $author_id || current_user_can('administrator'))) : ?>
+						<div class="event-attendees-section">
+							<div class="attendees-header">
+								<h3>Event Attendees</h3>
+								<p class="attendees-subtitle">View and manage all attendees for this event</p>
+							</div>
+
+							<?php
+							$attendees = event_rsvp_get_attendees_by_event($event_id);
+							$attendees_yes = array_filter($attendees, function($att) {
+								return get_post_meta($att->ID, 'rsvp_status', true) === 'yes';
+							});
+							$attendees_maybe = array_filter($attendees, function($att) {
+								return get_post_meta($att->ID, 'rsvp_status', true) === 'maybe';
+							});
+							$attendees_no = array_filter($attendees, function($att) {
+								return get_post_meta($att->ID, 'rsvp_status', true) === 'no';
+							});
+							?>
+
+							<div class="attendees-tabs">
+								<button class="attendee-tab-btn active" data-tab="all">All (<?php echo count($attendees); ?>)</button>
+								<button class="attendee-tab-btn" data-tab="yes">Attending (<?php echo count($attendees_yes); ?>)</button>
+								<button class="attendee-tab-btn" data-tab="maybe">Maybe (<?php echo count($attendees_maybe); ?>)</button>
+								<button class="attendee-tab-btn" data-tab="no">Not Attending (<?php echo count($attendees_no); ?>)</button>
+							</div>
+
+							<div class="attendees-list-container">
+								<div class="attendee-tab-content active" id="tab-all">
+									<?php if (!empty($attendees)) : ?>
+										<div class="attendees-grid">
+											<?php foreach ($attendees as $attendee) :
+												$email = get_post_meta($attendee->ID, 'attendee_email', true);
+												$phone = get_post_meta($attendee->ID, 'attendee_phone', true);
+												$rsvp_status = get_post_meta($attendee->ID, 'rsvp_status', true);
+												$checked_in = get_post_meta($attendee->ID, 'checkin_status', true);
+												$checkin_time = get_post_meta($attendee->ID, 'checkin_time', true);
+												?>
+												<div class="attendee-card">
+													<div class="attendee-info">
+														<h4 class="attendee-name"><?php echo esc_html(get_the_title($attendee->ID)); ?></h4>
+														<p class="attendee-email">📧 <?php echo esc_html($email); ?></p>
+														<?php if (!empty($phone)) : ?>
+															<p class="attendee-phone">📱 <?php echo esc_html($phone); ?></p>
+														<?php endif; ?>
+													</div>
+													<div class="attendee-meta">
+														<span class="attendee-status status-<?php echo esc_attr($rsvp_status); ?>">
+															<?php
+															if ($rsvp_status === 'yes') {
+																echo '✓ Attending';
+															} elseif ($rsvp_status === 'maybe') {
+																echo '? Maybe';
+															} else {
+																echo '✗ Not Attending';
+															}
+															?>
+														</span>
+														<?php if ($checked_in) : ?>
+															<span class="attendee-checked-in">
+																✓ Checked In
+																<?php if ($checkin_time) : ?>
+																	<small>(<?php echo date('M j, g:i A', strtotime($checkin_time)); ?>)</small>
+																<?php endif; ?>
+															</span>
+														<?php endif; ?>
+													</div>
+												</div>
+											<?php endforeach; ?>
+										</div>
+									<?php else : ?>
+										<div class="no-attendees">
+											<p>No attendees yet.</p>
+										</div>
+									<?php endif; ?>
+								</div>
+
+								<div class="attendee-tab-content" id="tab-yes">
+									<?php if (!empty($attendees_yes)) : ?>
+										<div class="attendees-grid">
+											<?php foreach ($attendees_yes as $attendee) :
+												$email = get_post_meta($attendee->ID, 'attendee_email', true);
+												$phone = get_post_meta($attendee->ID, 'attendee_phone', true);
+												$checked_in = get_post_meta($attendee->ID, 'checkin_status', true);
+												$checkin_time = get_post_meta($attendee->ID, 'checkin_time', true);
+												?>
+												<div class="attendee-card">
+													<div class="attendee-info">
+														<h4 class="attendee-name"><?php echo esc_html(get_the_title($attendee->ID)); ?></h4>
+														<p class="attendee-email">📧 <?php echo esc_html($email); ?></p>
+														<?php if (!empty($phone)) : ?>
+															<p class="attendee-phone">📱 <?php echo esc_html($phone); ?></p>
+														<?php endif; ?>
+													</div>
+													<div class="attendee-meta">
+														<span class="attendee-status status-yes">✓ Attending</span>
+														<?php if ($checked_in) : ?>
+															<span class="attendee-checked-in">
+																✓ Checked In
+																<?php if ($checkin_time) : ?>
+																	<small>(<?php echo date('M j, g:i A', strtotime($checkin_time)); ?>)</small>
+																<?php endif; ?>
+															</span>
+														<?php endif; ?>
+													</div>
+												</div>
+											<?php endforeach; ?>
+										</div>
+									<?php else : ?>
+										<div class="no-attendees">
+											<p>No confirmed attendees yet.</p>
+										</div>
+									<?php endif; ?>
+								</div>
+
+								<div class="attendee-tab-content" id="tab-maybe">
+									<?php if (!empty($attendees_maybe)) : ?>
+										<div class="attendees-grid">
+											<?php foreach ($attendees_maybe as $attendee) :
+												$email = get_post_meta($attendee->ID, 'attendee_email', true);
+												$phone = get_post_meta($attendee->ID, 'attendee_phone', true);
+												?>
+												<div class="attendee-card">
+													<div class="attendee-info">
+														<h4 class="attendee-name"><?php echo esc_html(get_the_title($attendee->ID)); ?></h4>
+														<p class="attendee-email">📧 <?php echo esc_html($email); ?></p>
+														<?php if (!empty($phone)) : ?>
+															<p class="attendee-phone">📱 <?php echo esc_html($phone); ?></p>
+														<?php endif; ?>
+													</div>
+													<div class="attendee-meta">
+														<span class="attendee-status status-maybe">? Maybe</span>
+													</div>
+												</div>
+											<?php endforeach; ?>
+										</div>
+									<?php else : ?>
+										<div class="no-attendees">
+											<p>No "maybe" attendees.</p>
+										</div>
+									<?php endif; ?>
+								</div>
+
+								<div class="attendee-tab-content" id="tab-no">
+									<?php if (!empty($attendees_no)) : ?>
+										<div class="attendees-grid">
+											<?php foreach ($attendees_no as $attendee) :
+												$email = get_post_meta($attendee->ID, 'attendee_email', true);
+												$phone = get_post_meta($attendee->ID, 'attendee_phone', true);
+												?>
+												<div class="attendee-card">
+													<div class="attendee-info">
+														<h4 class="attendee-name"><?php echo esc_html(get_the_title($attendee->ID)); ?></h4>
+														<p class="attendee-email">📧 <?php echo esc_html($email); ?></p>
+														<?php if (!empty($phone)) : ?>
+															<p class="attendee-phone">📱 <?php echo esc_html($phone); ?></p>
+														<?php endif; ?>
+													</div>
+													<div class="attendee-meta">
+														<span class="attendee-status status-no">✗ Not Attending</span>
+													</div>
+												</div>
+											<?php endforeach; ?>
+										</div>
+									<?php else : ?>
+										<div class="no-attendees">
+											<p>No declined attendees.</p>
+										</div>
+									<?php endif; ?>
+								</div>
+							</div>
+						</div>
+					<?php endif; ?>
+
 				</div>
 
 				<aside class="event-sidebar">

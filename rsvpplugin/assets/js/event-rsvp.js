@@ -515,11 +515,37 @@
 					this.loadCheckedInAttendees();
 				});
 			}
+		},
+
+		initAttendeeTabs: function() {
+			const tabButtons = document.querySelectorAll('.attendee-tab-btn');
+			const tabContents = document.querySelectorAll('.attendee-tab-content');
+
+			if (!tabButtons.length || !tabContents.length) {
+				return;
+			}
+
+			tabButtons.forEach(button => {
+				button.addEventListener('click', function() {
+					const targetTab = this.dataset.tab;
+
+					tabButtons.forEach(btn => btn.classList.remove('active'));
+					tabContents.forEach(content => content.classList.remove('active'));
+
+					this.classList.add('active');
+
+					const targetContent = document.getElementById('tab-' + targetTab);
+					if (targetContent) {
+						targetContent.classList.add('active');
+					}
+				});
+			});
 		}
 	};
 
 	$(document).ready(function() {
 		EventRSVP.init();
+		EventRSVP.initAttendeeTabs();
 	});
 
 })(jQuery);

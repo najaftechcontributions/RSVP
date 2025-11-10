@@ -815,6 +815,211 @@
 	}
 }
 
+/* Single Event Page Attendees Section */
+.single-event-page .event-attendees-section {
+	margin-top: 40px;
+	padding: 40px;
+	background-color: #ffffff;
+	border: 1px solid var(--event-border);
+	border-radius: var(--event-radius);
+	box-shadow: var(--event-shadow);
+}
+
+.single-event-page .attendees-header h3 {
+	margin: 0 0 10px 0;
+	font-size: 1.8rem;
+	color: var(--event-text);
+}
+
+.single-event-page .attendees-subtitle {
+	color: var(--event-text-light);
+	font-size: 1rem;
+	margin: 0 0 30px 0;
+}
+
+.single-event-page .attendees-tabs {
+	display: flex;
+	gap: 10px;
+	margin-bottom: 30px;
+	border-bottom: 2px solid var(--event-border);
+	overflow-x: auto;
+	flex-wrap: wrap;
+}
+
+.single-event-page .attendee-tab-btn {
+	padding: 12px 24px;
+	background-color: transparent;
+	border: none;
+	border-bottom: 3px solid transparent;
+	color: var(--event-text-light);
+	font-weight: 600;
+	font-size: 0.95rem;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	white-space: nowrap;
+}
+
+.single-event-page .attendee-tab-btn:hover {
+	color: var(--event-text);
+	border-bottom-color: var(--event-primary-light);
+}
+
+.single-event-page .attendee-tab-btn.active {
+	color: var(--event-primary);
+	border-bottom-color: var(--event-primary);
+}
+
+.single-event-page .attendee-tab-content {
+	display: none;
+}
+
+.single-event-page .attendee-tab-content.active {
+	display: block;
+}
+
+.single-event-page .attendees-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	gap: 20px;
+}
+
+.single-event-page .attendee-card {
+	background-color: var(--event-secondary);
+	border: 1px solid var(--event-border);
+	border-radius: 8px;
+	padding: 20px;
+	transition: all 0.3s ease;
+}
+
+.single-event-page .attendee-card:hover {
+	box-shadow: var(--event-shadow-md);
+	transform: translateY(-3px);
+}
+
+.single-event-page .attendee-info {
+	margin-bottom: 15px;
+}
+
+.single-event-page .attendee-name {
+	margin: 0 0 8px 0;
+	font-size: 1.1rem;
+	font-weight: 600;
+	color: var(--event-text);
+}
+
+.single-event-page .attendee-email,
+.single-event-page .attendee-phone {
+	margin: 4px 0;
+	font-size: 0.9rem;
+	color: var(--event-text-light);
+}
+
+.single-event-page .attendee-meta {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding-top: 12px;
+	border-top: 1px solid var(--event-border);
+}
+
+.single-event-page .attendee-status {
+	padding: 6px 12px;
+	border-radius: 20px;
+	font-size: 0.85rem;
+	font-weight: 600;
+	display: inline-block;
+	width: fit-content;
+}
+
+.single-event-page .attendee-status.status-yes {
+	background-color: #d4edda;
+	color: #155724;
+}
+
+.single-event-page .attendee-status.status-maybe {
+	background-color: #fff3cd;
+	color: #856404;
+}
+
+.single-event-page .attendee-status.status-no {
+	background-color: #f8d7da;
+	color: #721c24;
+}
+
+.single-event-page .attendee-checked-in {
+	padding: 6px 12px;
+	background-color: #d1ecf1;
+	color: #0c5460;
+	border-radius: 20px;
+	font-size: 0.85rem;
+	font-weight: 600;
+	display: inline-block;
+	width: fit-content;
+}
+
+.single-event-page .attendee-checked-in small {
+	font-size: 0.75rem;
+	display: block;
+	margin-top: 2px;
+	font-weight: 400;
+}
+
+.single-event-page .no-attendees {
+	text-align: center;
+	padding: 60px 20px;
+	background-color: var(--event-secondary);
+	border-radius: 8px;
+}
+
+.single-event-page .no-attendees p {
+	margin: 0;
+	color: var(--event-text-light);
+	font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+	.single-event-page .event-attendees-section {
+		padding: 25px 20px;
+	}
+
+	.single-event-page .attendees-header h3 {
+		font-size: 1.5rem;
+	}
+
+	.single-event-page .attendees-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.single-event-page .attendees-tabs {
+		gap: 5px;
+	}
+
+	.single-event-page .attendee-tab-btn {
+		padding: 10px 16px;
+		font-size: 0.9rem;
+	}
+}
+
+@media (max-width: 480px) {
+	.single-event-page .event-attendees-section {
+		padding: 20px 15px;
+		margin-top: 30px;
+	}
+
+	.single-event-page .attendees-header h3 {
+		font-size: 1.3rem;
+	}
+
+	.single-event-page .attendees-subtitle {
+		font-size: 0.9rem;
+	}
+
+	.single-event-page .attendee-tab-btn {
+		padding: 8px 12px;
+		font-size: 0.85rem;
+	}
+}
+
 /* Host Dashboard Attendees Section */
 .host-dashboard-page .event-attendees-section {
 	margin-top: 25px;

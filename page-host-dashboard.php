@@ -146,7 +146,7 @@ foreach ($all_user_events as $event) {
 							</div>
 
 							<?php if (!empty($attendees)) : ?>
-								<div class="event-attendees-section">
+								<!-- <div class="event-attendees-section">
 									<h4 class="attendees-section-title">
 										<span class="attendees-icon">👥</span>
 										Attendees (<?php echo count($attendees); ?>)
@@ -197,7 +197,7 @@ foreach ($all_user_events as $event) {
 											</tbody>
 										</table>
 									</div>
-								</div>
+								</div> -->
 							<?php endif; ?>
 						</div>
 						

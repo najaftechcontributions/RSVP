@@ -216,7 +216,13 @@ $ad_locations = array(
 											<?php echo esc_html($author->display_name); ?>
 										</td>
 										<td class="ad-location-cell">
-											<span class="location-badge"><?php echo esc_html($ad_locations[$slot_location] ?? ucfirst($slot_location)); ?></span>
+											<select class="ad-location-select" data-ad-id="<?php echo $ad->ID; ?>" data-current="<?php echo esc_attr($slot_location); ?>">
+												<?php foreach ($ad_locations as $loc_key => $loc_name) : ?>
+													<option value="<?php echo esc_attr($loc_key); ?>" <?php selected($slot_location, $loc_key); ?>>
+														<?php echo esc_html($loc_name); ?>
+													</option>
+												<?php endforeach; ?>
+											</select>
 										</td>
 										<td class="ad-schedule-cell">
 											<?php if (!empty($start_date) && !empty($end_date)) : ?>
@@ -665,6 +671,48 @@ document.addEventListener('DOMContentLoaded', function() {
 					this.style.backgroundColor = '';
 				}, 2000);
 			});
+		});
+	});
+
+	document.querySelectorAll('.ad-location-select').forEach(select => {
+		select.addEventListener('change', function() {
+			const adId = this.getAttribute('data-ad-id');
+			const newLocation = this.value;
+			const currentLocation = this.getAttribute('data-current');
+
+			if (newLocation === currentLocation) return;
+
+			if (confirm('Are you sure you want to change the ad location?')) {
+				fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/x-www-form-urlencoded',
+					},
+					body: new URLSearchParams({
+						action: 'event_rsvp_change_ad_location',
+						ad_id: adId,
+						location: newLocation,
+						nonce: nonce
+					})
+				})
+				.then(response => response.json())
+				.then(data => {
+					if (data.success) {
+						alert(data.data.message);
+						this.setAttribute('data-current', newLocation);
+					} else {
+						alert('Error: ' + (data.data || 'Unknown error'));
+						this.value = currentLocation;
+					}
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					alert('An error occurred. Please try again.');
+					this.value = currentLocation;
+				});
+			} else {
+				this.value = currentLocation;
+			}
 		});
 	});
 

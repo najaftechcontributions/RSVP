@@ -227,32 +227,107 @@ function event_rsvp_get_available_spots($event_id) {
 	return max(0, $max_attendees - count($current_attendees));
 }
 
-function event_rsvp_display_vendor_ad($location) {
-	$ads = event_rsvp_get_active_vendor_ads($location);
+function event_rsvp_display_vendor_ad($location, $preview = false) {
+	$today = date('Y-m-d');
+	
+	$args = array(
+		'post_type' => 'vendor_ad',
+		'posts_per_page' => -1,
+		'meta_query' => array(
+			'relation' => 'AND',
+			array(
+				'key' => 'ad_start_date',
+				'value' => $today,
+				'compare' => '<=',
+				'type' => 'DATE'
+			),
+			array(
+				'key' => 'ad_end_date',
+				'value' => $today,
+				'compare' => '>=',
+				'type' => 'DATE'
+			)
+		)
+	);
+	
+	if (!$preview) {
+		$args['meta_query'][] = array(
+			'key' => 'ad_status',
+			'value' => 'active',
+			'compare' => '='
+		);
+		$args['meta_query'][] = array(
+			'key' => 'ad_approval_status',
+			'value' => 'approved',
+			'compare' => '='
+		);
+	}
+	
+	if (!empty($location)) {
+		$args['meta_query'][] = array(
+			'key' => 'slot_location',
+			'value' => $location,
+			'compare' => '='
+		);
+	}
+	
+	$ads = get_posts($args);
 	
 	if (empty($ads)) {
+		if ($preview && (is_admin() || current_user_can('administrator'))) {
+			return '<div class="vendor-ad-preview-notice" style="padding: 20px; background: #f8f9fa; border: 2px dashed #ddd; border-radius: 8px; text-align: center; margin: 10px 0;"><strong>📢 No active ads for this location</strong><br><small>Create and approve ads to display them here</small></div>';
+		}
 		return '';
 	}
 	
 	$ad = $ads[array_rand($ads)];
+	$ad_id = $ad->ID;
 	
-	$thumbnail = get_the_post_thumbnail($ad->ID, 'medium');
-	$click_url = get_post_meta($ad->ID, 'click_url', true);
+	$thumbnail_url = get_the_post_thumbnail_url($ad_id, 'medium');
+	$click_url = get_post_meta($ad_id, 'click_url', true);
+	$ad_title = get_the_title($ad_id);
 	
-	if (empty($thumbnail)) {
+	if (empty($thumbnail_url)) {
+		if ($preview && (is_admin() || current_user_can('administrator'))) {
+			return '<div class="vendor-ad-preview-notice" style="padding: 20px; background: #fff3cd; border: 2px dashed #ffc107; border-radius: 8px; text-align: center; margin: 10px 0;"><strong>🖼️ Ad has no image</strong><br><small>Please add a featured image to the ad</small></div>';
+		}
 		return '';
 	}
 	
-	$current_impressions = intval(get_post_meta($ad->ID, 'ad_impressions', true));
-	update_post_meta($ad->ID, 'ad_impressions', $current_impressions + 1);
+	if (!$preview) {
+		$current_impressions = intval(get_post_meta($ad_id, 'ad_impressions', true));
+		update_post_meta($ad_id, 'ad_impressions', $current_impressions + 1);
+	}
 	
-	return sprintf(
-		'<div class="vendor-ad vendor-ad-%s"><a href="%s" target="_blank" rel="noopener sponsored" class="vendor-ad-link" data-ad-id="%d">%s</a></div>',
-		esc_attr($location),
-		esc_url($click_url),
-		$ad->ID,
-		$thumbnail
-	);
+	$preview_label = $preview ? '<div class="ad-preview-label" style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; z-index: 10;">PREVIEW</div>' : '';
+	
+	ob_start();
+	?>
+	<div class="vendor-ad vendor-ad-<?php echo esc_attr($location); ?> vendor-ad-wrapper" data-ad-id="<?php echo $ad_id; ?>">
+		<div class="vendor-ad-container" style="position: relative;">
+			<?php echo $preview_label; ?>
+			<?php if (!empty($click_url)) : ?>
+				<a href="<?php echo esc_url($click_url); ?>" target="_blank" rel="noopener sponsored" class="vendor-ad-link" data-ad-id="<?php echo $ad_id; ?>" <?php echo $preview ? 'onclick="return false;"' : ''; ?>>
+					<div class="vendor-ad-image">
+						<img src="<?php echo esc_url($thumbnail_url); ?>=" alt="<?php echo esc_attr($ad_title); ?>" loading="lazy">
+					</div>
+					<div class="vendor-ad-overlay">
+						<span class="vendor-ad-title"><?php echo esc_html($ad_title); ?></span>
+						<span class="vendor-ad-cta">Learn More →</span>
+					</div>
+				</a>
+			<?php else : ?>
+				<div class="vendor-ad-image">
+					<img src="<?php echo esc_url($thumbnail_url); ?>" alt="<?php echo esc_attr($ad_title); ?>" loading="lazy">
+				</div>
+				<div class="vendor-ad-overlay">
+					<span class="vendor-ad-title"><?php echo esc_html($ad_title); ?></span>
+				</div>
+			<?php endif; ?>
+		</div>
+	</div>
+	<?php
+	return ob_get_clean();
 }
 
 function event_rsvp_generate_qr_code($data) {
