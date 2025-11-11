@@ -242,8 +242,11 @@ while ( have_posts() ) :
 												$phone = get_post_meta($attendee->ID, 'attendee_phone', true);
 												$checked_in = get_post_meta($attendee->ID, 'checkin_status', true);
 												$checkin_time = get_post_meta($attendee->ID, 'checkin_time', true);
+												$qr_data = get_post_meta($attendee->ID, 'qr_data', true);
+												$email_sent = get_post_meta($attendee->ID, 'email_sent', true);
+												$email_sent_time = get_post_meta($attendee->ID, 'email_sent_time', true);
 												?>
-												<div class="attendee-card">
+												<div class="attendee-card" data-attendee-id="<?php echo esc_attr($attendee->ID); ?>">
 													<div class="attendee-info">
 														<h4 class="attendee-name"><?php echo esc_html(get_the_title($attendee->ID)); ?></h4>
 														<p class="attendee-email">📧 <?php echo esc_html($email); ?></p>
@@ -262,6 +265,34 @@ while ( have_posts() ) :
 															</span>
 														<?php endif; ?>
 													</div>
+													<div class="attendee-email-status">
+														<?php if ($email_sent) : ?>
+															<span class="email-status-sent">
+																✓ Email Sent
+																<?php if ($email_sent_time) : ?>
+																	<small>(<?php echo date('M j, g:i A', strtotime($email_sent_time)); ?>)</small>
+																<?php endif; ?>
+															</span>
+														<?php else : ?>
+															<span class="email-status-not-sent">⚠️ Email Not Sent</span>
+														<?php endif; ?>
+													</div>
+													<div class="attendee-actions">
+														<?php if (!empty($qr_data)) : ?>
+															<a href="<?php echo esc_url(home_url('/qr-view/?qr=' . urlencode($qr_data))); ?>" target="_blank" class="attendee-action-btn view-qr-btn" title="View QR Code">
+																<span class="btn-icon">🔍</span>
+																<span class="btn-text">View QR</span>
+															</a>
+															<button type="button" class="attendee-action-btn download-qr-btn" data-qr-data="<?php echo esc_attr($qr_data); ?>" data-attendee-name="<?php echo esc_attr(get_the_title($attendee->ID)); ?>" title="Download QR Code">
+																<span class="btn-icon">⬇️</span>
+																<span class="btn-text">Download QR</span>
+															</button>
+														<?php endif; ?>
+														<button type="button" class="attendee-action-btn send-email-btn" data-attendee-id="<?php echo esc_attr($attendee->ID); ?>" title="Send/Resend Email">
+															<span class="btn-icon">📧</span>
+															<span class="btn-text"><?php echo $email_sent ? 'Resend Email' : 'Send Email'; ?></span>
+														</button>
+													</div>
 												</div>
 											<?php endforeach; ?>
 										</div>
@@ -278,8 +309,11 @@ while ( have_posts() ) :
 											<?php foreach ($attendees_maybe as $attendee) :
 												$email = get_post_meta($attendee->ID, 'attendee_email', true);
 												$phone = get_post_meta($attendee->ID, 'attendee_phone', true);
+												$qr_data = get_post_meta($attendee->ID, 'qr_data', true);
+												$email_sent = get_post_meta($attendee->ID, 'email_sent', true);
+												$email_sent_time = get_post_meta($attendee->ID, 'email_sent_time', true);
 												?>
-												<div class="attendee-card">
+												<div class="attendee-card" data-attendee-id="<?php echo esc_attr($attendee->ID); ?>">
 													<div class="attendee-info">
 														<h4 class="attendee-name"><?php echo esc_html(get_the_title($attendee->ID)); ?></h4>
 														<p class="attendee-email">📧 <?php echo esc_html($email); ?></p>
@@ -289,6 +323,34 @@ while ( have_posts() ) :
 													</div>
 													<div class="attendee-meta">
 														<span class="attendee-status status-maybe">? Maybe</span>
+													</div>
+													<div class="attendee-email-status">
+														<?php if ($email_sent) : ?>
+															<span class="email-status-sent">
+																✓ Email Sent
+																<?php if ($email_sent_time) : ?>
+																	<small>(<?php echo date('M j, g:i A', strtotime($email_sent_time)); ?>)</small>
+																<?php endif; ?>
+															</span>
+														<?php else : ?>
+															<span class="email-status-not-sent">⚠️ Email Not Sent</span>
+														<?php endif; ?>
+													</div>
+													<div class="attendee-actions">
+														<?php if (!empty($qr_data)) : ?>
+															<a href="<?php echo esc_url(home_url('/qr-view/?qr=' . urlencode($qr_data))); ?>" target="_blank" class="attendee-action-btn view-qr-btn" title="View QR Code">
+																<span class="btn-icon">🔍</span>
+																<span class="btn-text">View QR</span>
+															</a>
+															<button type="button" class="attendee-action-btn download-qr-btn" data-qr-data="<?php echo esc_attr($qr_data); ?>" data-attendee-name="<?php echo esc_attr(get_the_title($attendee->ID)); ?>" title="Download QR Code">
+																<span class="btn-icon">⬇️</span>
+																<span class="btn-text">Download QR</span>
+															</button>
+														<?php endif; ?>
+														<button type="button" class="attendee-action-btn send-email-btn" data-attendee-id="<?php echo esc_attr($attendee->ID); ?>" title="Send/Resend Email">
+															<span class="btn-icon">📧</span>
+															<span class="btn-text"><?php echo $email_sent ? 'Resend Email' : 'Send Email'; ?></span>
+														</button>
 													</div>
 												</div>
 											<?php endforeach; ?>
@@ -306,8 +368,11 @@ while ( have_posts() ) :
 											<?php foreach ($attendees_no as $attendee) :
 												$email = get_post_meta($attendee->ID, 'attendee_email', true);
 												$phone = get_post_meta($attendee->ID, 'attendee_phone', true);
+												$qr_data = get_post_meta($attendee->ID, 'qr_data', true);
+												$email_sent = get_post_meta($attendee->ID, 'email_sent', true);
+												$email_sent_time = get_post_meta($attendee->ID, 'email_sent_time', true);
 												?>
-												<div class="attendee-card">
+												<div class="attendee-card" data-attendee-id="<?php echo esc_attr($attendee->ID); ?>">
 													<div class="attendee-info">
 														<h4 class="attendee-name"><?php echo esc_html(get_the_title($attendee->ID)); ?></h4>
 														<p class="attendee-email">📧 <?php echo esc_html($email); ?></p>
@@ -317,6 +382,34 @@ while ( have_posts() ) :
 													</div>
 													<div class="attendee-meta">
 														<span class="attendee-status status-no">✗ Not Attending</span>
+													</div>
+													<div class="attendee-email-status">
+														<?php if ($email_sent) : ?>
+															<span class="email-status-sent">
+																✓ Email Sent
+																<?php if ($email_sent_time) : ?>
+																	<small>(<?php echo date('M j, g:i A', strtotime($email_sent_time)); ?>)</small>
+																<?php endif; ?>
+															</span>
+														<?php else : ?>
+															<span class="email-status-not-sent">⚠️ Email Not Sent</span>
+														<?php endif; ?>
+													</div>
+													<div class="attendee-actions">
+														<?php if (!empty($qr_data)) : ?>
+															<a href="<?php echo esc_url(home_url('/qr-view/?qr=' . urlencode($qr_data))); ?>" target="_blank" class="attendee-action-btn view-qr-btn" title="View QR Code">
+																<span class="btn-icon">🔍</span>
+																<span class="btn-text">View QR</span>
+															</a>
+															<button type="button" class="attendee-action-btn download-qr-btn" data-qr-data="<?php echo esc_attr($qr_data); ?>" data-attendee-name="<?php echo esc_attr(get_the_title($attendee->ID)); ?>" title="Download QR Code">
+																<span class="btn-icon">⬇️</span>
+																<span class="btn-text">Download QR</span>
+															</button>
+														<?php endif; ?>
+														<button type="button" class="attendee-action-btn send-email-btn" data-attendee-id="<?php echo esc_attr($attendee->ID); ?>" title="Send/Resend Email">
+															<span class="btn-icon">📧</span>
+															<span class="btn-text"><?php echo $email_sent ? 'Resend Email' : 'Send Email'; ?></span>
+														</button>
 													</div>
 												</div>
 											<?php endforeach; ?>
@@ -562,6 +655,142 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	if (document.getElementById('event-checked-in-attendees')) {
 		loadCheckedInAttendees();
+	}
+
+	// Handle Download QR Code
+	const downloadQrBtns = document.querySelectorAll('.download-qr-btn');
+	downloadQrBtns.forEach(btn => {
+		btn.addEventListener('click', function() {
+			const qrData = this.getAttribute('data-qr-data');
+			const attendeeName = this.getAttribute('data-attendee-name');
+
+			if (!qrData) {
+				alert('QR code data not available');
+				return;
+			}
+
+			// Generate QR code URL
+			const qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=' + encodeURIComponent(qrData);
+
+			// Create a temporary link and trigger download
+			fetch(qrCodeUrl)
+				.then(response => response.blob())
+				.then(blob => {
+					const url = window.URL.createObjectURL(blob);
+					const a = document.createElement('a');
+					a.style.display = 'none';
+					a.href = url;
+					a.download = 'QR-' + attendeeName.replace(/\s+/g, '-') + '.png';
+					document.body.appendChild(a);
+					a.click();
+					window.URL.revokeObjectURL(url);
+					document.body.removeChild(a);
+
+					showNotification('QR code downloaded successfully!', 'success');
+				})
+				.catch(error => {
+					console.error('Download error:', error);
+					alert('Failed to download QR code. Please try again.');
+				});
+		});
+	});
+
+	// Handle Send/Resend Email
+	const sendEmailBtns = document.querySelectorAll('.send-email-btn');
+	sendEmailBtns.forEach(btn => {
+		btn.addEventListener('click', function() {
+			const attendeeId = this.getAttribute('data-attendee-id');
+			const btnElement = this;
+			const originalText = btnElement.innerHTML;
+
+			if (!attendeeId) {
+				alert('Invalid attendee ID');
+				return;
+			}
+
+			if (!confirm('Are you sure you want to send/resend the email with QR code to this attendee?')) {
+				return;
+			}
+
+			// Disable button and show loading state
+			btnElement.disabled = true;
+			btnElement.innerHTML = '<span class="btn-icon">⏳</span><span class="btn-text">Sending...</span>';
+
+			fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+				},
+				body: new URLSearchParams({
+					action: 'event_rsvp_resend_qr_email',
+					attendee_id: attendeeId,
+					nonce: '<?php echo wp_create_nonce('event_rsvp_resend_qr'); ?>'
+				})
+			})
+			.then(response => response.json())
+			.then(data => {
+				btnElement.disabled = false;
+				btnElement.innerHTML = originalText;
+
+				if (data.success) {
+					showNotification(data.data.message || 'Email sent successfully!', 'success');
+
+					// Update email status in the card
+					const card = btnElement.closest('.attendee-card');
+					if (card) {
+						const emailStatus = card.querySelector('.attendee-email-status');
+						if (emailStatus) {
+							emailStatus.innerHTML = '<span class="email-status-sent">✓ Email Sent <small>(' + (data.data.sent_time || 'Just now') + ')</small></span>';
+						}
+					}
+
+					// Update button text
+					btnElement.querySelector('.btn-text').textContent = 'Resend Email';
+				} else {
+					showNotification(data.data || 'Failed to send email. Please check email configuration.', 'error');
+				}
+			})
+			.catch(error => {
+				console.error('Email error:', error);
+				btnElement.disabled = false;
+				btnElement.innerHTML = originalText;
+				showNotification('Failed to send email. Please try again.', 'error');
+			});
+		});
+	});
+
+	// Notification helper function
+	function showNotification(message, type = 'success') {
+		const notification = document.createElement('div');
+		notification.className = 'event-notification event-notification-' + type;
+		notification.textContent = message;
+		notification.style.cssText = 'position:fixed;top:20px;right:20px;padding:15px 25px;background:' + (type === 'success' ? '#10b981' : '#ef4444') + ';color:#fff;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,0.1);z-index:10000;animation:slideInRight 0.3s ease;max-width:400px;';
+
+		document.body.appendChild(notification);
+
+		setTimeout(() => {
+			notification.style.animation = 'slideOutRight 0.3s ease';
+			setTimeout(() => {
+				document.body.removeChild(notification);
+			}, 300);
+		}, 3000);
+	}
+
+	// Add CSS animations
+	if (!document.getElementById('event-notification-styles')) {
+		const style = document.createElement('style');
+		style.id = 'event-notification-styles';
+		style.textContent = `
+			@keyframes slideInRight {
+				from { transform: translateX(100%); opacity: 0; }
+				to { transform: translateX(0); opacity: 1; }
+			}
+			@keyframes slideOutRight {
+				from { transform: translateX(0); opacity: 1; }
+				to { transform: translateX(100%); opacity: 0; }
+			}
+		`;
+		document.head.appendChild(style);
 	}
 });
 </script>

@@ -964,6 +964,121 @@
 	font-weight: 400;
 }
 
+.single-event-page .attendee-email-status {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid var(--event-border);
+}
+
+.single-event-page .email-status-sent {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 6px 12px;
+	background-color: #d4edda;
+	color: #155724;
+	border-radius: 20px;
+	font-size: 0.85rem;
+	font-weight: 600;
+}
+
+.single-event-page .email-status-sent small {
+	font-size: 0.75rem;
+	font-weight: 400;
+	margin-left: 3px;
+}
+
+.single-event-page .email-status-not-sent {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 6px 12px;
+	background-color: #fff3cd;
+	color: #856404;
+	border-radius: 20px;
+	font-size: 0.85rem;
+	font-weight: 600;
+}
+
+.single-event-page .attendee-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 15px;
+}
+
+.single-event-page .attendee-action-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 14px;
+	background-color: var(--event-secondary);
+	border: 1px solid var(--event-border);
+	border-radius: 6px;
+	color: var(--event-text);
+	font-size: 0.85rem;
+	font-weight: 600;
+	text-decoration: none;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	white-space: nowrap;
+}
+
+.single-event-page .attendee-action-btn:hover {
+	background-color: var(--event-primary);
+	border-color: var(--event-primary);
+	color: #ffffff;
+	transform: translateY(-2px);
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.single-event-page .attendee-action-btn:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+	transform: none;
+}
+
+.single-event-page .attendee-action-btn .btn-icon {
+	font-size: 1rem;
+}
+
+.single-event-page .attendee-action-btn .btn-text {
+	font-size: 0.85rem;
+}
+
+.single-event-page .view-qr-btn {
+	background-color: #e7f3ff;
+	border-color: #0066cc;
+	color: #0066cc;
+}
+
+.single-event-page .view-qr-btn:hover {
+	background-color: #0066cc;
+	color: #ffffff;
+}
+
+.single-event-page .download-qr-btn {
+	background-color: #e8f5e9;
+	border-color: #28a745;
+	color: #28a745;
+}
+
+.single-event-page .download-qr-btn:hover {
+	background-color: #28a745;
+	color: #ffffff;
+}
+
+.single-event-page .send-email-btn {
+	background-color: #fff3e0;
+	border-color: #ff9800;
+	color: #ff9800;
+}
+
+.single-event-page .send-email-btn:hover {
+	background-color: #ff9800;
+	color: #ffffff;
+}
+
 .single-event-page .no-attendees {
 	text-align: center;
 	padding: 60px 20px;
@@ -1017,6 +1132,19 @@
 	.single-event-page .attendee-tab-btn {
 		padding: 8px 12px;
 		font-size: 0.85rem;
+	}
+
+	.single-event-page .attendee-actions {
+		flex-direction: column;
+	}
+
+	.single-event-page .attendee-action-btn {
+		width: 100%;
+		justify-content: center;
+	}
+
+	.single-event-page .attendee-action-btn .btn-text {
+		display: inline;
 	}
 }
 

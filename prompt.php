@@ -1,0 +1,1 @@
+i have setup woocommerce stripe payment please fix pricing and signup accordingly so payment and signup will work create a document at the end as well
