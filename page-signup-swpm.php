@@ -1,6 +1,6 @@
 <?php
 /**
- * Template Name: Signup Page
+ * Template Name: Signup Page (Simple Membership)
  *
  * @package RSVP
  */
@@ -11,35 +11,35 @@ if (is_user_logged_in()) {
 }
 
 $selected_plan = isset($_GET['plan']) ? sanitize_text_field($_GET['plan']) : '';
-$role_from_plan = '';
+$membership_level_id = 1; // Default to free attendee
 $is_paid_plan = false;
 
 switch ($selected_plan) {
 	case 'attendee':
-		$role_from_plan = 'subscriber';
+		$membership_level_id = 1;
 		$is_paid_plan = false;
 		break;
 	case 'event_host':
-		$role_from_plan = 'event_host';
+		$membership_level_id = 2;
 		$is_paid_plan = true;
 		break;
 	case 'vendor':
-		$role_from_plan = 'vendor';
+		$membership_level_id = 3;
 		$is_paid_plan = true;
 		break;
 	case 'pro':
-		$role_from_plan = 'pro';
+		$membership_level_id = 4;
 		$is_paid_plan = true;
 		break;
 	default:
-		$role_from_plan = 'subscriber';
+		$membership_level_id = 1;
 		$is_paid_plan = false;
 }
 
 get_header();
 ?>
 
-<main id="primary" class="site-main signup-page">
+<main id="primary" class="site-main signup-page swpm-signup-page">
 	<div class="container signup-container">
 		<div class="signup-header">
 			<h1 class="signup-title">Create Your Account</h1>
@@ -54,10 +54,7 @@ get_header();
 			<div class="signup-form-section">
 				<div class="signup-card">
 					
-					<div id="signup-message" class="form-message" style="display: none;"></div>
-
-					<?php if ($is_paid_plan && class_exists('WooCommerce')) : ?>
-						
+					<?php if ($is_paid_plan) : ?>
 						<div class="paid-plan-notice">
 							<h3>📋 Two-Step Registration Process</h3>
 							<div class="steps-container">
@@ -79,106 +76,45 @@ get_header();
 							</div>
 							<p class="notice-text">Your subscription will activate immediately after payment.</p>
 						</div>
-
 					<?php endif; ?>
 
-					<form class="event-signup-form" id="event-signup-form">
-						<?php wp_nonce_field('event_rsvp_register', 'register_nonce'); ?>
-						<input type="hidden" name="pricing_plan" id="pricing-plan" value="<?php echo esc_attr($selected_plan); ?>">
-						<input type="hidden" name="is_paid_plan" value="<?php echo $is_paid_plan ? '1' : '0'; ?>">
-						
-						<div class="form-row">
-							<div class="form-field">
-								<label for="first-name">First Name <span class="required">*</span></label>
-								<input type="text" id="first-name" name="first_name" placeholder="John" required>
-							</div>
-							
-							<div class="form-field">
-								<label for="last-name">Last Name <span class="required">*</span></label>
-								<input type="text" id="last-name" name="last_name" placeholder="Doe" required>
-							</div>
+					<?php
+					// Display Simple Membership registration form
+					if (function_exists('swpm_render_registration_form')) {
+						// Set the membership level based on selected plan
+						echo '<div class="swpm-form-wrapper">';
+						echo do_shortcode('[swpm_registration_form id="' . $membership_level_id . '"]');
+						echo '</div>';
+					} else {
+						// Fallback if Simple Membership is not active
+						?>
+						<div class="swpm-not-active-notice">
+							<h3>⚠️ Simple Membership Plugin Required</h3>
+							<p>The Simple Membership plugin is required for registration but is not currently active.</p>
+							<p>Please contact the site administrator.</p>
 						</div>
-						
-						<div class="form-field">
-							<label for="username">Username <span class="required">*</span></label>
-							<input type="text" id="username" name="username" placeholder="Choose a unique username" required>
-							<span class="field-hint">This will be your unique identifier on the platform</span>
-						</div>
-						
-						<div class="form-field">
-							<label for="email">Email Address <span class="required">*</span></label>
-							<input type="email" id="email" name="email" placeholder="your.email@example.com" required>
-							<span class="field-hint">We'll send your confirmation and QR codes here</span>
-						</div>
-						
-						<div class="form-field">
-							<label for="password">Password <span class="required">*</span></label>
-							<input type="password" id="password" name="password" placeholder="Create a strong password" required minlength="8">
-							<span class="field-hint">Minimum 8 characters</span>
-						</div>
-						
-						<div class="form-field">
-							<label for="password-confirm">Confirm Password <span class="required">*</span></label>
-							<input type="password" id="password-confirm" name="password_confirm" placeholder="Re-enter your password" required>
-						</div>
-						
-						<?php if ($selected_plan && $selected_plan !== 'attendee') : ?>
-							<div class="form-field">
-								<label for="user-role">Account Type <span class="required">*</span></label>
-								<select id="user-role" name="user_role" required disabled>
-									<option value="event_host" <?php selected($role_from_plan, 'event_host'); ?>>Host Events - Create and manage my own events</option>
-									<option value="vendor" <?php selected($role_from_plan, 'vendor'); ?>>Become a Vendor - Advertise my services</option>
-									<option value="pro" <?php selected($role_from_plan, 'pro'); ?>>Pro (Both) - Host events & advertise</option>
-								</select>
-								<input type="hidden" name="user_role" value="<?php echo esc_attr($role_from_plan); ?>">
-								<span class="field-hint">Role selected based on your pricing plan</span>
-							</div>
-						<?php else : ?>
-							<input type="hidden" name="user_role" value="subscriber">
-						<?php endif; ?>
+						<?php
+					}
+					?>
 
-						<?php if (!$selected_plan || $selected_plan === 'attendee') : ?>
-							<div class="pricing-info-box">
-								<p><strong>📌 Free Attendee Account</strong></p>
-								<p>You're signing up for a free account. You can browse events and RSVP. If you want to create events or post ads, <a href="<?php echo esc_url(home_url('/pricing/')); ?>">check our pricing plans</a>.</p>
-							</div>
-						<?php elseif ($is_paid_plan) : ?>
-							<div class="payment-info-box">
-								<p><strong>💳 Secure Payment via Stripe</strong></p>
-								<p>You'll be redirected to our secure Stripe checkout to complete your <strong><?php echo esc_html(ucwords(str_replace('_', ' ', $selected_plan))); ?></strong> subscription. Your account will be created automatically after successful payment.</p>
-								<ul class="payment-features">
-									<li>✓ Secure SSL encrypted payment</li>
-									<li>✓ Account auto-created after payment</li>
-									<li>✓ Cancel anytime</li>
-									<li>✓ 30-day money-back guarantee</li>
-									<li>✓ Credentials emailed to you</li>
-								</ul>
-							</div>
-						<?php endif; ?>
-						
-						<div class="form-checkbox">
-							<input type="checkbox" id="terms" name="terms" required>
-							<label for="terms">
-								I agree to the <a href="<?php echo esc_url(home_url('/terms/')); ?>" target="_blank">Terms of Service</a> 
-								and <a href="<?php echo esc_url(home_url('/privacy/')); ?>" target="_blank">Privacy Policy</a> 
-								<span class="required">*</span>
-							</label>
+					<?php if (!$selected_plan || $selected_plan === 'attendee') : ?>
+						<div class="pricing-info-box">
+							<p><strong>📌 Free Attendee Account</strong></p>
+							<p>You're signing up for a free account. You can browse events and RSVP. If you want to create events or post ads, <a href="<?php echo esc_url(home_url('/pricing/')); ?>">check our pricing plans</a>.</p>
 						</div>
-						
-						<div class="form-checkbox">
-							<input type="checkbox" id="newsletter" name="newsletter">
-							<label for="newsletter">
-								Send me updates about new events and platform features
-							</label>
+					<?php elseif ($is_paid_plan) : ?>
+						<div class="payment-info-box">
+							<p><strong>💳 Secure Payment via Stripe</strong></p>
+							<p>After completing the form above, you'll be redirected to our secure Stripe checkout to complete your <strong><?php echo esc_html(ucwords(str_replace('_', ' ', $selected_plan))); ?></strong> subscription.</p>
+							<ul class="payment-features">
+								<li>✓ Secure SSL encrypted payment</li>
+								<li>✓ Account auto-created after payment</li>
+								<li>✓ Cancel anytime</li>
+								<li>✓ 30-day money-back guarantee</li>
+								<li>✓ Email confirmation sent immediately</li>
+							</ul>
 						</div>
-						
-						<div class="form-actions">
-							<button type="submit" class="signup-submit-button">
-								<span class="button-icon">🚀</span>
-								<span class="button-text"><?php echo $is_paid_plan ? 'Create Account & Proceed to Payment' : 'Create Free Account'; ?></span>
-							</button>
-						</div>
-					</form>
+					<?php endif; ?>
 
 					<div class="signup-divider">
 						<span class="divider-text">Already have an account?</span>
@@ -281,6 +217,29 @@ get_header();
 </main>
 
 <style>
+.swpm-form-wrapper {
+	margin-bottom: 20px;
+}
+
+.swpm-not-active-notice {
+	background-color: #fef3c7;
+	border: 2px solid #f59e0b;
+	border-radius: 8px;
+	padding: 20px;
+	text-align: center;
+	margin-bottom: 20px;
+}
+
+.swpm-not-active-notice h3 {
+	margin: 0 0 10px 0;
+	color: #92400e;
+}
+
+.swpm-not-active-notice p {
+	margin: 5px 0;
+	color: #78350f;
+}
+
 .pricing-info-box {
 	background-color: var(--event-primary-light, #f0f7ff);
 	border: 2px solid var(--event-primary, #3b82f6);
@@ -454,6 +413,85 @@ get_header();
 	font-weight: 500;
 }
 
+.swpm-registration-form {
+	width: 100%;
+}
+
+.swpm-registration-form .swpm-form-field {
+	margin-bottom: 20px;
+}
+
+.swpm-registration-form label {
+	display: block;
+	margin-bottom: 8px;
+	font-weight: 600;
+	color: #374151;
+	font-size: 0.95rem;
+}
+
+.swpm-registration-form input[type="text"],
+.swpm-registration-form input[type="email"],
+.swpm-registration-form input[type="password"],
+.swpm-registration-form select {
+	width: 100%;
+	padding: 12px 16px;
+	border: 2px solid #e5e7eb;
+	border-radius: 8px;
+	font-size: 1rem;
+	transition: all 0.3s ease;
+	box-sizing: border-box;
+}
+
+.swpm-registration-form input:focus,
+.swpm-registration-form select:focus {
+	outline: none;
+	border-color: #667eea;
+	box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.swpm-registration-form .swpm-submit {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	color: white;
+	padding: 14px 32px;
+	border: none;
+	border-radius: 8px;
+	font-size: 1.1rem;
+	font-weight: 600;
+	cursor: pointer;
+	width: 100%;
+	transition: all 0.3s ease;
+	margin-top: 10px;
+}
+
+.swpm-registration-form .swpm-submit:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.swpm-error,
+.swpm-validation-error {
+	background-color: #fee2e2;
+	border: 2px solid #ef4444;
+	color: #991b1b;
+	padding: 12px 16px;
+	border-radius: 8px;
+	margin-bottom: 20px;
+}
+
+.swpm-success {
+	background-color: #d1fae5;
+	border: 2px solid #10b981;
+	color: #065f46;
+	padding: 12px 16px;
+	border-radius: 8px;
+	margin-bottom: 20px;
+}
+
+.swpm-registration-form .swpm-required {
+	color: #ef4444;
+	margin-left: 2px;
+}
+
 @media (max-width: 768px) {
 	.steps-container {
 		flex-direction: column;
@@ -468,77 +506,5 @@ get_header();
 	}
 }
 </style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-	const form = document.getElementById('event-signup-form');
-	const messageEl = document.getElementById('signup-message');
-	const submitButton = form.querySelector('.signup-submit-button');
-	const isPaidPlan = form.querySelector('input[name="is_paid_plan"]').value === '1';
-
-	form.addEventListener('submit', function(e) {
-		e.preventDefault();
-
-		const password = document.getElementById('password').value;
-		const passwordConfirm = document.getElementById('password-confirm').value;
-
-		if (password !== passwordConfirm) {
-			showMessage('Passwords do not match. Please try again.', 'error');
-			return;
-		}
-
-		submitButton.disabled = true;
-		const buttonText = submitButton.querySelector('.button-text');
-		const originalText = buttonText.textContent;
-		buttonText.textContent = isPaidPlan ? 'Creating Account...' : 'Creating Account...';
-		submitButton.querySelector('.button-icon').textContent = '⏳';
-
-		const formData = new FormData(form);
-		formData.append('action', 'event_rsvp_register_user');
-		formData.append('nonce', '<?php echo wp_create_nonce('event_rsvp_register'); ?>');
-
-		fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
-			method: 'POST',
-			body: formData
-		})
-		.then(response => response.json())
-		.then(data => {
-			if (data.success) {
-				showMessage(data.data.message, 'success');
-				
-				if (isPaidPlan && data.data.checkout_url) {
-					buttonText.textContent = 'Redirecting to checkout...';
-					setTimeout(() => {
-						window.location.href = data.data.checkout_url;
-					}, 1000);
-				} else {
-					setTimeout(() => {
-						window.location.href = data.data.redirect;
-					}, 1500);
-				}
-			} else {
-				showMessage(data.data || 'Registration failed. Please try again.', 'error');
-				submitButton.disabled = false;
-				buttonText.textContent = originalText;
-				submitButton.querySelector('.button-icon').textContent = '🚀';
-			}
-		})
-		.catch(error => {
-			console.error('Error:', error);
-			showMessage('An error occurred. Please try again.', 'error');
-			submitButton.disabled = false;
-			buttonText.textContent = originalText;
-			submitButton.querySelector('.button-icon').textContent = '🚀';
-		});
-	});
-
-	function showMessage(message, type) {
-		messageEl.textContent = message;
-		messageEl.className = 'form-message ' + type + '-message';
-		messageEl.style.display = 'block';
-		messageEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-	}
-});
-</script>
 
 <?php get_footer(); ?>

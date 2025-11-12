@@ -45,18 +45,18 @@ function event_rsvp_register_post_types() {
 		'map_meta_cap' => true,
 	));
 
-	register_post_type('product', array(
+	register_post_type('event_product', array(
 		'labels' => array(
-			'name' => 'Products',
-			'singular_name' => 'Product',
-			'add_new' => 'Add New Product',
-			'edit_item' => 'Edit Product',
+			'name' => 'Event Products',
+			'singular_name' => 'Event Product',
+			'add_new' => 'Add New Event Product',
+			'edit_item' => 'Edit Event Product',
 		),
 		'public' => true,
 		'show_in_rest' => true,
 		'supports' => array('title', 'editor', 'thumbnail', 'excerpt'),
 		'has_archive' => true,
-		'rewrite' => array('slug' => 'products'),
+		'rewrite' => array('slug' => 'event-products'),
 		'menu_icon' => 'dashicons-cart',
 		'capability_type' => 'post',
 		'map_meta_cap' => true,

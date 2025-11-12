@@ -6,6 +6,10 @@
  */
 
 get_header();
+
+$is_logged_in = is_user_logged_in();
+$current_user = wp_get_current_user();
+$user_plan = $is_logged_in ? Event_RSVP_Stripe_Integration::get_user_plan() : '';
 ?>
 
 <main id="primary" class="site-main pricing-page">
@@ -13,6 +17,12 @@ get_header();
 		<div class="container">
 			<h1 class="pricing-title">Simple, Transparent Pricing</h1>
 			<p class="pricing-subtitle">Choose the plan that's right for you. No hidden fees, cancel anytime.</p>
+			<?php if ($is_logged_in && $user_plan) : ?>
+				<div class="current-plan-notice">
+					<p>Your current plan: <strong><?php echo esc_html(ucwords(str_replace('_', ' ', $user_plan))); ?></strong></p>
+					<p class="plan-info">Manage your subscription through your <a href="https://billing.stripe.com/p/login" target="_blank" class="manage-subscription-link">Stripe Customer Portal</a></p>
+				</div>
+			<?php endif; ?>
 		</div>
 	</div>
 
@@ -43,9 +53,15 @@ get_header();
 						</ul>
 						
 						<div class="pricing-cta">
-							<a href="<?php echo esc_url(home_url('/signup/?plan=attendee')); ?>" class="pricing-button pricing-button-outline">
-								Sign Up Free
-							</a>
+							<?php if (!$is_logged_in) : ?>
+								<a href="<?php echo esc_url(home_url('/signup/?plan=attendee')); ?>" class="pricing-button pricing-button-outline">
+									Sign Up Free
+								</a>
+							<?php elseif ($user_plan === '' || $user_plan === 'attendee') : ?>
+								<button class="pricing-button pricing-button-outline" disabled>Current Plan</button>
+							<?php else : ?>
+								<span class="plan-note">Downgrade available in account settings</span>
+							<?php endif; ?>
 						</div>
 					</div>
 				</div>
@@ -75,9 +91,13 @@ get_header();
 						</ul>
 						
 						<div class="pricing-cta">
-							<a href="<?php echo esc_url(home_url('/signup/?plan=event_host')); ?>" class="pricing-button pricing-button-primary">
-								Start Hosting
-							</a>
+							<?php if ($user_plan === 'event_host') : ?>
+								<button class="pricing-button pricing-button-primary" disabled>Current Plan</button>
+							<?php else : ?>
+								<a href="<?php echo esc_url(event_rsvp_get_plan_url('event_host', $is_logged_in)); ?>" class="pricing-button pricing-button-primary">
+									<?php echo $is_logged_in ? 'Upgrade Now' : 'Start Hosting'; ?>
+								</a>
+							<?php endif; ?>
 						</div>
 					</div>
 				</div>
@@ -107,9 +127,13 @@ get_header();
 						</ul>
 						
 						<div class="pricing-cta">
-							<a href="<?php echo esc_url(home_url('/signup/?plan=vendor')); ?>" class="pricing-button pricing-button-outline">
-								Start Advertising
-							</a>
+							<?php if ($user_plan === 'vendor') : ?>
+								<button class="pricing-button pricing-button-outline" disabled>Current Plan</button>
+							<?php else : ?>
+								<a href="<?php echo esc_url(event_rsvp_get_plan_url('vendor', $is_logged_in)); ?>" class="pricing-button pricing-button-outline">
+									<?php echo $is_logged_in ? 'Upgrade Now' : 'Start Advertising'; ?>
+								</a>
+							<?php endif; ?>
 						</div>
 					</div>
 				</div>
@@ -140,9 +164,13 @@ get_header();
 						</ul>
 						
 						<div class="pricing-cta">
-							<a href="<?php echo esc_url(home_url('/signup/?plan=pro')); ?>" class="pricing-button pricing-button-primary">
-								Get Pro Access
-							</a>
+							<?php if ($user_plan === 'pro') : ?>
+								<button class="pricing-button pricing-button-primary" disabled>Current Plan</button>
+							<?php else : ?>
+								<a href="<?php echo esc_url(event_rsvp_get_plan_url('pro', $is_logged_in)); ?>" class="pricing-button pricing-button-primary">
+									<?php echo $is_logged_in ? 'Upgrade to Pro' : 'Get Pro Access'; ?>
+								</a>
+							<?php endif; ?>
 						</div>
 					</div>
 				</div>
@@ -176,7 +204,7 @@ get_header();
 							<td class="feature-name">Create Events</td>
 							<td class="feature-value">—</td>
 							<td class="feature-value">✓</td>
-							<td class="feature-value">—</td>
+							<td class="feature-value">��</td>
 							<td class="feature-value">✓</td>
 						</tr>
 						<tr>
@@ -246,7 +274,7 @@ get_header();
 			<div class="faq-grid">
 				<div class="faq-item">
 					<h3 class="faq-question">Can I change plans later?</h3>
-					<p class="faq-answer">Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately and we'll prorate the difference.</p>
+					<p class="faq-answer">Yes! You can upgrade or downgrade your plan at any time from your account settings. Changes take effect immediately and we'll prorate the difference.</p>
 				</div>
 				
 				<div class="faq-item">
@@ -261,12 +289,12 @@ get_header();
 				
 				<div class="faq-item">
 					<h3 class="faq-question">What payment methods do you accept?</h3>
-					<p class="faq-answer">We accept all major credit cards, PayPal, and can set up invoicing for Enterprise customers.</p>
+					<p class="faq-answer">We accept all major credit cards through Stripe. Payments are secure and encrypted. We also support various payment methods available through Stripe.</p>
 				</div>
 				
 				<div class="faq-item">
 					<h3 class="faq-question">Can I cancel anytime?</h3>
-					<p class="faq-answer">Yes, you can cancel your subscription at any time. You'll retain access until the end of your billing period.</p>
+					<p class="faq-answer">Yes, you can cancel your subscription at any time from your account settings. You'll retain access until the end of your billing period.</p>
 				</div>
 				
 				<div class="faq-item">
@@ -293,4 +321,72 @@ get_header();
 	</div>
 </main>
 
-<?php get_footer(); ?>
+<style>
+.current-plan-notice {
+	background-color: #f0f7ff;
+	border: 2px solid #3b82f6;
+	border-radius: 8px;
+	padding: 15px 20px;
+	margin-top: 20px;
+	text-align: center;
+}
+
+.current-plan-notice p {
+	margin: 0 0 10px 0;
+	font-size: 1.1rem;
+	color: #1e40af;
+}
+
+.manage-subscription-link {
+	color: #3b82f6;
+	text-decoration: none;
+	font-weight: 600;
+	border: 2px solid #3b82f6;
+	padding: 8px 16px;
+	border-radius: 4px;
+	display: inline-block;
+	transition: all 0.3s ease;
+}
+
+.manage-subscription-link:hover {
+	background-color: #3b82f6;
+	color: white;
+}
+
+.plan-note {
+	font-size: 0.9rem;
+	color: #6b7280;
+	font-style: italic;
+}
+
+.pricing-button:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+</style>
+
+<?php
+function event_rsvp_get_plan_url($plan_slug, $is_logged_in) {
+	if (!$is_logged_in) {
+		return home_url('/signup/?plan=' . $plan_slug);
+	}
+	
+	if (!class_exists('WooCommerce')) {
+		return home_url('/signup/?plan=' . $plan_slug);
+	}
+	
+	$wc_integration = Event_RSVP_WooCommerce_Integration::get_instance();
+	$product_id = $wc_integration->get_product_id($plan_slug);
+	
+	if (!$product_id) {
+		return home_url('/signup/?plan=' . $plan_slug);
+	}
+	
+	WC()->cart->empty_cart();
+	WC()->cart->add_to_cart($product_id);
+	
+	return wc_get_checkout_url();
+}
+
+get_footer();
+?>

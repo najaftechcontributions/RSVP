@@ -1,0 +1,24 @@
+# Stripe PHP Library (installed via Composer)
+/vendor/
+/stripe-php/
+
+# Composer files
+composer.lock
+
+# Environment files (if you add them)
+.env
+.env.local
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+debug.log

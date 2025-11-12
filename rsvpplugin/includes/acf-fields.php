@@ -186,7 +186,7 @@ function event_rsvp_register_acf_fields() {
 
 	acf_add_local_field_group(array(
 		'key' => 'group_product_fields',
-		'title' => 'Product Fields',
+		'title' => 'Event Product Fields',
 		'fields' => array(
 			array(
 				'key' => 'field_price',
@@ -229,7 +229,7 @@ function event_rsvp_register_acf_fields() {
 				array(
 					'param' => 'post_type',
 					'operator' => '==',
-					'value' => 'product',
+					'value' => 'event_product',
 				),
 			),
 		),

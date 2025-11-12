@@ -262,6 +262,8 @@ function event_rsvp_register_user() {
 	$first_name = sanitize_text_field($_POST['first_name'] ?? '');
 	$last_name = sanitize_text_field($_POST['last_name'] ?? '');
 	$user_role = sanitize_text_field($_POST['user_role'] ?? 'subscriber');
+	$is_paid_plan = isset($_POST['is_paid_plan']) && $_POST['is_paid_plan'] === '1';
+	$pricing_plan = sanitize_text_field($_POST['pricing_plan'] ?? '');
 
 	if (empty($username) || empty($email) || empty($password)) {
 		wp_send_json_error('Please fill in all required fields.');
@@ -305,7 +307,7 @@ function event_rsvp_register_user() {
 		'first_name' => $first_name,
 		'last_name' => $last_name,
 		'display_name' => $first_name . ' ' . $last_name,
-		'role' => $user_role
+		'role' => 'subscriber'
 	));
 
 	$user = get_user_by('id', $user_id);
@@ -313,11 +315,19 @@ function event_rsvp_register_user() {
 	wp_set_auth_cookie($user_id, true);
 	do_action('wp_login', $user->user_login, $user);
 
-	$redirect_url = ($user_role === 'event_host' || $user_role === 'pro') ? home_url('/host-dashboard/') : home_url('/events/');
+	// This handler is now only used for free plans
+	// Paid plans use event_rsvp_create_payment_link in stripe-ajax-handlers.php
+	wp_update_user(array(
+		'ID' => $user_id,
+		'role' => $user_role
+	));
+
+	$redirect_url = home_url('/browse-events/');
 
 	wp_send_json_success(array(
 		'message' => 'Account created successfully!',
-		'redirect' => $redirect_url
+		'redirect' => $redirect_url,
+		'requires_payment' => false
 	));
 }
 add_action('wp_ajax_nopriv_event_rsvp_register_user', 'event_rsvp_register_user');
