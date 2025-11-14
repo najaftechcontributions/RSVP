@@ -115,35 +115,71 @@ get_header();
 				<div class="scanner-card">
 					<h2 class="scanner-title">QR Code Scanner</h2>
 					
-					<div class="scanner-wrapper">
-						<div id="qr-reader" class="qr-reader">
-							<div class="scanner-placeholder">
-								<div class="scanner-icon">📷</div>
-								<p>Position QR code within the frame</p>
-								<small>Camera will activate automatically</small>
-							</div>
-						</div>
-						<div id="qr-reader-results" class="qr-results"></div>
+					<div class="scanner-mode-tabs">
+						<button type="button" class="scanner-mode-btn active" data-mode="camera" id="mode-camera">
+							<span class="mode-icon">📷</span>
+							<span class="mode-text">Camera Scan</span>
+						</button>
+						<button type="button" class="scanner-mode-btn" data-mode="upload" id="mode-upload">
+							<span class="mode-icon">📤</span>
+							<span class="mode-text">Upload QR Image</span>
+						</button>
+						<button type="button" class="scanner-mode-btn" data-mode="manual" id="mode-manual">
+							<span class="mode-icon">⌨️</span>
+							<span class="mode-text">Manual Entry</span>
+						</button>
 					</div>
 					
-					<div class="manual-entry-section">
-						<button type="button" class="toggle-manual-entry" id="toggle-manual">
-							<span class="toggle-icon">⌨️</span>
-							<span class="toggle-text">Switch to Manual Entry</span>
-						</button>
-						
-						<div class="manual-entry-form" id="manual-entry-form" style="display: none;">
-							<h3>Manual Entry</h3>
-							<form id="manual-checkin-form">
-								<div class="form-field">
-									<label for="qr-data-input">Enter QR Code Data or Attendee Email:</label>
-									<input type="text" id="qr-data-input" name="qr-data" placeholder="Paste QR code data or email address">
+					<div class="scanner-wrapper">
+						<div id="scanner-camera-mode" class="scanner-mode-content active">
+							<div id="qr-reader" class="qr-reader">
+								<div class="scanner-placeholder">
+									<div class="scanner-icon">📷</div>
+									<p>Position QR code within the frame</p>
+									<small>Camera will activate automatically</small>
 								</div>
-								<button type="submit" class="checkin-submit-button mt-2">
-									<span class="button-icon">✓</span>
-									<span class="button-text">Check In</span>
-								</button>
-							</form>
+							</div>
+						</div>
+						
+						<div id="scanner-upload-mode" class="scanner-mode-content">
+							<div class="qr-upload-area">
+								<div class="upload-dropzone" id="qr-dropzone">
+									<div class="upload-icon">📤</div>
+									<p class="upload-title">Upload QR Code Image</p>
+									<p class="upload-subtitle">Drag & drop or click to browse</p>
+									<input type="file" id="qr-file-input" accept="image/*" style="display: none;">
+									<button type="button" class="upload-browse-btn" id="browse-qr-file">
+										<span class="button-icon">📁</span>
+										<span class="button-text">Browse Files</span>
+									</button>
+								</div>
+								<div id="qr-upload-preview" class="upload-preview" style="display: none;">
+									<div class="preview-image-container">
+										<img id="qr-preview-image" src="" alt="QR Code Preview">
+									</div>
+									<p class="preview-status" id="upload-status">Processing...</p>
+									<button type="button" class="upload-another-btn" id="upload-another">
+										<span class="button-icon">🔄</span>
+										<span class="button-text">Upload Another</span>
+									</button>
+								</div>
+							</div>
+						</div>
+						
+						<div id="scanner-manual-mode" class="scanner-mode-content">
+							<div class="manual-entry-form">
+								<h3>Manual Entry</h3>
+								<form id="manual-checkin-form">
+									<div class="form-field">
+										<label for="qr-data-input">Enter QR Code Data or Attendee Email:</label>
+										<input type="text" id="qr-data-input" name="qr-data" placeholder="Paste QR code data or email address">
+									</div>
+									<button type="submit" class="checkin-submit-button mt-2">
+										<span class="button-icon">✓</span>
+										<span class="button-text">Check In</span>
+									</button>
+								</form>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -159,18 +195,50 @@ get_header();
 				</div>
 			</div>
 
-			<div class="checked-in-attendees-section">
-				<div class="section-header-with-refresh">
-					<h2 class="attendees-list-title">All Checked-In Attendees</h2>
+			<div class="all-attendees-section">
+				<div class="attendees-tabs">
+					<button type="button" class="attendee-tab-btn active" data-tab="all">
+						<span class="tab-icon">👥</span>
+						<span class="tab-text">All Attendees</span>
+					</button>
+					<button type="button" class="attendee-tab-btn" data-tab="checked-in">
+						<span class="tab-icon">✓</span>
+						<span class="tab-text">Checked In</span>
+					</button>
+					<button type="button" class="attendee-tab-btn" data-tab="pending">
+						<span class="tab-icon">⏳</span>
+						<span class="tab-text">Pending</span>
+					</button>
 					<button type="button" id="refresh-attendees" class="refresh-button">
 						<span class="refresh-icon">🔄</span>
 						<span class="refresh-text">Refresh</span>
 					</button>
 				</div>
-				<div id="checked-in-attendees-list" class="attendees-table-wrapper">
-					<div class="loading-state">
-						<div class="loading-icon">⏳</div>
-						<p>Loading checked-in attendees...</p>
+				
+				<div class="attendees-tab-content active" id="tab-all">
+					<div id="all-attendees-list" class="attendees-table-wrapper">
+						<div class="loading-state">
+							<div class="loading-icon">⏳</div>
+							<p>Loading all attendees...</p>
+						</div>
+					</div>
+				</div>
+				
+				<div class="attendees-tab-content" id="tab-checked-in">
+					<div id="checked-in-attendees-list" class="attendees-table-wrapper">
+						<div class="loading-state">
+							<div class="loading-icon">⏳</div>
+							<p>Loading checked-in attendees...</p>
+						</div>
+					</div>
+				</div>
+				
+				<div class="attendees-tab-content" id="tab-pending">
+					<div id="pending-attendees-list" class="attendees-table-wrapper">
+						<div class="loading-state">
+							<div class="loading-icon">⏳</div>
+							<p>Loading pending attendees...</p>
+						</div>
 					</div>
 				</div>
 			</div>

@@ -69,6 +69,10 @@ class EventRSVPPlugin {
 			wp_enqueue_style('ads-management-styles', EVENT_RSVP_PLUGIN_URL . '/assets/css/ads-management.css', array('event-rsvp-styles'), EVENT_RSVP_VERSION);
 		}
 		
+		if (is_page_template('page-check-in.php')) {
+			wp_enqueue_script('html5-qrcode', 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js', array(), '2.3.8', true);
+		}
+		
 		wp_enqueue_script('event-rsvp-scripts', EVENT_RSVP_PLUGIN_URL . '/assets/js/event-rsvp.js', array('jquery'), EVENT_RSVP_VERSION, true);
 		wp_enqueue_script('vendor-ads-scripts', EVENT_RSVP_PLUGIN_URL . '/assets/js/vendor-ads.js', array('jquery'), EVENT_RSVP_VERSION, true);
 		

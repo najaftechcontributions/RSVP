@@ -235,6 +235,155 @@ function event_rsvp_get_checked_in_attendees() {
 add_action('wp_ajax_event_rsvp_get_checked_in_attendees', 'event_rsvp_get_checked_in_attendees');
 add_action('wp_ajax_nopriv_event_rsvp_get_checked_in_attendees', 'event_rsvp_get_checked_in_attendees');
 
+function event_rsvp_get_all_attendees() {
+	check_ajax_referer('event_rsvp_checkin', 'nonce');
+
+	$event_id = intval($_POST['event_id'] ?? 0);
+	$current_user = wp_get_current_user();
+
+	$args = array(
+		'post_type' => 'attendee',
+		'posts_per_page' => -1,
+		'orderby' => 'date',
+		'order' => 'DESC'
+	);
+
+	if ($event_id > 0) {
+		$args['meta_query'] = array(
+			array(
+				'key' => 'linked_event',
+				'value' => $event_id,
+				'compare' => '='
+			)
+		);
+	} elseif (!current_user_can('administrator')) {
+		$host_events = event_rsvp_get_user_events($current_user->ID);
+		$host_event_ids = wp_list_pluck($host_events, 'ID');
+
+		if (empty($host_event_ids)) {
+			wp_send_json_success(array('attendees' => array()));
+			return;
+		}
+
+		$args['meta_query'] = array(
+			array(
+				'key' => 'linked_event',
+				'value' => $host_event_ids,
+				'compare' => 'IN'
+			)
+		);
+	}
+
+	$attendees = get_posts($args);
+
+	$results = array();
+	foreach ($attendees as $attendee) {
+		$email = get_post_meta($attendee->ID, 'attendee_email', true);
+		$phone = get_post_meta($attendee->ID, 'attendee_phone', true);
+		$checkin_status = get_post_meta($attendee->ID, 'checkin_status', true);
+		$checkin_time = get_post_meta($attendee->ID, 'checkin_time', true);
+		$qr_data = get_post_meta($attendee->ID, 'qr_data', true);
+		$event_linked = get_post_meta($attendee->ID, 'linked_event', true);
+
+		$results[] = array(
+			'id' => $attendee->ID,
+			'name' => get_the_title($attendee->ID),
+			'email' => $email,
+			'phone' => $phone,
+			'qr_data' => $qr_data,
+			'checked_in' => (bool) $checkin_status,
+			'checkin_time' => $checkin_time ? date('M j, Y g:i A', strtotime($checkin_time)) : '',
+			'event_id' => $event_linked,
+			'event_title' => $event_linked ? get_the_title($event_linked) : ''
+		);
+	}
+
+	wp_send_json_success(array('attendees' => $results));
+}
+add_action('wp_ajax_event_rsvp_get_all_attendees', 'event_rsvp_get_all_attendees');
+add_action('wp_ajax_nopriv_event_rsvp_get_all_attendees', 'event_rsvp_get_all_attendees');
+
+function event_rsvp_get_pending_attendees() {
+	check_ajax_referer('event_rsvp_checkin', 'nonce');
+
+	$event_id = intval($_POST['event_id'] ?? 0);
+	$current_user = wp_get_current_user();
+
+	$args = array(
+		'post_type' => 'attendee',
+		'posts_per_page' => -1,
+		'orderby' => 'date',
+		'order' => 'DESC',
+		'meta_query' => array(
+			array(
+				'relation' => 'OR',
+				array(
+					'key' => 'checkin_status',
+					'compare' => 'NOT EXISTS'
+				),
+				array(
+					'key' => 'checkin_status',
+					'value' => '0',
+					'compare' => '='
+				),
+				array(
+					'key' => 'checkin_status',
+					'value' => '',
+					'compare' => '='
+				)
+			)
+		)
+	);
+
+	if ($event_id > 0) {
+		$args['meta_query'][] = array(
+			'key' => 'linked_event',
+			'value' => $event_id,
+			'compare' => '='
+		);
+	} elseif (!current_user_can('administrator')) {
+		$host_events = event_rsvp_get_user_events($current_user->ID);
+		$host_event_ids = wp_list_pluck($host_events, 'ID');
+
+		if (empty($host_event_ids)) {
+			wp_send_json_success(array('attendees' => array()));
+			return;
+		}
+
+		$args['meta_query'][] = array(
+			'key' => 'linked_event',
+			'value' => $host_event_ids,
+			'compare' => 'IN'
+		);
+	}
+
+	$attendees = get_posts($args);
+
+	$results = array();
+	foreach ($attendees as $attendee) {
+		$email = get_post_meta($attendee->ID, 'attendee_email', true);
+		$phone = get_post_meta($attendee->ID, 'attendee_phone', true);
+		$qr_data = get_post_meta($attendee->ID, 'qr_data', true);
+		$event_linked = get_post_meta($attendee->ID, 'linked_event', true);
+
+		$results[] = array(
+			'id' => $attendee->ID,
+			'name' => get_the_title($attendee->ID),
+			'email' => $email,
+			'phone' => $phone,
+			'qr_data' => $qr_data,
+			'checked_in' => false,
+			'checkin_time' => '',
+			'event_id' => $event_linked,
+			'event_title' => $event_linked ? get_the_title($event_linked) : ''
+		);
+	}
+
+	wp_send_json_success(array('attendees' => $results));
+}
+add_action('wp_ajax_event_rsvp_get_pending_attendees', 'event_rsvp_get_pending_attendees');
+add_action('wp_ajax_nopriv_event_rsvp_get_pending_attendees', 'event_rsvp_get_pending_attendees');
+
 function event_rsvp_track_ad_click() {
 	check_ajax_referer('event_rsvp_checkin', 'nonce');
 	

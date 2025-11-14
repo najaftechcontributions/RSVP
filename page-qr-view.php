@@ -111,6 +111,19 @@ $event_end_date = get_post_meta($event_id, 'event_end_date', true);
 $venue_address = get_post_meta($event_id, 'venue_address', true);
 $event_category = get_post_meta($event_id, 'event_category', true);
 
+$event_author_id = get_post_field('post_author', $event_id);
+$current_user_id = get_current_user_id();
+$is_event_host = ($current_user_id && ($current_user_id == $event_author_id || current_user_can('administrator')));
+
+$auto_checkin_performed = false;
+if ($is_event_host && !$checkin_status) {
+	update_post_meta($attendee_id, 'checkin_status', true);
+	update_post_meta($attendee_id, 'checkin_time', current_time('mysql'));
+	$checkin_status = true;
+	$checkin_time = current_time('mysql');
+	$auto_checkin_performed = true;
+}
+
 $status_badge_class = 'status-confirmed';
 $status_text = '✓ Confirmed';
 $status_icon = '✓';
@@ -132,6 +145,17 @@ get_header();
 	<div class="container">
 		
 		<div style="height:40px" aria-hidden="true"></div>
+
+		<?php if ($auto_checkin_performed) : ?>
+			<div class="auto-checkin-notice">
+				<div class="notice-icon">✅</div>
+				<div class="notice-content">
+					<h3>Attendee Automatically Checked In!</h3>
+					<p>As the event host, <strong><?php echo esc_html($attendee_name); ?></strong> has been automatically checked in at <?php echo esc_html(date('g:i A', strtotime($checkin_time))); ?>.</p>
+				</div>
+			</div>
+			<div style="height:20px" aria-hidden="true"></div>
+		<?php endif; ?>
 
 		<div class="qr-viewer-header">
 			<div class="qr-header-icon">🎟️</div>
@@ -192,6 +216,9 @@ get_header();
 								<span class="info-value">
 									<?php if ($checkin_status) : ?>
 										<span class="status-badge status-checked-in">✓ Checked In</span>
+										<?php if ($auto_checkin_performed) : ?>
+											<span class="auto-checkin-badge">🔄 Just Now</span>
+										<?php endif; ?>
 									<?php else : ?>
 										<span class="status-badge status-not-checked-in">⏳ Not Checked In</span>
 									<?php endif; ?>
@@ -293,7 +320,7 @@ get_header();
 							<span class="action-text">View Event</span>
 						</a>
 						
-						<?php if (!$checkin_status && current_user_can('edit_posts')) : ?>
+						<?php if (current_user_can('edit_posts')) : ?>
 							<a href="<?php echo esc_url(home_url('/check-in/?event_id=' . $event_id)); ?>" class="quick-action-item">
 								<span class="action-icon">✓</span>
 								<span class="action-text">Go to Check-In</span>
