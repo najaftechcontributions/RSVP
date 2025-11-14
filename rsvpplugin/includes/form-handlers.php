@@ -96,7 +96,7 @@ function event_rsvp_handle_login() {
 	$username = sanitize_user($_POST['log'] ?? '');
 	$password = $_POST['pwd'] ?? '';
 	$remember = isset($_POST['rememberme']);
-	$redirect_to = $_POST['redirect_to'] ?? home_url('/host-dashboard/');
+	$redirect_to = $_POST['redirect_to'] ?? home_url('/my-account/');
 
 	if (empty($username) || empty($password)) {
 		wp_redirect(add_query_arg('login', 'empty', home_url('/login/')));

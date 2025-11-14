@@ -385,7 +385,7 @@ get_header();
 				?>
 				<div class="rsvps-list">
 					<?php foreach ($my_rsvps as $rsvp) : 
-						$event_id = get_post_meta($rsvp->ID, 'event_id', true);
+						$event_id = get_post_meta($rsvp->ID, 'linked_event', true);
 						$qr_data = get_post_meta($rsvp->ID, 'qr_data', true);
 						$checkin_status = get_post_meta($rsvp->ID, 'checkin_status', true);
 						$event_date = get_field('event_date', $event_id);

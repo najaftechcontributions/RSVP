@@ -6,7 +6,7 @@
  */
 
 if (is_user_logged_in()) {
-	wp_redirect(home_url('/host-dashboard/'));
+	wp_redirect(home_url('/my-account/'));
 	exit;
 }
 
@@ -25,7 +25,7 @@ get_header();
 
 					<?php
 					$login_error = '';
-					$redirect_to = isset($_GET['redirect_to']) ? $_GET['redirect_to'] : home_url('/host-dashboard/');
+					$redirect_to = isset($_GET['redirect_to']) ? $_GET['redirect_to'] : home_url('/my-account/');
 					
 					if (isset($_GET['login']) && $_GET['login'] === 'failed') {
 						$login_error = 'Invalid username or password. Please try again.';
