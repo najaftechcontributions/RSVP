@@ -130,22 +130,32 @@ function event_rsvp_verify_payment_token() {
 	$token = isset($_POST['token']) ? sanitize_text_field($_POST['token']) : '';
 	$plan = isset($_POST['plan']) ? sanitize_text_field($_POST['plan']) : '';
 	
-	if (empty($token) || empty($plan)) {
+	$stripe = Event_RSVP_Simple_Stripe::get_instance();
+	
+	// If token is provided, try token verification
+	if (!empty($token) && !empty($plan)) {
+		$result = $stripe->verify_payment_and_upgrade($token, $plan);
+	} 
+	// Otherwise, if user is logged in, try user-based verification
+	elseif (is_user_logged_in()) {
+		$user_id = get_current_user_id();
+		$result = $stripe->verify_payment_for_user($user_id);
+		$plan = isset($result['plan']) ? $result['plan'] : '';
+	} 
+	// No valid verification method
+	else {
 		wp_send_json_error('Invalid verification data.');
 		return;
 	}
 	
-	$stripe = Event_RSVP_Simple_Stripe::get_instance();
-	$result = $stripe->verify_payment_and_upgrade($token, $plan);
-	
 	if ($result['success']) {
 		$redirect_map = array(
-			'event_host' => home_url('/host-dashboard/?welcome=1'),
-			'vendor' => home_url('/vendor-dashboard/?welcome=1'),
-			'pro' => home_url('/host-dashboard/?welcome=1&pro=1')
+			'event_host' => home_url('/my-account/?welcome=1'),
+			'vendor' => home_url('/my-account/?welcome=1'),
+			'pro' => home_url('/my-account/?welcome=1&pro=1')
 		);
 		
-		$redirect = isset($redirect_map[$plan]) ? $redirect_map[$plan] : home_url('/');
+		$redirect = isset($redirect_map[$plan]) ? $redirect_map[$plan] : home_url('/my-account/');
 		
 		wp_send_json_success(array(
 			'message' => 'Payment verified! Your account has been upgraded.',

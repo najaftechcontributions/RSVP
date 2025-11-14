@@ -58,27 +58,21 @@ class Event_RSVP_Simple_Stripe {
 			return $user_id;
 		}
 		
-		// Generate secure token
+		// Generate secure token and save it
 		$token = wp_generate_password(32, false);
 		$this->save_payment_token($user_id, $token, $plan_slug);
 		
-		// Build payment link with success and cancel URLs
-		$payment_link = $links[$plan_slug];
-		$success_url = add_query_arg(array(
-			'payment_success' => '1',
-			'token' => $token,
-			'plan' => $plan_slug
-		), home_url('/signup-success/'));
+		// Store token in user meta for easy lookup when user returns from Stripe
+		update_user_meta($user_id, 'event_rsvp_pending_token', $token);
+		update_user_meta($user_id, 'event_rsvp_pending_plan', $plan_slug);
 		
-		// Cancel URL for failed/cancelled payments
-		$cancel_url = add_query_arg(array(
-			'plan' => $plan_slug
-		), home_url('/payment-cancelled/'));
-
-		// Add both URLs to Stripe payment link
+		// Return the Stripe payment link
+		// Success and Cancel URLs must be configured in Stripe Dashboard
+		$payment_link = $links[$plan_slug];
+		
+		// Add customer email prefill if supported
 		$payment_url = add_query_arg(array(
-			'success_url' => urlencode($success_url),
-			'cancel_url' => urlencode($cancel_url)
+			'prefilled_email' => urlencode($user_data['email'])
 		), $payment_link);
 		
 		return $payment_url;
@@ -157,11 +151,15 @@ class Event_RSVP_Simple_Stripe {
 	}
 	
 	/**
-	 * Verify payment and upgrade account
+	 * Verify payment and upgrade account (with token)
 	 */
 	public function verify_payment_and_upgrade($token, $plan_slug) {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'event_rsvp_payment_tokens';
+		
+		error_log('=== TOKEN VERIFICATION START ===');
+		error_log('Token: ' . substr($token, 0, 10) . '...');
+		error_log('Plan: ' . $plan_slug);
 		
 		// Get all pending tokens for this plan
 		$tokens = $wpdb->get_results($wpdb->prepare(
@@ -169,9 +167,14 @@ class Event_RSVP_Simple_Stripe {
 			$plan_slug
 		));
 		
+		error_log('Found ' . count($tokens) . ' pending tokens for plan ' . $plan_slug);
+		
 		foreach ($tokens as $token_row) {
+			error_log('Checking token ID: ' . $token_row->id . ' for user: ' . $token_row->user_id);
+			
 			if (wp_check_password($token, $token_row->token)) {
 				$user_id = $token_row->user_id;
+				error_log('TOKEN MATCH! Upgrading user ' . $user_id . ' to ' . $plan_slug);
 				
 				// Upgrade user role
 				$role_map = array(
@@ -187,11 +190,17 @@ class Event_RSVP_Simple_Stripe {
 					'role' => $new_role
 				));
 				
+				error_log('User role updated to: ' . $new_role);
+				
 				// Update user meta
 				update_user_meta($user_id, 'event_rsvp_plan', $plan_slug);
 				update_user_meta($user_id, 'event_rsvp_subscription_status', 'active');
 				delete_user_meta($user_id, 'event_rsvp_payment_pending');
+				delete_user_meta($user_id, 'event_rsvp_pending_token');
+				delete_user_meta($user_id, 'event_rsvp_pending_plan');
 				update_user_meta($user_id, 'event_rsvp_payment_date', current_time('mysql'));
+				
+				error_log('User meta updated');
 				
 				// Mark token as used
 				$wpdb->update(
@@ -202,18 +211,95 @@ class Event_RSVP_Simple_Stripe {
 					array('%d')
 				);
 				
+				error_log('Token marked as completed');
+				
 				// Send upgrade confirmation email
 				$this->send_upgrade_email($user_id, $plan_slug);
+				
+				error_log('=== TOKEN VERIFICATION SUCCESS ===');
 				
 				return array(
 					'success' => true,
 					'user_id' => $user_id,
 					'plan' => $plan_slug
 				);
+			} else {
+				error_log('Token does not match for token ID: ' . $token_row->id);
 			}
 		}
 		
+		error_log('=== TOKEN VERIFICATION FAILED - No matching token ===');
 		return array('success' => false, 'message' => 'Invalid or expired token');
+	}
+	
+	/**
+	 * Verify payment for logged-in user (alternative method when no token in URL)
+	 */
+	public function verify_payment_for_user($user_id) {
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'event_rsvp_payment_tokens';
+		
+		error_log('=== VERIFYING PAYMENT FOR USER ' . $user_id . ' ===');
+		
+		// Get pending token for this user
+		$token_row = $wpdb->get_row($wpdb->prepare(
+			"SELECT * FROM $table_name WHERE user_id = %d AND status = 'pending' ORDER BY created_at DESC LIMIT 1",
+			$user_id
+		));
+		
+		if (!$token_row) {
+			error_log('No pending token found for user ' . $user_id);
+			return array('success' => false, 'message' => 'No pending payment found');
+		}
+		
+		$plan_slug = $token_row->plan_slug;
+		error_log('Found pending token for plan: ' . $plan_slug);
+		
+		// Upgrade user role
+		$role_map = array(
+			'event_host' => 'event_host',
+			'vendor' => 'vendor',
+			'pro' => 'pro'
+		);
+		
+		$new_role = isset($role_map[$plan_slug]) ? $role_map[$plan_slug] : 'subscriber';
+		
+		wp_update_user(array(
+			'ID' => $user_id,
+			'role' => $new_role
+		));
+		
+		error_log('User role updated to: ' . $new_role);
+		
+		// Update user meta
+		update_user_meta($user_id, 'event_rsvp_plan', $plan_slug);
+		update_user_meta($user_id, 'event_rsvp_subscription_status', 'active');
+		delete_user_meta($user_id, 'event_rsvp_payment_pending');
+		delete_user_meta($user_id, 'event_rsvp_pending_token');
+		delete_user_meta($user_id, 'event_rsvp_pending_plan');
+		update_user_meta($user_id, 'event_rsvp_payment_date', current_time('mysql'));
+		
+		// Mark token as used
+		$wpdb->update(
+			$table_name,
+			array('status' => 'completed', 'completed_at' => current_time('mysql')),
+			array('id' => $token_row->id),
+			array('%s', '%s'),
+			array('%d')
+		);
+		
+		error_log('Token marked as completed');
+		
+		// Send upgrade confirmation email
+		$this->send_upgrade_email($user_id, $plan_slug);
+		
+		error_log('=== USER VERIFICATION SUCCESS ===');
+		
+		return array(
+			'success' => true,
+			'user_id' => $user_id,
+			'plan' => $plan_slug
+		);
 	}
 	
 	/**
@@ -293,7 +379,7 @@ class Event_RSVP_Simple_Stripe {
 			$message .= "- Track ad performance\n";
 		}
 		
-		$message .= "\nGet started: " . home_url('/host-dashboard/') . "\n\n";
+		$message .= "\nGet started: " . home_url('/my-account/') . "\n\n";
 		$message .= "Thank you for upgrading!\n\n";
 		$message .= "Best regards,\n";
 		$message .= get_bloginfo('name');
@@ -340,9 +426,11 @@ class Event_RSVP_Simple_Stripe {
 					<li>Go to <strong>Products</strong> → <strong>Payment Links</strong></li>
 					<li>Click <strong>New</strong> to create a payment link for each plan</li>
 					<li>Set up your product (name, price, recurring)</li>
+					<li>Configure success URL to: <code><?php echo esc_url(home_url('/signup-success/?payment_success=1')); ?></code></li>
+					<li>Configure cancel URL to: <code><?php echo esc_url(home_url('/payment-cancelled/')); ?></code></li>
 					<li>Copy the payment link URL and paste it below</li>
 				</ol>
-				<p><strong>Important:</strong> When creating the payment link, you can configure the success URL in Stripe, but this system will append its own success URL with token for verification.</p>
+				<p><strong>Important:</strong> The success and cancel URLs MUST be configured in your Stripe Payment Link settings.</p>
 			</div>
 			
 			<form method="post" action="options.php">
@@ -397,16 +485,14 @@ class Event_RSVP_Simple_Stripe {
 			<hr>
 			
 			<h2>Success URL for Stripe Dashboard</h2>
-			<p>Use this URL as the success redirect in your Stripe Payment Link settings:</p>
-			<code style="display: block; background: #f5f5f5; padding: 10px; margin: 10px 0;"><?php echo esc_url(home_url('/signup-success/')); ?></code>
-			<p><em>Note: The system will automatically append the token and plan parameters.</em></p>
+			<p>Use this EXACT URL as the success redirect in your Stripe Payment Link settings:</p>
+			<code style="display: block; background: #f5f5f5; padding: 10px; margin: 10px 0;"><?php echo esc_url(home_url('/signup-success/?payment_success=1')); ?></code>
 			
 			<hr>
 			
 			<h2>Cancel URL for Stripe Dashboard</h2>
-			<p>Use this URL as the cancel redirect in your Stripe Payment Link settings:</p>
+			<p>Use this EXACT URL as the cancel redirect in your Stripe Payment Link settings:</p>
 			<code style="display: block; background: #f5f5f5; padding: 10px; margin: 10px 0;"><?php echo esc_url(home_url('/payment-cancelled/')); ?></code>
-			<p><em>Note: The system will automatically append the plan parameter.</em></p>
 		</div>
 		<?php
 	}

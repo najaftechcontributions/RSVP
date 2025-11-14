@@ -15,7 +15,7 @@ get_header();
 <main id="primary" class="site-main signup-success-page">
 	<div class="container success-container">
 		<div class="success-content">
-			<?php if ($payment_success && $token && $plan) : ?>
+			<?php if ($payment_success && is_user_logged_in()) : ?>
 				<div id="verification-pending" class="verification-box">
 					<div class="spinner-wrapper">
 						<div class="spinner"></div>
@@ -205,7 +205,7 @@ get_header();
 }
 </style>
 
-<?php if ($payment_success && $token && $plan) : ?>
+<?php if ($payment_success && is_user_logged_in()) : ?>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 	const token = '<?php echo esc_js($token); ?>';
@@ -216,20 +216,30 @@ document.addEventListener('DOMContentLoaded', function() {
 	function verifyPayment() {
 		attemptCount++;
 		
+		console.log('Attempting payment verification, attempt:', attemptCount);
+		console.log('Token:', token ? 'present' : 'missing');
+		console.log('Plan:', plan ? plan : 'missing');
+		
+		const params = {
+			action: 'event_rsvp_verify_payment_token',
+			nonce: '<?php echo wp_create_nonce('event_rsvp_verify_token'); ?>'
+		};
+		
+		// Add token and plan if available
+		if (token) params.token = token;
+		if (plan) params.plan = plan;
+		
 		fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded',
 			},
-			body: new URLSearchParams({
-				action: 'event_rsvp_verify_payment_token',
-				nonce: '<?php echo wp_create_nonce('event_rsvp_verify_token'); ?>',
-				token: token,
-				plan: plan
-			})
+			body: new URLSearchParams(params)
 		})
 		.then(response => response.json())
 		.then(data => {
+			console.log('Verification response:', data);
+			
 			if (data.success) {
 				document.getElementById('verification-pending').style.display = 'none';
 				document.getElementById('verification-success').style.display = 'block';
@@ -239,6 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				}, 2000);
 			} else {
 				if (attemptCount < maxAttempts) {
+					console.log('Verification failed, retrying in 2 seconds...');
 					setTimeout(verifyPayment, 2000);
 				} else {
 					showError(data.data || 'Verification timeout. Your account was created as a free attendee. You can upgrade from your dashboard.');
