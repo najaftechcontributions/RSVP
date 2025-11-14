@@ -139,7 +139,7 @@ get_header();
 									<label for="qr-data-input">Enter QR Code Data or Attendee Email:</label>
 									<input type="text" id="qr-data-input" name="qr-data" placeholder="Paste QR code data or email address">
 								</div>
-								<button type="submit" class="checkin-submit-button">
+								<button type="submit" class="checkin-submit-button mt-2">
 									<span class="button-icon">✓</span>
 									<span class="button-text">Check In</span>
 								</button>
