@@ -5,8 +5,9 @@
  * @package RSVP
  */
 
-$session_id = isset($_GET['session_id']) ? sanitize_text_field($_GET['session_id']) : '';
 $token = isset($_GET['token']) ? sanitize_text_field($_GET['token']) : '';
+$plan = isset($_GET['plan']) ? sanitize_text_field($_GET['plan']) : '';
+$payment_success = isset($_GET['payment_success']) && $_GET['payment_success'] === '1';
 
 get_header();
 ?>
@@ -14,19 +15,19 @@ get_header();
 <main id="primary" class="site-main signup-success-page">
 	<div class="container success-container">
 		<div class="success-content">
-			<?php if ($session_id && $token) : ?>
+			<?php if ($payment_success && $token && $plan) : ?>
 				<div id="verification-pending" class="verification-box">
 					<div class="spinner-wrapper">
 						<div class="spinner"></div>
 					</div>
 					<h1 class="verification-title">Processing Your Payment...</h1>
-					<p class="verification-message">Please wait while we verify your payment and create your account. This should only take a moment.</p>
+					<p class="verification-message">Please wait while we verify your payment and upgrade your account. This should only take a moment.</p>
 				</div>
 
 				<div id="verification-success" class="verification-box success-box" style="display: none;">
 					<div class="success-icon">✓</div>
 					<h1 class="success-title">Payment Successful!</h1>
-					<p class="success-message">Your account has been created successfully. Redirecting you to your dashboard...</p>
+					<p class="success-message">Your account has been upgraded successfully. Redirecting you to your dashboard...</p>
 				</div>
 
 				<div id="verification-error" class="verification-box error-box" style="display: none;">
@@ -35,17 +36,17 @@ get_header();
 					<p class="error-message" id="error-message-text">We're still processing your payment. This can take a few moments.</p>
 					<div class="error-actions">
 						<button id="retry-verification" class="retry-button">Check Again</button>
-						<p class="help-text">If this issue persists, please check your email for your account details or <a href="<?php echo esc_url(home_url('/contact/')); ?>">contact support</a>.</p>
+						<p class="help-text">If this issue persists, your account has already been created with free access. You can upgrade later or <a href="<?php echo esc_url(home_url('/contact/')); ?>">contact support</a>.</p>
 					</div>
 				</div>
 			<?php else : ?>
-				<div class="verification-box error-box">
-					<div class="error-icon">⚠</div>
-					<h1 class="error-title">Invalid Access</h1>
-					<p class="error-message">This page requires valid payment verification data.</p>
+				<div class="verification-box success-box">
+					<div class="success-icon">✓</div>
+					<h1 class="success-title">Welcome!</h1>
+					<p class="success-message">Your account has been created successfully.</p>
 					<div class="error-actions">
-						<a href="<?php echo esc_url(home_url('/signup/')); ?>" class="button-primary">Back to Signup</a>
-						<a href="<?php echo esc_url(home_url('/login/')); ?>" class="button-secondary">Login</a>
+						<a href="<?php echo esc_url(home_url('/login/')); ?>" class="button-primary">Login to Your Account</a>
+						<a href="<?php echo esc_url(home_url('/browse-events/')); ?>" class="button-secondary">Browse Events</a>
 					</div>
 				</div>
 			<?php endif; ?>
@@ -204,13 +205,13 @@ get_header();
 }
 </style>
 
-<?php if ($session_id && $token) : ?>
+<?php if ($payment_success && $token && $plan) : ?>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-	const sessionId = '<?php echo esc_js($session_id); ?>';
 	const token = '<?php echo esc_js($token); ?>';
+	const plan = '<?php echo esc_js($plan); ?>';
 	let attemptCount = 0;
-	const maxAttempts = 20;
+	const maxAttempts = 10;
 	
 	function verifyPayment() {
 		attemptCount++;
@@ -223,8 +224,8 @@ document.addEventListener('DOMContentLoaded', function() {
 			body: new URLSearchParams({
 				action: 'event_rsvp_verify_payment_token',
 				nonce: '<?php echo wp_create_nonce('event_rsvp_verify_token'); ?>',
-				session_id: sessionId,
-				token: token
+				token: token,
+				plan: plan
 			})
 		})
 		.then(response => response.json())
@@ -240,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				if (attemptCount < maxAttempts) {
 					setTimeout(verifyPayment, 2000);
 				} else {
-					showError(data.data || 'Verification timeout. Please check your email.');
+					showError(data.data || 'Verification timeout. Your account was created as a free attendee. You can upgrade from your dashboard.');
 				}
 			}
 		})
@@ -249,7 +250,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			if (attemptCount < maxAttempts) {
 				setTimeout(verifyPayment, 2000);
 			} else {
-				showError('Unable to verify payment. Please check your email for account details.');
+				showError('Unable to verify payment at this time. Your account was created. Please log in to continue.');
 			}
 		});
 	}

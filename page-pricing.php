@@ -9,7 +9,7 @@ get_header();
 
 $is_logged_in = is_user_logged_in();
 $current_user = wp_get_current_user();
-$user_plan = $is_logged_in ? Event_RSVP_Stripe_Integration::get_user_plan() : '';
+$user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 ?>
 
 <main id="primary" class="site-main pricing-page">
@@ -17,10 +17,10 @@ $user_plan = $is_logged_in ? Event_RSVP_Stripe_Integration::get_user_plan() : ''
 		<div class="container">
 			<h1 class="pricing-title">Simple, Transparent Pricing</h1>
 			<p class="pricing-subtitle">Choose the plan that's right for you. No hidden fees, cancel anytime.</p>
-			<?php if ($is_logged_in && $user_plan) : ?>
+			<?php if ($is_logged_in && $user_plan && $user_plan !== 'attendee') : ?>
 				<div class="current-plan-notice">
 					<p>Your current plan: <strong><?php echo esc_html(ucwords(str_replace('_', ' ', $user_plan))); ?></strong></p>
-					<p class="plan-info">Manage your subscription through your <a href="https://billing.stripe.com/p/login" target="_blank" class="manage-subscription-link">Stripe Customer Portal</a></p>
+					<p class="plan-info">To manage your subscription, log in to your <a href="https://billing.stripe.com/p/login" target="_blank" class="manage-subscription-link">Stripe Customer Portal</a></p>
 				</div>
 			<?php endif; ?>
 		</div>
@@ -375,7 +375,9 @@ function event_rsvp_get_plan_url($plan_slug, $is_logged_in) {
 		return home_url('/signup/?plan=' . $plan_slug);
 	}
 	
-	$wc_integration = Event_RSVP_WooCommerce_Integration::get_instance();
+	// Simple redirect - no WooCommerce needed
+	return home_url('/signup/?plan=' . $plan_slug);
+	/*
 	$product_id = $wc_integration->get_product_id($plan_slug);
 	
 	if (!$product_id) {
@@ -386,6 +388,7 @@ function event_rsvp_get_plan_url($plan_slug, $is_logged_in) {
 	WC()->cart->add_to_cart($product_id);
 	
 	return wc_get_checkout_url();
+	*/
 }
 
 get_footer();

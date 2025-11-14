@@ -78,3 +78,27 @@ function event_rsvp_register_post_types() {
 	));
 }
 add_action('init', 'event_rsvp_register_post_types');
+
+/**
+ * Filter vendor_ad queries to show only author's ads for non-admins
+ */
+function event_rsvp_filter_vendor_ads_by_author($query) {
+	if (!is_admin() || !$query->is_main_query()) {
+		return;
+	}
+
+	global $pagenow, $typenow;
+
+	if ('edit.php' !== $pagenow || 'vendor_ad' !== $typenow) {
+		return;
+	}
+
+	// Admins see all ads
+	if (current_user_can('administrator')) {
+		return;
+	}
+
+	// Vendors only see their own ads
+	$query->set('author', get_current_user_id());
+}
+add_action('pre_get_posts', 'event_rsvp_filter_vendor_ads_by_author');

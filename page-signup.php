@@ -56,7 +56,7 @@ get_header();
 					
 					<div id="signup-message" class="form-message" style="display: none;"></div>
 
-					<?php if ($is_paid_plan && class_exists('WooCommerce')) : ?>
+					<?php if ($is_paid_plan) : ?>
 						
 						<div class="paid-plan-notice">
 							<h3>📋 Two-Step Registration Process</h3>

@@ -253,85 +253,10 @@ function event_rsvp_track_ad_click() {
 add_action('wp_ajax_event_rsvp_track_ad_click', 'event_rsvp_track_ad_click');
 add_action('wp_ajax_nopriv_event_rsvp_track_ad_click', 'event_rsvp_track_ad_click');
 
-function event_rsvp_register_user() {
-	check_ajax_referer('event_rsvp_register', 'nonce');
-
-	$username = sanitize_user($_POST['username'] ?? '');
-	$email = sanitize_email($_POST['email'] ?? '');
-	$password = $_POST['password'] ?? '';
-	$first_name = sanitize_text_field($_POST['first_name'] ?? '');
-	$last_name = sanitize_text_field($_POST['last_name'] ?? '');
-	$user_role = sanitize_text_field($_POST['user_role'] ?? 'subscriber');
-	$is_paid_plan = isset($_POST['is_paid_plan']) && $_POST['is_paid_plan'] === '1';
-	$pricing_plan = sanitize_text_field($_POST['pricing_plan'] ?? '');
-
-	if (empty($username) || empty($email) || empty($password)) {
-		wp_send_json_error('Please fill in all required fields.');
-		return;
-	}
-
-	if (!is_email($email)) {
-		wp_send_json_error('Please enter a valid email address.');
-		return;
-	}
-
-	if (strlen($password) < 8) {
-		wp_send_json_error('Password must be at least 8 characters long.');
-		return;
-	}
-
-	if (username_exists($username)) {
-		wp_send_json_error('Username already exists. Please choose another.');
-		return;
-	}
-
-	if (email_exists($email)) {
-		wp_send_json_error('Email address already registered. Please login instead.');
-		return;
-	}
-
-	$valid_roles = array('event_host', 'vendor', 'pro', 'subscriber');
-	if (!in_array($user_role, $valid_roles)) {
-		$user_role = 'subscriber';
-	}
-
-	$user_id = wp_create_user($username, $password, $email);
-
-	if (is_wp_error($user_id)) {
-		wp_send_json_error($user_id->get_error_message());
-		return;
-	}
-
-	wp_update_user(array(
-		'ID' => $user_id,
-		'first_name' => $first_name,
-		'last_name' => $last_name,
-		'display_name' => $first_name . ' ' . $last_name,
-		'role' => 'subscriber'
-	));
-
-	$user = get_user_by('id', $user_id);
-	wp_set_current_user($user_id, $user->user_login);
-	wp_set_auth_cookie($user_id, true);
-	do_action('wp_login', $user->user_login, $user);
-
-	// This handler is now only used for free plans
-	// Paid plans use event_rsvp_create_payment_link in stripe-ajax-handlers.php
-	wp_update_user(array(
-		'ID' => $user_id,
-		'role' => $user_role
-	));
-
-	$redirect_url = home_url('/browse-events/');
-
-	wp_send_json_success(array(
-		'message' => 'Account created successfully!',
-		'redirect' => $redirect_url,
-		'requires_payment' => false
-	));
-}
-add_action('wp_ajax_nopriv_event_rsvp_register_user', 'event_rsvp_register_user');
-add_action('wp_ajax_event_rsvp_register_user', 'event_rsvp_register_user');
+// Registration handler moved to simple-stripe-ajax.php
+// This old handler bypassed payment and directly assigned roles
+// The new handler properly creates subscriber account first, then redirects to Stripe payment
+// After successful payment, the account is upgraded via token verification
 
 function event_rsvp_approve_ad() {
 	check_ajax_referer('event_rsvp_ad_management', 'nonce');

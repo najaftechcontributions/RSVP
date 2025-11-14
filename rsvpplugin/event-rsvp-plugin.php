@@ -5,17 +5,17 @@
  * A complete event management system with RSVP, QR codes, attendee management,
  * check-in system, and vendor advertising capabilities.
  * 
- * Now integrated with Simple Membership plugin for payment processing.
+ * Uses simple Stripe Payment Links for subscriptions.
  * 
  * @package EventRSVPPlugin
- * @version 2.1.0
+ * @version 3.0.0
  */
 
 if (!defined('ABSPATH')) {
 	exit;
 }
 
-define('EVENT_RSVP_VERSION', '2.1.0');
+define('EVENT_RSVP_VERSION', '3.0.0');
 define('EVENT_RSVP_PLUGIN_DIR', dirname(__FILE__));
 define('EVENT_RSVP_PLUGIN_URL', get_template_directory_uri() . '/rsvpplugin');
 
@@ -46,13 +46,9 @@ class EventRSVPPlugin {
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/shortcodes.php';
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/admin-functions.php';
 		
-		// Load Simple Membership integration (replaces custom Stripe integration)
-		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/swpm-integration.php';
-		
-		// Old custom Stripe integration (commented out - use Simple Membership instead)
-		// If you need to temporarily use the old system, uncomment these lines:
-		// require_once EVENT_RSVP_PLUGIN_DIR . '/includes/stripe-integration.php';
-		// require_once EVENT_RSVP_PLUGIN_DIR . '/includes/stripe-ajax-handlers.php';
+		// Simple Stripe Payment Links integration
+		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/simple-stripe-payments.php';
+		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/simple-stripe-ajax.php';
 	}
 	
 	private function register_hooks() {
@@ -84,45 +80,14 @@ class EventRSVPPlugin {
 	}
 	
 	public function admin_notices() {
-		$missing_plugins = array();
-		$required_plugins = array();
+		// Check if Stripe payment links are configured
+		$links = Event_RSVP_Simple_Stripe::get_instance()->get_payment_links();
+		$has_links = !empty($links['event_host']) || !empty($links['vendor']) || !empty($links['pro']);
 		
-		// Required plugins
-		if (!class_exists('SwpmMemberUtils')) {
-			$required_plugins[] = '<strong>Simple Membership</strong> (Required for payments and membership management)';
-		}
-		if (!function_exists('acf')) {
-			$required_plugins[] = '<strong>Advanced Custom Fields</strong> (Required for custom fields)';
-		}
-		
-		// Recommended plugins
-		if (!function_exists('members_plugin')) {
-			$missing_plugins[] = 'Members (for role management)';
-		}
-		if (!function_exists('wpcf7')) {
-			$missing_plugins[] = 'Contact Form 7 (for contact forms)';
-		}
-		
-		// Show critical error for required plugins
-		if (!empty($required_plugins)) {
-			?>
-			<div class="notice notice-error">
-				<p><strong>Event RSVP Platform:</strong> The following REQUIRED plugins are missing:</p>
-				<ul style="list-style-type: disc; margin-left: 20px;">
-					<?php foreach ($required_plugins as $plugin) : ?>
-						<li><?php echo $plugin; ?></li>
-					<?php endforeach; ?>
-				</ul>
-				<p>Please install and activate these plugins for full functionality. See <code>SIMPLE-MEMBERSHIP-INTEGRATION-GUIDE.md</code> for details.</p>
-			</div>
-			<?php
-		}
-		
-		// Show warning for recommended plugins
-		if (!empty($missing_plugins)) {
+		if (!$has_links) {
 			?>
 			<div class="notice notice-warning">
-				<p><strong>Event RSVP Platform:</strong> The following recommended plugins are missing: <?php echo implode(', ', $missing_plugins); ?></p>
+				<p><strong>Event RSVP Platform:</strong> Stripe Payment Links are not configured. Please configure them in <a href="<?php echo admin_url('options-general.php?page=event-rsvp-stripe-links'); ?>">Settings → Stripe Payments</a> to enable paid subscriptions.</p>
 			</div>
 			<?php
 		}

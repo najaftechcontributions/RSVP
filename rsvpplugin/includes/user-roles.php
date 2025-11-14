@@ -10,49 +10,56 @@ if (!defined('ABSPATH')) {
 }
 
 function event_rsvp_add_custom_roles() {
-	if (!get_option('event_rsvp_roles_added')) {
-		remove_role('event_host');
-		remove_role('vendor');
-		remove_role('pro');
-		remove_role('event_staff');
+	remove_role('event_host');
+	remove_role('vendor');
+	remove_role('pro');
+	remove_role('event_staff');
 
-		add_role('event_host', 'Event Host', array(
-			'read' => true,
-			'edit_posts' => true,
-			'delete_posts' => true,
-			'publish_posts' => true,
-			'upload_files' => true,
-			'edit_published_posts' => true,
-			'delete_published_posts' => true,
-		));
+	add_role('event_host', 'Event Host', array(
+		'read' => true,
+		'edit_posts' => true,
+		'delete_posts' => true,
+		'publish_posts' => true,
+		'upload_files' => true,
+		'edit_published_posts' => true,
+		'delete_published_posts' => true,
+	));
 
-		add_role('vendor', 'Vendor', array(
-			'read' => true,
-			'upload_files' => true,
-			'edit_posts' => true,
-			'delete_posts' => true,
-			'publish_posts' => true,
-			'edit_published_posts' => true,
-			'delete_published_posts' => true,
-		));
+	add_role('vendor', 'Vendor', array(
+		'read' => true,
+		'upload_files' => true,
+		'edit_posts' => true,
+		'delete_posts' => true,
+		'publish_posts' => true,
+		'edit_published_posts' => true,
+		'delete_published_posts' => true,
+	));
 
-		add_role('pro', 'Pro (Event Host + Vendor)', array(
-			'read' => true,
-			'edit_posts' => true,
-			'delete_posts' => true,
-			'publish_posts' => true,
-			'upload_files' => true,
-			'edit_published_posts' => true,
-			'delete_published_posts' => true,
-		));
+	add_role('pro', 'Pro (Event Host + Vendor)', array(
+		'read' => true,
+		'edit_posts' => true,
+		'delete_posts' => true,
+		'publish_posts' => true,
+		'upload_files' => true,
+		'edit_published_posts' => true,
+		'delete_published_posts' => true,
+	));
 
-		add_role('event_staff', 'Event Staff', array(
-			'read' => true,
-		));
+	add_role('event_staff', 'Event Staff', array(
+		'read' => true,
+	));
 
-		update_option('event_rsvp_roles_added', true);
+	update_option('event_rsvp_roles_version', '2.1.0');
+}
+
+function event_rsvp_check_and_add_roles() {
+	$current_version = get_option('event_rsvp_roles_version', '0');
+
+	if (version_compare($current_version, '2.1.0', '<')) {
+		event_rsvp_add_custom_roles();
 	}
 }
+add_action('init', 'event_rsvp_check_and_add_roles', 5);
 add_action('after_switch_theme', 'event_rsvp_add_custom_roles');
 
 function event_rsvp_restrict_admin_menu() {
