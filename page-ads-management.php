@@ -642,6 +642,56 @@ $ad_locations = array(
 	</div>
 </main>
 
+<div id="shortcode-preview-modal" class="modal-overlay" style="display: none;">
+	<div class="modal-container">
+		<div class="modal-header">
+			<h2 class="modal-title">📋 Shortcode Preview</h2>
+			<button type="button" class="modal-close" id="close-preview-modal">✕</button>
+		</div>
+		<div class="modal-body">
+			<div class="preview-section">
+				<h3>Individual Ad Shortcode</h3>
+				<div class="shortcode-demo">
+					<code id="individual-shortcode">[ad id="123"]</code>
+					<button class="copy-btn" data-copy-id="individual-shortcode">📋 Copy</button>
+				</div>
+				<p class="preview-description">Use this to display a specific ad anywhere on your site.</p>
+			</div>
+
+			<div class="preview-section">
+				<h3>Live Preview</h3>
+				<div id="ad-preview-container" class="ad-preview-area">
+					<p class="preview-loading">Select an ad from the table to see preview...</p>
+				</div>
+			</div>
+
+			<div class="preview-section">
+				<h3>Usage Examples</h3>
+				<div class="usage-examples">
+					<div class="example-item">
+						<h4>In WordPress Editor:</h4>
+						<p>Paste the shortcode directly into your page or post content:</p>
+						<code>[ad id="123"]</code>
+					</div>
+					<div class="example-item">
+						<h4>In PHP Templates:</h4>
+						<p>Use the do_shortcode function:</p>
+						<code>&lt;?php echo do_shortcode('[ad id="123"]'); ?&gt;</code>
+					</div>
+					<div class="example-item">
+						<h4>In Elementor:</h4>
+						<p>Add a Shortcode widget and paste:</p>
+						<code>[ad id="123"]</code>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="modal-footer">
+			<button type="button" class="modal-btn close-modal-btn" id="close-modal-footer">Close</button>
+		</div>
+	</div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 	const tabButtons = document.querySelectorAll('.tab-button');
@@ -827,6 +877,107 @@ document.addEventListener('DOMContentLoaded', function() {
 			if (confirm('Are you sure you want to permanently delete this ad? This action cannot be undone.')) {
 				const adId = this.getAttribute('data-ad-id');
 				performAdAction('event_rsvp_delete_ad', adId, this);
+			}
+		});
+	});
+
+	const previewModal = document.getElementById('shortcode-preview-modal');
+	const closeModalBtn = document.getElementById('close-preview-modal');
+	const closeModalFooter = document.getElementById('close-modal-footer');
+	const previewContainer = document.getElementById('ad-preview-container');
+	const individualShortcode = document.getElementById('individual-shortcode');
+
+	document.querySelectorAll('.preview-shortcode-btn').forEach(btn => {
+		btn.addEventListener('click', function(e) {
+			e.preventDefault();
+			const adId = this.getAttribute('data-ad-id');
+			showPreviewModal(adId);
+		});
+	});
+
+	if (closeModalBtn) {
+		closeModalBtn.addEventListener('click', closePreview);
+	}
+
+	if (closeModalFooter) {
+		closeModalFooter.addEventListener('click', closePreview);
+	}
+
+	if (previewModal) {
+		previewModal.addEventListener('click', function(e) {
+			if (e.target === previewModal) {
+				closePreview();
+			}
+		});
+	}
+
+	function showPreviewModal(adId) {
+		if (individualShortcode) {
+			individualShortcode.textContent = `[ad id="${adId}"]`;
+		}
+
+		if (previewContainer) {
+			previewContainer.innerHTML = '<p class="preview-loading">Loading preview...</p>';
+		}
+
+		if (previewModal) {
+			previewModal.style.display = 'flex';
+			document.body.style.overflow = 'hidden';
+		}
+
+		fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+			body: new URLSearchParams({
+				action: 'event_rsvp_get_ad_preview',
+				ad_id: adId,
+				nonce: nonce
+			})
+		})
+		.then(response => response.json())
+		.then(data => {
+			if (data.success && data.data.html) {
+				if (previewContainer) {
+					previewContainer.innerHTML = data.data.html;
+				}
+			} else {
+				if (previewContainer) {
+					previewContainer.innerHTML = '<p class="preview-error">Failed to load preview. Make sure the ad has an image.</p>';
+				}
+			}
+		})
+		.catch(error => {
+			console.error('Preview error:', error);
+			if (previewContainer) {
+				previewContainer.innerHTML = '<p class="preview-error">Error loading preview.</p>';
+			}
+		});
+	}
+
+	function closePreview() {
+		if (previewModal) {
+			previewModal.style.display = 'none';
+			document.body.style.overflow = '';
+		}
+	}
+
+	document.querySelectorAll('.copy-btn').forEach(btn => {
+		btn.addEventListener('click', function() {
+			const targetId = this.getAttribute('data-copy-id');
+			const targetEl = document.getElementById(targetId);
+			if (targetEl) {
+				const text = targetEl.textContent;
+				navigator.clipboard.writeText(text).then(() => {
+					const original = this.textContent;
+					this.textContent = '✓ Copied!';
+					this.style.backgroundColor = '#4caf50';
+					setTimeout(() => {
+						this.textContent = original;
+						this.style.backgroundColor = '';
+					}, 2000);
+				});
 			}
 		});
 	});

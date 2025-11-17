@@ -117,7 +117,7 @@ Features available:
 
 ### Vendor Dashboard (Custom Page)
 
-Vendors see ONLY their own ads on the custom vendor dashboard page (`/vendor-dashboard/`):
+Vendors see ONLY their own ads on the custom vendor dashboard page (`/ads-manager/`):
 
 ```php
 // In page-vendor-dashboard.php

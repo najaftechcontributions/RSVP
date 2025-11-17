@@ -78,16 +78,25 @@ query_posts($args);
 
 		<div class="events-filter-bar">
 			<div class="filter-options">
-				<button class="filter-button active" data-filter="upcoming">Upcoming</button>
-				<button class="filter-button" data-filter="all">All Events</button>
-				<button class="filter-button" data-filter="past">Past Events</button>
+				<button class="filter-button active" data-filter="upcoming">
+					<span class="filter-icon">📅</span>
+					<span class="filter-text">Upcoming</span>
+				</button>
+				<button class="filter-button" data-filter="all">
+					<span class="filter-icon">🎯</span>
+					<span class="filter-text">All Events</span>
+				</button>
+				<button class="filter-button" data-filter="past">
+					<span class="filter-icon">🕐</span>
+					<span class="filter-text">Past Events</span>
+				</button>
 			</div>
 			<div class="view-toggle">
 				<button class="view-button active" data-view="grid" title="Grid View">
-					<span>Grid</span>
+					<span class="view-icon">◫</span>
 				</button>
 				<button class="view-button" data-view="list" title="List View">
-					<span>List</span>
+					<span class="view-icon">☰</span>
 				</button>
 			</div>
 		</div>
@@ -196,16 +205,50 @@ query_posts($args);
 
 .event-grid-item {
 	display: block;
+	transition: all 0.3s ease;
 }
 
 .events-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
 	gap: 30px;
+	transition: all 0.3s ease;
 }
 
 .events-grid[data-view="list"] {
 	grid-template-columns: 1fr;
+}
+
+.no-filter-results {
+	background: #fff;
+	padding: 60px 40px;
+	border-radius: var(--event-radius);
+	text-align: center;
+	box-shadow: var(--event-shadow);
+}
+
+.no-filter-results .no-events-icon {
+	font-size: 5rem;
+	margin-bottom: 20px;
+	opacity: 0.4;
+}
+
+.no-filter-results h3 {
+	font-size: 1.8rem;
+	font-weight: 700;
+	margin: 0 0 12px 0;
+	color: var(--event-text);
+}
+
+.no-filter-results p {
+	font-size: 1.1rem;
+	color: var(--event-text-light);
+	margin: 0;
+}
+
+.filter-count {
+	opacity: 0.8;
+	font-size: 0.9em;
 }
 
 @media (max-width: 1200px) {
@@ -228,6 +271,22 @@ query_posts($args);
 	.guest-info-card p {
 		font-size: 0.95rem;
 	}
+
+	.no-filter-results {
+		padding: 40px 20px;
+	}
+
+	.no-filter-results .no-events-icon {
+		font-size: 4rem;
+	}
+
+	.no-filter-results h3 {
+		font-size: 1.5rem;
+	}
+
+	.no-filter-results p {
+		font-size: 1rem;
+	}
 }
 
 @media (max-width: 480px) {
@@ -238,40 +297,102 @@ query_posts($args);
 </style>
 
 <script>
-(function() {
+document.addEventListener('DOMContentLoaded', function() {
 	const filterButtons = document.querySelectorAll('.filter-button');
 	const viewButtons = document.querySelectorAll('.view-button');
 	const eventsGrid = document.querySelector('.events-grid');
 	const eventItems = document.querySelectorAll('.event-grid-item');
 
-	filterButtons.forEach(button => {
-		button.addEventListener('click', function() {
-			filterButtons.forEach(btn => btn.classList.remove('active'));
-			this.classList.add('active');
-			
-			const filter = this.dataset.filter;
-			
-			eventItems.forEach(item => {
-				if (filter === 'all') {
-					item.style.display = '';
+	if (filterButtons.length > 0) {
+		filterButtons.forEach(button => {
+			button.addEventListener('click', function() {
+				filterButtons.forEach(btn => btn.classList.remove('active'));
+				this.classList.add('active');
+				
+				const filter = this.dataset.filter;
+				let visibleCount = 0;
+				
+				eventItems.forEach(item => {
+					if (filter === 'all') {
+						item.style.display = '';
+						visibleCount++;
+					} else {
+						const eventType = item.dataset.eventType;
+						if (eventType === filter) {
+							item.style.display = '';
+							visibleCount++;
+						} else {
+							item.style.display = 'none';
+						}
+					}
+				});
+
+				// Remove existing no results message
+				const noResultsMsg = document.getElementById('no-filter-results');
+				if (noResultsMsg) {
+					noResultsMsg.remove();
+				}
+				
+				// Show message if no events match filter
+				if (visibleCount === 0) {
+					const msg = document.createElement('div');
+					msg.id = 'no-filter-results';
+					msg.className = 'no-filter-results';
+					msg.innerHTML = '<div class="no-events-icon">🔍</div><h3>No Events Found</h3><p>No events match this filter. Try a different filter.</p>';
+					eventsGrid.parentNode.insertBefore(msg, eventsGrid);
+					eventsGrid.style.display = 'none';
 				} else {
-					const eventType = item.dataset.eventType;
-					item.style.display = eventType === filter ? '' : 'none';
+					eventsGrid.style.display = '';
 				}
 			});
 		});
-	});
+	}
 
-	viewButtons.forEach(button => {
-		button.addEventListener('click', function() {
-			viewButtons.forEach(btn => btn.classList.remove('active'));
-			this.classList.add('active');
-			
-			const view = this.dataset.view;
-			eventsGrid.setAttribute('data-view', view);
+	if (viewButtons.length > 0) {
+		viewButtons.forEach(button => {
+			button.addEventListener('click', function() {
+				viewButtons.forEach(btn => btn.classList.remove('active'));
+				this.classList.add('active');
+				
+				const view = this.dataset.view;
+				if (eventsGrid) {
+					eventsGrid.setAttribute('data-view', view);
+				}
+			});
 		});
-	});
-})();
+	}
+
+	// Initialize filter counts
+	if (filterButtons.length > 0 && eventItems.length > 0) {
+		const upcomingCount = document.querySelectorAll('[data-event-type="upcoming"]').length;
+		const pastCount = document.querySelectorAll('[data-event-type="past"]').length;
+		const allCount = eventItems.length;
+
+		filterButtons.forEach(button => {
+			const filter = button.dataset.filter;
+			const filterText = button.querySelector('.filter-text');
+			if (filterText) {
+				const currentText = filterText.textContent.split(' (')[0];
+				if (filter === 'upcoming') {
+					filterText.textContent = currentText;
+					if (upcomingCount > 0) {
+						filterText.innerHTML = currentText + ' <span class="filter-count">(' + upcomingCount + ')</span>';
+					}
+				} else if (filter === 'past') {
+					filterText.textContent = currentText;
+					if (pastCount > 0) {
+						filterText.innerHTML = currentText + ' <span class="filter-count">(' + pastCount + ')</span>';
+					}
+				} else if (filter === 'all') {
+					filterText.textContent = currentText;
+					if (allCount > 0) {
+						filterText.innerHTML = currentText + ' <span class="filter-count">(' + allCount + ')</span>';
+					}
+				}
+			}
+		});
+	}
+});
 </script>
 
 <?php

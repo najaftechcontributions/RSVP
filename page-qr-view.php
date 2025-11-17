@@ -115,15 +115,6 @@ $event_author_id = get_post_field('post_author', $event_id);
 $current_user_id = get_current_user_id();
 $is_event_host = ($current_user_id && ($current_user_id == $event_author_id || current_user_can('administrator')));
 
-$auto_checkin_performed = false;
-if ($is_event_host && !$checkin_status) {
-	update_post_meta($attendee_id, 'checkin_status', true);
-	update_post_meta($attendee_id, 'checkin_time', current_time('mysql'));
-	$checkin_status = true;
-	$checkin_time = current_time('mysql');
-	$auto_checkin_performed = true;
-}
-
 $status_badge_class = 'status-confirmed';
 $status_text = '✓ Confirmed';
 $status_icon = '✓';
@@ -146,12 +137,16 @@ get_header();
 		
 		<div style="height:40px" aria-hidden="true"></div>
 
-		<?php if ($auto_checkin_performed) : ?>
-			<div class="auto-checkin-notice">
-				<div class="notice-icon">✅</div>
+		<?php if ($is_event_host && !$checkin_status) : ?>
+			<div class="checkin-action-notice">
+				<div class="notice-icon">🎟️</div>
 				<div class="notice-content">
-					<h3>Attendee Automatically Checked In!</h3>
-					<p>As the event host, <strong><?php echo esc_html($attendee_name); ?></strong> has been automatically checked in at <?php echo esc_html(date('g:i A', strtotime($checkin_time))); ?>.</p>
+					<h3>Attendee Ready for Check-In</h3>
+					<p>As the event host, you can check in <strong><?php echo esc_html($attendee_name); ?></strong>.</p>
+					<button type="button" id="manual-checkin-btn" class="checkin-button" data-attendee-id="<?php echo esc_attr($attendee_id); ?>" data-qr-data="<?php echo esc_attr($qr_data); ?>">
+						<span class="button-icon">✓</span>
+						<span class="button-text">Check In Attendee</span>
+					</button>
 				</div>
 			</div>
 			<div style="height:20px" aria-hidden="true"></div>
@@ -211,14 +206,11 @@ get_header();
 								</span>
 							</div>
 							
-							<div class="info-item">
+							<div class="info-item" id="checkin-status-display">
 								<span class="info-label">Check-In Status</span>
 								<span class="info-value">
 									<?php if ($checkin_status) : ?>
 										<span class="status-badge status-checked-in">✓ Checked In</span>
-										<?php if ($auto_checkin_performed) : ?>
-											<span class="auto-checkin-badge">🔄 Just Now</span>
-										<?php endif; ?>
 									<?php else : ?>
 										<span class="status-badge status-not-checked-in">⏳ Not Checked In</span>
 									<?php endif; ?>
@@ -349,5 +341,236 @@ get_header();
 
 	</div>
 </main>
+
+<script>
+jQuery(document).ready(function($) {
+	$('#manual-checkin-btn').on('click', function() {
+		const button = $(this);
+		const qrData = button.data('qr-data');
+		const attendeeId = button.data('attendee-id');
+		const noticeBox = button.closest('.checkin-action-notice');
+
+		// Disable button and show loading state
+		button.prop('disabled', true);
+		button.html('<span class="button-icon">⏳</span><span class="button-text">Checking In...</span>');
+
+		$.ajax({
+			url: '<?php echo admin_url('admin-ajax.php'); ?>',
+			type: 'POST',
+			data: {
+				action: 'event_rsvp_checkin',
+				nonce: '<?php echo wp_create_nonce('event_rsvp_checkin'); ?>',
+				qr_data: qrData
+			},
+			success: function(response) {
+				if (response.success) {
+					// Show success message
+					noticeBox.html(
+						'<div class="notice-icon">✅</div>' +
+						'<div class="notice-content">' +
+						'<h3>Attendee Successfully Checked In!</h3>' +
+						'<p><strong>' + response.data.attendee_name + '</strong> has been checked in at ' + new Date().toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'}) + '.</p>' +
+						'</div>'
+					);
+					noticeBox.removeClass('checkin-action-notice').addClass('auto-checkin-notice');
+
+					// Update check-in status display
+					const statusDisplay = $('#checkin-status-display .info-value');
+					statusDisplay.html('<span class="status-badge status-checked-in">✓ Checked In</span>');
+
+					// Add check-in time display if it doesn't exist
+					const checkinTimeExists = $('#checkin-time-display').length > 0;
+					if (!checkinTimeExists) {
+						const now = new Date();
+						const formattedDate = now.toLocaleDateString('en-US', {
+							year: 'numeric',
+							month: 'long',
+							day: 'numeric'
+						});
+						const formattedTime = now.toLocaleTimeString('en-US', {
+							hour: 'numeric',
+							minute: '2-digit'
+						});
+
+						$('#checkin-status-display').after(
+							'<div class="info-item" id="checkin-time-display">' +
+							'<span class="info-label">Check-In Time</span>' +
+							'<span class="info-value">' + formattedDate + ' at ' + formattedTime + '</span>' +
+							'</div>'
+						);
+					}
+
+					// Auto-hide success message after 5 seconds
+					setTimeout(function() {
+						noticeBox.fadeOut();
+					}, 5000);
+				} else {
+					// Show error message
+					noticeBox.html(
+						'<div class="notice-icon">❌</div>' +
+						'<div class="notice-content">' +
+						'<h3>Check-In Failed</h3>' +
+						'<p>' + (response.data || 'An error occurred. Please try again.') + '</p>' +
+						'<button type="button" id="manual-checkin-btn" class="checkin-button" data-attendee-id="' + attendeeId + '" data-qr-data="' + qrData + '">' +
+						'<span class="button-icon">✓</span>' +
+						'<span class="button-text">Try Again</span>' +
+						'</button>' +
+						'</div>'
+					);
+					noticeBox.removeClass('checkin-action-notice').addClass('error-notice');
+				}
+			},
+			error: function() {
+				// Show error message
+				noticeBox.html(
+					'<div class="notice-icon">❌</div>' +
+					'<div class="notice-content">' +
+					'<h3>Check-In Failed</h3>' +
+					'<p>A network error occurred. Please check your connection and try again.</p>' +
+					'<button type="button" id="manual-checkin-btn" class="checkin-button" data-attendee-id="' + attendeeId + '" data-qr-data="' + qrData + '">' +
+					'<span class="button-icon">✓</span>' +
+					'<span class="button-text">Try Again</span>' +
+					'</button>' +
+					'</div>'
+				);
+				noticeBox.removeClass('checkin-action-notice').addClass('error-notice');
+			}
+		});
+	});
+
+	// Handle dynamically added button clicks
+	$(document).on('click', '#manual-checkin-btn', function() {
+		if ($(this).prop('disabled')) {
+			return;
+		}
+		$(this).trigger('click');
+	});
+});
+</script>
+
+<style>
+.checkin-action-notice {
+	background: #f0f9ff;
+	border: 2px solid #3b82f6;
+	border-radius: 12px;
+	padding: 24px;
+	display: flex;
+	align-items: flex-start;
+	gap: 16px;
+	margin-bottom: 20px;
+}
+
+.checkin-action-notice .notice-icon {
+	font-size: 32px;
+	line-height: 1;
+}
+
+.checkin-action-notice .notice-content {
+	flex: 1;
+}
+
+.checkin-action-notice h3 {
+	margin: 0 0 8px 0;
+	color: #1e40af;
+	font-size: 20px;
+}
+
+.checkin-action-notice p {
+	margin: 0 0 16px 0;
+	color: #1e3a8a;
+}
+
+.checkin-button {
+	background: #10b981;
+	color: white;
+	border: none;
+	padding: 12px 24px;
+	border-radius: 8px;
+	font-size: 16px;
+	font-weight: 600;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	transition: all 0.3s ease;
+}
+
+.checkin-button:hover:not(:disabled) {
+	background: #059669;
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.checkin-button:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.checkin-button .button-icon {
+	font-size: 18px;
+}
+
+.auto-checkin-notice {
+	background: #f0fdf4;
+	border: 2px solid #10b981;
+	border-radius: 12px;
+	padding: 24px;
+	display: flex;
+	align-items: flex-start;
+	gap: 16px;
+	margin-bottom: 20px;
+}
+
+.auto-checkin-notice .notice-icon {
+	font-size: 32px;
+	line-height: 1;
+}
+
+.auto-checkin-notice .notice-content {
+	flex: 1;
+}
+
+.auto-checkin-notice h3 {
+	margin: 0 0 8px 0;
+	color: #047857;
+	font-size: 20px;
+}
+
+.auto-checkin-notice p {
+	margin: 0;
+	color: #065f46;
+}
+
+.error-notice {
+	background: #fef2f2;
+	border: 2px solid #ef4444;
+	border-radius: 12px;
+	padding: 24px;
+	display: flex;
+	align-items: flex-start;
+	gap: 16px;
+	margin-bottom: 20px;
+}
+
+.error-notice .notice-icon {
+	font-size: 32px;
+	line-height: 1;
+}
+
+.error-notice .notice-content {
+	flex: 1;
+}
+
+.error-notice h3 {
+	margin: 0 0 8px 0;
+	color: #991b1b;
+	font-size: 20px;
+}
+
+.error-notice p {
+	margin: 0 0 16px 0;
+	color: #7f1d1d;
+}
+</style>
 
 <?php get_footer(); ?>

@@ -242,7 +242,7 @@ Make sure these pages exist with correct templates:
 - `/pricing/` - Template: Pricing Page
 - `/login/` - Template: Login Page
 - `/host-dashboard/` - Template: Host Dashboard
-- `/vendor-dashboard/` - Template: Vendor Dashboard
+- `/ads-manager/` - Template: Vendor Dashboard
 - `/browse-events/` - Template: Browse Events
 
 ## Summary

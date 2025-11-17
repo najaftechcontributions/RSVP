@@ -2095,7 +2095,7 @@ body {
 }
 
 .qr-viewer-header {
-	background: linear-gradient(135deg, #503AA8 0%, #6B52C3 100%);
+	background: #fff;
 	color: #fff;
 	border-radius: var(--event-radius);
 	padding: 3rem 2rem;

@@ -192,11 +192,11 @@ get_header();
 						<?php endif; ?>
 
 						<?php if ($user_plan === 'vendor' || $user_plan === 'pro') : ?>
-						<a href="<?php echo admin_url('post-new.php?post_type=vendor_ad'); ?>" class="action-button create-ad">
+						<a href="<?php echo home_url('/ad-create/'); ?>" class="action-button create-ad">
 							<span class="button-icon">📢</span>
 							<span class="button-text">Create Ad</span>
 						</a>
-						<a href="<?php echo home_url('/vendor-dashboard/'); ?>" class="action-button view-ads">
+						<a href="<?php echo home_url('/ads-manager/'); ?>" class="action-button view-ads">
 							<span class="button-icon">📊</span>
 							<span class="button-text">Manage Ads</span>
 						</a>
@@ -301,7 +301,7 @@ get_header();
 				<div class="content-header">
 					<h2 class="content-title">My Ads</h2>
 					<p class="content-subtitle">Manage your advertisements</p>
-					<a href="<?php echo admin_url('post-new.php?post_type=vendor_ad'); ?>" class="header-button">+ Create New Ad</a>
+					<a href="<?php echo home_url('/ad-create/'); ?>" class="header-button">+ Create New Ad</a>
 				</div>
 
 				<?php
@@ -348,13 +348,13 @@ get_header();
 					<?php endforeach; ?>
 				</div>
 				<div class="view-all-link">
-					<a href="<?php echo home_url('/vendor-dashboard/'); ?>">View All Ads →</a>
+					<a href="<?php echo home_url('/ads-manager/'); ?>">View All Ads →</a>
 				</div>
 				<?php else : ?>
 				<div class="empty-state">
 					<div class="empty-icon">📢</div>
 					<p class="empty-text">You haven't created any ads yet.</p>
-					<a href="<?php echo admin_url('post-new.php?post_type=vendor_ad'); ?>" class="empty-action-button">Create Your First Ad</a>
+					<a href="<?php echo home_url('/ad-create/'); ?>" class="empty-action-button">Create Your First Ad</a>
 				</div>
 				<?php endif; ?>
 			</div>

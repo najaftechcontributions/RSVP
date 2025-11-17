@@ -235,6 +235,44 @@ function event_rsvp_get_checked_in_attendees() {
 add_action('wp_ajax_event_rsvp_get_checked_in_attendees', 'event_rsvp_get_checked_in_attendees');
 add_action('wp_ajax_nopriv_event_rsvp_get_checked_in_attendees', 'event_rsvp_get_checked_in_attendees');
 
+function event_rsvp_get_attendee_counts() {
+	check_ajax_referer('event_rsvp_counts', 'nonce');
+
+	$event_id = intval($_POST['event_id'] ?? 0);
+
+	if (!$event_id) {
+		wp_send_json_error('Invalid event ID');
+		return;
+	}
+
+	$attendees = event_rsvp_get_attendees_by_event($event_id);
+
+	$total = count($attendees);
+	$yes_count = 0;
+	$maybe_count = 0;
+	$no_count = 0;
+
+	foreach ($attendees as $attendee) {
+		$rsvp_status = get_post_meta($attendee->ID, 'rsvp_status', true);
+		if ($rsvp_status === 'yes') {
+			$yes_count++;
+		} elseif ($rsvp_status === 'maybe') {
+			$maybe_count++;
+		} elseif ($rsvp_status === 'no') {
+			$no_count++;
+		}
+	}
+
+	wp_send_json_success(array(
+		'total' => $total,
+		'yes' => $yes_count,
+		'maybe' => $maybe_count,
+		'no' => $no_count
+	));
+}
+add_action('wp_ajax_event_rsvp_get_attendee_counts', 'event_rsvp_get_attendee_counts');
+add_action('wp_ajax_nopriv_event_rsvp_get_attendee_counts', 'event_rsvp_get_attendee_counts');
+
 function event_rsvp_get_all_attendees() {
 	check_ajax_referer('event_rsvp_checkin', 'nonce');
 

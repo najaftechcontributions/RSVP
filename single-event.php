@@ -179,7 +179,7 @@ while ( have_posts() ) :
 														<span class="attendee-status status-<?php echo esc_attr($rsvp_status); ?>">
 															<?php
 															if ($rsvp_status === 'yes') {
-																echo '✓ Attending';
+																echo '��� Attending';
 															} elseif ($rsvp_status === 'maybe') {
 																echo '? Maybe';
 															} else {
@@ -611,7 +611,10 @@ document.addEventListener('DOMContentLoaded', function() {
 		if (!container) return;
 
 		const eventId = container.getAttribute('data-event-id');
-		container.innerHTML = '<div class="loading-mini">Loading...</div>';
+		const currentHtml = container.innerHTML;
+		if (!currentHtml.includes('loading-mini')) {
+			container.innerHTML = '<div class="loading-mini">Loading...</div>';
+		}
 
 		fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
 			method: 'POST',
@@ -627,7 +630,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		.then(response => response.json())
 		.then(data => {
 			if (data.success && data.data.attendees) {
-				const attendees = data.data.attendees;
+				const attendees = data.data.attendees.filter(a => a.event_id == eventId);
 
 				if (attendees.length === 0) {
 					container.innerHTML = '<div class="no-checked-in">No attendees checked in yet.</div>';
@@ -653,8 +656,67 @@ document.addEventListener('DOMContentLoaded', function() {
 		});
 	}
 
-	if (document.getElementById('event-checked-in-attendees')) {
-		loadCheckedInAttendees();
+	function refreshAttendeeCounts() {
+		const eventId = <?php echo $event_id; ?>;
+
+		fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+			body: new URLSearchParams({
+				action: 'event_rsvp_get_attendee_counts',
+				event_id: eventId,
+				nonce: '<?php echo wp_create_nonce('event_rsvp_counts'); ?>'
+			})
+		})
+		.then(response => response.json())
+		.then(data => {
+			if (data.success && data.data) {
+				const counts = data.data;
+
+				document.querySelectorAll('.attendee-tab-btn').forEach(btn => {
+					const tab = btn.getAttribute('data-tab');
+					if (tab === 'all') {
+						btn.textContent = 'All (' + counts.total + ')';
+					} else if (tab === 'yes') {
+						btn.textContent = 'Attending (' + counts.yes + ')';
+					} else if (tab === 'maybe') {
+						btn.textContent = 'Maybe (' + counts.maybe + ')';
+					} else if (tab === 'no') {
+						btn.textContent = 'Not Attending (' + counts.no + ')';
+					}
+				});
+
+				const statsCard = document.querySelector('.event-stats-card');
+				if (statsCard) {
+					const totalValue = statsCard.querySelector('.stat-value');
+					if (totalValue) {
+						totalValue.textContent = counts.total;
+					}
+				}
+			}
+		})
+		.catch(error => {
+			console.error('Error refreshing counts:', error);
+		});
+	}
+
+	function startAutoRefresh() {
+		if (document.getElementById('event-checked-in-attendees')) {
+			loadCheckedInAttendees();
+			refreshAttendeeCounts();
+			setInterval(function() {
+				loadCheckedInAttendees();
+				refreshAttendeeCounts();
+			}, 30000);
+		}
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', startAutoRefresh);
+	} else {
+		startAutoRefresh();
 	}
 
 	// Handle Download QR Code

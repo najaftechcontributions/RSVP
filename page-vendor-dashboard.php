@@ -75,7 +75,7 @@ foreach ($vendor_ads as $ad) {
 				<p class="dashboard-subtitle">Manage your advertisements and track their performance</p>
 			</div>
 			<div class="header-actions">
-				<a href="<?php echo esc_url(admin_url('post-new.php?post_type=vendor_ad')); ?>" class="create-ad-button">
+				<a href="<?php echo esc_url(home_url('/ad-create/')); ?>" class="create-ad-button">
 					<span class="button-icon">➕</span>
 					<span class="button-text">Create New Ad</span>
 				</a>
@@ -233,7 +233,7 @@ foreach ($vendor_ads as $ad) {
 					<div class="empty-icon">📢</div>
 					<h3>No Active Ads</h3>
 					<p>You don't have any active ads at the moment.</p>
-					<a href="<?php echo esc_url(admin_url('post-new.php?post_type=vendor_ad')); ?>" class="empty-action-button">
+					<a href="<?php echo esc_url(home_url('/ad-create/')); ?>" class="empty-action-button">
 						Create Your First Ad
 					</a>
 				</div>
@@ -444,7 +444,7 @@ foreach ($vendor_ads as $ad) {
 					<div class="empty-icon">📢</div>
 					<h3>No Ads Yet</h3>
 					<p>You haven't created any ads yet. Get started by creating your first ad!</p>
-					<a href="<?php echo esc_url(admin_url('post-new.php?post_type=vendor_ad')); ?>" class="empty-action-button">
+					<a href="<?php echo esc_url(home_url('/ad-create/')); ?>" class="empty-action-button">
 						Create Your First Ad
 					</a>
 				</div>

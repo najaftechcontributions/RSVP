@@ -76,7 +76,7 @@ These pages MUST exist with correct templates:
 | `/login/` | Login Page | User login |
 | `/pricing/` | Pricing Page | Plan selection |
 | `/host-dashboard/` | Host Dashboard | Event host dashboard |
-| `/vendor-dashboard/` | Vendor Dashboard | Vendor dashboard |
+| `/ads-manager/` | Vendor Dashboard | Vendor dashboard |
 | `/browse-events/` | Browse Events | Event listing |
 
 **How to Create:**
@@ -782,7 +782,7 @@ Cancelled: /payment-cancelled/?plan=event_host
 Pricing: /pricing/
 Login: /login/
 Host Dashboard: /host-dashboard/
-Vendor Dashboard: /vendor-dashboard/
+Vendor Dashboard: /ads-manager/
 ```
 
 ### Database Queries
