@@ -47,6 +47,28 @@
 	flex: 1;
 }
 
+.vendor-dashboard-page .vendor-info {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	margin-bottom: 1rem;
+	padding-bottom: 0.75rem;
+	border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.vendor-dashboard-page .vendor-name {
+	font-size: 1rem;
+	font-weight: 600;
+	color: #fff;
+	opacity: 0.95;
+}
+
+.vendor-dashboard-page .vendor-email {
+	font-size: 0.875rem;
+	color: #fff;
+	opacity: 0.8;
+}
+
 .vendor-dashboard-page .dashboard-title {
 	font-size: 2.5rem;
 	color:#fff;

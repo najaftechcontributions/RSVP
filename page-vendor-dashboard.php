@@ -71,6 +71,10 @@ foreach ($vendor_ads as $ad) {
 
 		<div class="dashboard-header">
 			<div class="header-content">
+				<div class="vendor-info">
+					<span class="vendor-name">👤 <?php echo esc_html($current_user->display_name); ?></span>
+					<span class="vendor-email"><?php echo esc_html($current_user->user_email); ?></span>
+				</div>
 				<h1 class="dashboard-title">📢 Vendor Ads Dashboard</h1>
 				<p class="dashboard-subtitle">Manage your advertisements and track their performance</p>
 			</div>
@@ -100,7 +104,7 @@ foreach ($vendor_ads as $ad) {
 
 		<?php if (isset($_GET['ad_deleted']) && $_GET['ad_deleted'] === 'success') : ?>
 			<div class="success-notice">
-				✓ Ad deleted successfully!
+				��� Ad deleted successfully!
 			</div>
 			<div style="height:20px" aria-hidden="true"></div>
 		<?php endif; ?>
@@ -212,11 +216,11 @@ foreach ($vendor_ads as $ad) {
 								</div>
 
 								<div class="ad-actions">
-									<a href="<?php echo esc_url(get_edit_post_link($ad->ID)); ?>" class="ad-action-button edit-button">
+									<button class="ad-action-button preview-button" data-ad-id="<?php echo $ad->ID; ?>" title="Preview Ad">
+										👁️ Preview
+									</button>
+									<a href="<?php echo esc_url(home_url('/ad-create/?ad_id=' . $ad->ID)); ?>" class="ad-action-button edit-button">
 										✏️ Edit
-									</a>
-									<a href="<?php echo esc_url(get_permalink($ad->ID)); ?>" target="_blank" class="ad-action-button view-button">
-										👁️ View
 									</a>
 									<?php if (current_user_can('delete_post', $ad->ID)) : ?>
 										<a href="<?php echo esc_url(get_delete_post_link($ad->ID)); ?>" class="ad-action-button delete-button" onclick="return confirm('Are you sure you want to delete this ad?');">
@@ -288,7 +292,10 @@ foreach ($vendor_ads as $ad) {
 								</div>
 
 								<div class="ad-actions">
-									<a href="<?php echo esc_url(get_edit_post_link($ad->ID)); ?>" class="ad-action-button edit-button">
+									<button class="ad-action-button preview-button" data-ad-id="<?php echo $ad->ID; ?>">
+										👁️ Preview
+									</button>
+									<a href="<?php echo esc_url(home_url('/ad-create/?ad_id=' . $ad->ID)); ?>" class="ad-action-button edit-button">
 										✏️ Edit
 									</a>
 									<?php if (current_user_can('delete_post', $ad->ID)) : ?>
@@ -357,8 +364,11 @@ foreach ($vendor_ads as $ad) {
 								</div>
 
 								<div class="ad-actions">
-									<a href="<?php echo esc_url(get_edit_post_link($ad->ID)); ?>" class="ad-action-button edit-button">
-										📋 Duplicate
+									<button class="ad-action-button preview-button" data-ad-id="<?php echo $ad->ID; ?>">
+										👁️ Preview
+									</button>
+									<a href="<?php echo esc_url(home_url('/ad-create/?ad_id=' . $ad->ID)); ?>" class="ad-action-button edit-button">
+										✏️ Edit
 									</a>
 									<?php if (current_user_can('delete_post', $ad->ID)) : ?>
 										<a href="<?php echo esc_url(get_delete_post_link($ad->ID)); ?>" class="ad-action-button delete-button" onclick="return confirm('Are you sure you want to delete this ad?');">
@@ -429,7 +439,8 @@ foreach ($vendor_ads as $ad) {
 									<td><?php echo esc_html($impressions); ?></td>
 									<td><?php echo esc_html($clicks); ?></td>
 									<td class="actions-cell">
-										<a href="<?php echo esc_url(get_edit_post_link($ad->ID)); ?>" class="table-action-link" title="Edit">✏️</a>
+										<button class="table-action-link preview-button" data-ad-id="<?php echo $ad->ID; ?>" title="Preview" style="background: none; border: none; cursor: pointer;">👁️</button>
+										<a href="<?php echo esc_url(home_url('/ad-create/?ad_id=' . $ad->ID)); ?>" class="table-action-link" title="Edit">✏️</a>
 										<?php if (current_user_can('delete_post', $ad->ID)) : ?>
 											<a href="<?php echo esc_url(get_delete_post_link($ad->ID)); ?>" class="table-action-link delete" title="Delete" onclick="return confirm('Are you sure?');">🗑️</a>
 										<?php endif; ?>
@@ -456,10 +467,151 @@ foreach ($vendor_ads as $ad) {
 	</div>
 </main>
 
+<div id="ad-preview-modal" class="modal-overlay" style="display: none;">
+	<div class="modal-container">
+		<div class="modal-header">
+			<h2 class="modal-title">👁️ Ad Preview</h2>
+			<button type="button" class="modal-close" id="close-preview-modal">✕</button>
+		</div>
+		<div class="modal-body">
+			<div id="ad-preview-content" class="ad-preview-area">
+				<p class="preview-loading">Loading preview...</p>
+			</div>
+		</div>
+		<div class="modal-footer">
+			<button type="button" class="modal-btn close-modal-btn" id="close-modal-footer">Close</button>
+		</div>
+	</div>
+</div>
+
+<style>
+.modal-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.7);
+	z-index: 9999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+}
+
+.modal-container {
+	background: #fff;
+	border-radius: 16px;
+	max-width: 800px;
+	width: 100%;
+	max-height: 90vh;
+	overflow-y: auto;
+	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 24px 32px;
+	border-bottom: 2px solid #f0f0f0;
+}
+
+.modal-title {
+	font-size: 24px;
+	font-weight: 700;
+	margin: 0;
+	color: #1a1a1a;
+}
+
+.modal-close {
+	background: #f5f5f5;
+	border: none;
+	border-radius: 8px;
+	width: 40px;
+	height: 40px;
+	font-size: 20px;
+	cursor: pointer;
+	transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+	background: #e8e8e8;
+	transform: rotate(90deg);
+}
+
+.modal-body {
+	padding: 32px;
+}
+
+.ad-preview-area {
+	background: #f9f9f9;
+	padding: 24px;
+	border-radius: 8px;
+	min-height: 200px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.preview-loading,
+.preview-error {
+	color: #999;
+	font-size: 14px;
+	text-align: center;
+	font-style: italic;
+}
+
+.preview-error {
+	color: #f44336;
+}
+
+.modal-footer {
+	padding: 20px 32px;
+	border-top: 2px solid #f0f0f0;
+	display: flex;
+	justify-content: flex-end;
+}
+
+.modal-btn {
+	padding: 12px 24px;
+	border-radius: 8px;
+	font-size: 15px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	border: none;
+}
+
+.close-modal-btn {
+	background: #f5f5f5;
+	color: #333;
+	border: 2px solid #e0e0e0;
+}
+
+.close-modal-btn:hover {
+	background: #e8e8e8;
+	border-color: #ccc;
+}
+
+.preview-button {
+	background: #2196f3;
+	color: #fff;
+	border: none;
+}
+
+.preview-button:hover {
+	background: #1976d2;
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+}
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 	const tabButtons = document.querySelectorAll('.tab-button');
 	const tabContents = document.querySelectorAll('.tab-content');
+	const nonce = '<?php echo wp_create_nonce('event_rsvp_ad_management'); ?>';
 
 	tabButtons.forEach(button => {
 		button.addEventListener('click', function() {
@@ -472,6 +624,75 @@ document.addEventListener('DOMContentLoaded', function() {
 			document.getElementById('tab-' + targetTab).classList.add('active');
 		});
 	});
+
+	// Preview functionality
+	const previewModal = document.getElementById('ad-preview-modal');
+	const closeModalBtn = document.getElementById('close-preview-modal');
+	const closeModalFooter = document.getElementById('close-modal-footer');
+	const previewContent = document.getElementById('ad-preview-content');
+
+	document.querySelectorAll('.preview-button').forEach(btn => {
+		btn.addEventListener('click', function(e) {
+			e.preventDefault();
+			const adId = this.getAttribute('data-ad-id');
+			showPreview(adId);
+		});
+	});
+
+	function showPreview(adId) {
+		if (!previewModal || !previewContent) return;
+
+		previewContent.innerHTML = '<p class="preview-loading">Loading preview...</p>';
+		previewModal.style.display = 'flex';
+		document.body.style.overflow = 'hidden';
+
+		fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+			body: new URLSearchParams({
+				action: 'event_rsvp_get_ad_preview',
+				ad_id: adId,
+				nonce: nonce
+			})
+		})
+		.then(response => response.json())
+		.then(data => {
+			if (data.success && data.data.html) {
+				previewContent.innerHTML = data.data.html;
+			} else {
+				previewContent.innerHTML = '<p class="preview-error">Failed to load preview. Make sure the ad has an image.</p>';
+			}
+		})
+		.catch(error => {
+			console.error('Preview error:', error);
+			previewContent.innerHTML = '<p class="preview-error">Error loading preview.</p>';
+		});
+	}
+
+	function closePreview() {
+		if (previewModal) {
+			previewModal.style.display = 'none';
+			document.body.style.overflow = '';
+		}
+	}
+
+	if (closeModalBtn) {
+		closeModalBtn.addEventListener('click', closePreview);
+	}
+
+	if (closeModalFooter) {
+		closeModalFooter.addEventListener('click', closePreview);
+	}
+
+	if (previewModal) {
+		previewModal.addEventListener('click', function(e) {
+			if (e.target === previewModal) {
+				closePreview();
+			}
+		});
+	}
 });
 </script>
 

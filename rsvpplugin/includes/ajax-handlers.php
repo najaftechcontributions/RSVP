@@ -440,11 +440,6 @@ function event_rsvp_track_ad_click() {
 add_action('wp_ajax_event_rsvp_track_ad_click', 'event_rsvp_track_ad_click');
 add_action('wp_ajax_nopriv_event_rsvp_track_ad_click', 'event_rsvp_track_ad_click');
 
-// Registration handler moved to simple-stripe-ajax.php
-// This old handler bypassed payment and directly assigned roles
-// The new handler properly creates subscriber account first, then redirects to Stripe payment
-// After successful payment, the account is upgraded via token verification
-
 function event_rsvp_approve_ad() {
 	check_ajax_referer('event_rsvp_ad_management', 'nonce');
 
@@ -484,6 +479,7 @@ function event_rsvp_reject_ad() {
 	}
 
 	update_post_meta($ad_id, 'ad_approval_status', 'rejected');
+	update_post_meta($ad_id, 'ad_status', 'inactive');
 
 	wp_send_json_success(array(
 		'message' => 'Ad rejected successfully!'
@@ -502,18 +498,27 @@ function event_rsvp_toggle_ad_status() {
 	$ad_id = intval($_POST['ad_id'] ?? 0);
 	$status = sanitize_text_field($_POST['status'] ?? '');
 
-	if (!$ad_id || !in_array($status, array('activate', 'deactivate'))) {
+	if (!$ad_id || !in_array($status, array('activate', 'deactivate', 'pause'))) {
 		wp_send_json_error('Invalid parameters');
 		return;
 	}
 
-	$new_status = ($status === 'activate') ? 'active' : 'inactive';
+	if ($status === 'activate') {
+		$new_status = 'active';
+		$message = 'Ad activated successfully!';
+	} elseif ($status === 'pause') {
+		$new_status = 'paused';
+		$message = 'Ad paused successfully!';
+	} else {
+		$new_status = 'inactive';
+		$message = 'Ad deactivated successfully!';
+	}
+
 	update_post_meta($ad_id, 'ad_status', $new_status);
 
-	$message = ($status === 'activate') ? 'Ad activated successfully!' : 'Ad deactivated successfully!';
-
 	wp_send_json_success(array(
-		'message' => $message
+		'message' => $message,
+		'new_status' => $new_status
 	));
 }
 add_action('wp_ajax_event_rsvp_toggle_ad_status', 'event_rsvp_toggle_ad_status');
@@ -561,7 +566,7 @@ function event_rsvp_change_ad_location() {
 		return;
 	}
 
-	$valid_locations = array('sidebar', 'footer', 'homepage', 'header', 'event_single', 'event_archive', 'between_content');
+	$valid_locations = array_keys(event_rsvp_get_ad_locations());
 
 	if (!in_array($location, $valid_locations)) {
 		wp_send_json_error('Invalid location');
@@ -575,6 +580,43 @@ function event_rsvp_change_ad_location() {
 	));
 }
 add_action('wp_ajax_event_rsvp_change_ad_location', 'event_rsvp_change_ad_location');
+
+function event_rsvp_get_ad_preview() {
+	check_ajax_referer('event_rsvp_ad_management', 'nonce');
+
+	if (!current_user_can('edit_posts')) {
+		wp_send_json_error('Unauthorized');
+		return;
+	}
+
+	$ad_id = intval($_POST['ad_id'] ?? 0);
+
+	if (!$ad_id) {
+		wp_send_json_error('Invalid ad ID');
+		return;
+	}
+
+	$ad = get_post($ad_id);
+	if (!$ad || $ad->post_type !== 'vendor_ad') {
+		wp_send_json_error('Ad not found');
+		return;
+	}
+
+	// Generate preview HTML using shortcode
+	$preview_html = do_shortcode('[ad id="' . $ad_id . '" preview="true"]');
+
+	if (empty($preview_html)) {
+		wp_send_json_error('Failed to generate preview');
+		return;
+	}
+
+	wp_send_json_success(array(
+		'html' => $preview_html,
+		'ad_id' => $ad_id,
+		'title' => get_the_title($ad_id)
+	));
+}
+add_action('wp_ajax_event_rsvp_get_ad_preview', 'event_rsvp_get_ad_preview');
 
 function event_rsvp_resend_qr_email() {
 	check_ajax_referer('event_rsvp_resend_qr', 'nonce');

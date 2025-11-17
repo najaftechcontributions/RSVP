@@ -95,18 +95,33 @@ function event_rsvp_upcoming_events_shortcode($atts) {
 }
 add_shortcode('upcoming_events', 'event_rsvp_upcoming_events_shortcode');
 
+/**
+ * Vendor Ad Shortcode - Display ads by location
+ * 
+ * Usage: [vendor_ad location="home_1"]
+ * Usage: [vendor_ad location="sidebar_1" show_all="true"]
+ * Usage: [vendor_ad location="events_1" preview="true"]
+ */
 function event_rsvp_vendor_ad_shortcode($atts) {
 	$atts = shortcode_atts(array(
-		'location' => 'sidebar',
+		'location' => 'sidebar_1',
 		'preview' => false,
+		'show_all' => true,
 	), $atts);
 	
 	$is_preview = filter_var($atts['preview'], FILTER_VALIDATE_BOOLEAN);
+	$show_all = filter_var($atts['show_all'], FILTER_VALIDATE_BOOLEAN);
 	
-	return event_rsvp_display_vendor_ad($atts['location'], $is_preview);
+	return event_rsvp_display_vendor_ad($atts['location'], $is_preview, $show_all);
 }
 add_shortcode('vendor_ad', 'event_rsvp_vendor_ad_shortcode');
 
+/**
+ * Single Ad Shortcode - Display specific ad by ID
+ * 
+ * Usage: [ad id="123"]
+ * Usage: [ad id="123" preview="true"]
+ */
 function event_rsvp_single_ad_shortcode($atts) {
 	$atts = shortcode_atts(array(
 		'id' => 0,
@@ -118,7 +133,7 @@ function event_rsvp_single_ad_shortcode($atts) {
 
 	if (!$ad_id) {
 		if (is_admin() || current_user_can('administrator')) {
-			return '<div class="ad-error" style="padding: 20px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; margin: 10px 0; text-align: center;"><strong>⚠️ Invalid ad ID</strong></div>';
+			return '<div class="ad-error" style="padding: 20px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 6px; margin: 10px 0; text-align: center;"><strong>⚠️ Invalid ad ID</strong></div>';
 		}
 		return '';
 	}
@@ -126,7 +141,7 @@ function event_rsvp_single_ad_shortcode($atts) {
 	$ad = get_post($ad_id);
 	if (!$ad || $ad->post_type !== 'vendor_ad') {
 		if (is_admin() || current_user_can('administrator')) {
-			return '<div class="ad-error" style="padding: 20px; background: #f8d7da; border: 1px solid #dc3545; border-radius: 6px; margin: 10px 0; text-align: center;"><strong>❌ Ad not found (ID: ' . $ad_id . ')</strong></div>';
+			return '<div class="ad-error" style="padding: 20px; background: #f8d7da; border: 2px solid #dc3545; border-radius: 6px; margin: 10px 0; text-align: center;"><strong>❌ Ad not found (ID: ' . $ad_id . ')</strong></div>';
 		}
 		return '';
 	}
@@ -134,14 +149,25 @@ function event_rsvp_single_ad_shortcode($atts) {
 	$ad_status = get_post_meta($ad_id, 'ad_status', true);
 	$approval_status = get_post_meta($ad_id, 'ad_approval_status', true);
 
-	if (!$is_preview && ($ad_status !== 'active' || $approval_status !== 'approved')) {
-		if (is_admin() || current_user_can('administrator')) {
-			$status_msg = $approval_status !== 'approved' ? 'Not Approved' : 'Inactive';
-			return '<div class="ad-error" style="padding: 20px; background: #e2e3e5; border: 1px solid #6c757d; border-radius: 6px; margin: 10px 0; text-align: center;"><strong>⏸️ Ad Status: ' . $status_msg . '</strong><br><small>This ad will not be shown to visitors</small></div>';
+	// Check if ad is active and approved (unless in preview mode)
+	if (!$is_preview) {
+		if ($ad_status !== 'active') {
+			if (is_admin() || current_user_can('administrator')) {
+				$status_msg = $ad_status === 'paused' ? 'Paused' : 'Inactive';
+				return '<div class="ad-error" style="padding: 20px; background: #e2e3e5; border: 2px solid #6c757d; border-radius: 6px; margin: 10px 0; text-align: center;"><strong>⏸️ Ad Status: ' . $status_msg . '</strong><br><small>This ad will not be shown to visitors</small></div>';
+			}
+			return '';
 		}
-		return '';
+		
+		if ($approval_status !== 'approved') {
+			if (is_admin() || current_user_can('administrator')) {
+				return '<div class="ad-error" style="padding: 20px; background: #e2e3e5; border: 2px solid #6c757d; border-radius: 6px; margin: 10px 0; text-align: center;"><strong>⏸️ Ad Status: Not Approved</strong><br><small>This ad will not be shown to visitors</small></div>';
+			}
+			return '';
+		}
 	}
 
+	// Check date range
 	$today = date('Y-m-d');
 	$start_date = get_post_meta($ad_id, 'ad_start_date', true);
 	$end_date = get_post_meta($ad_id, 'ad_end_date', true);
@@ -149,14 +175,14 @@ function event_rsvp_single_ad_shortcode($atts) {
 	if (!$is_preview && !empty($start_date) && !empty($end_date)) {
 		if ($today < $start_date) {
 			if (is_admin() || current_user_can('administrator')) {
-				return '<div class="ad-error" style="padding: 20px; background: #d1ecf1; border: 1px solid #17a2b8; border-radius: 6px; margin: 10px 0; text-align: center;"><strong>📅 Scheduled</strong><br><small>Ad starts on: ' . date('M j, Y', strtotime($start_date)) . '</small></div>';
+				return '<div class="ad-error" style="padding: 20px; background: #d1ecf1; border: 2px solid #17a2b8; border-radius: 6px; margin: 10px 0; text-align: center;"><strong>📅 Scheduled</strong><br><small>Ad starts on: ' . date('M j, Y', strtotime($start_date)) . '</small></div>';
 			}
 			return '';
 		}
 
 		if ($today > $end_date) {
 			if (is_admin() || current_user_can('administrator')) {
-				return '<div class="ad-error" style="padding: 20px; background: #e2e3e5; border: 1px solid #6c757d; border-radius: 6px; margin: 10px 0; text-align: center;"><strong>⏰ Expired</strong><br><small>Ad ended on: ' . date('M j, Y', strtotime($end_date)) . '</small></div>';
+				return '<div class="ad-error" style="padding: 20px; background: #e2e3e5; border: 2px solid #6c757d; border-radius: 6px; margin: 10px 0; text-align: center;"><strong>⏰ Expired</strong><br><small>Ad ended on: ' . date('M j, Y', strtotime($end_date)) . '</small></div>';
 			}
 			return '';
 		}
@@ -165,14 +191,16 @@ function event_rsvp_single_ad_shortcode($atts) {
 	$thumbnail_url = get_the_post_thumbnail_url($ad_id, 'large');
 	$click_url = get_post_meta($ad_id, 'click_url', true);
 	$ad_title = get_the_title($ad_id);
+	$slot_location = get_post_meta($ad_id, 'slot_location', true);
 
 	if (empty($thumbnail_url)) {
 		if (is_admin() || current_user_can('administrator')) {
-			return '<div class="ad-error" style="padding: 20px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; margin: 10px 0; text-align: center;"><strong>🖼️ No Image</strong><br><small>Please add a featured image to this ad</small></div>';
+			return '<div class="ad-error" style="padding: 20px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 6px; margin: 10px 0; text-align: center;"><strong>🖼️ No Image</strong><br><small>Please add a featured image to this ad</small></div>';
 		}
 		return '';
 	}
 
+	// Track impressions
 	if (!$is_preview) {
 		$current_impressions = intval(get_post_meta($ad_id, 'ad_impressions', true));
 		update_post_meta($ad_id, 'ad_impressions', $current_impressions + 1);
@@ -182,7 +210,7 @@ function event_rsvp_single_ad_shortcode($atts) {
 
 	ob_start();
 	?>
-	<div class="vendor-ad-single vendor-ad-wrapper" data-ad-id="<?php echo $ad_id; ?>">
+	<div class="vendor-ad-single vendor-ad-wrapper vendor-ad-<?php echo esc_attr($slot_location); ?>" data-ad-id="<?php echo $ad_id; ?>">
 		<div class="vendor-ad-container" style="position: relative;">
 			<?php echo $preview_label; ?>
 			<?php if (!empty($click_url)) : ?>

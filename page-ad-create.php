@@ -47,7 +47,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ad_form_nonce'])) {
 		$slot_location = sanitize_text_field($_POST['slot_location'] ?? 'sidebar');
 		$ad_start_date = sanitize_text_field($_POST['ad_start_date'] ?? '');
 		$ad_end_date = sanitize_text_field($_POST['ad_end_date'] ?? '');
-		$featured_image_id = intval($_POST['featured_image_id'] ?? 0);
 		
 		if (empty($ad_title)) {
 			$error_message = 'Please provide an ad title.';
@@ -84,15 +83,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ad_form_nonce'])) {
 					update_post_meta($saved_ad_id, 'ad_impressions', 0);
 				}
 				
-				if ($featured_image_id > 0) {
-					set_post_thumbnail($saved_ad_id, $featured_image_id);
+				// Handle featured image upload
+				if (!empty($_FILES['ad_image']['name'])) {
+					require_once(ABSPATH . 'wp-admin/includes/image.php');
+					require_once(ABSPATH . 'wp-admin/includes/file.php');
+					require_once(ABSPATH . 'wp-admin/includes/media.php');
+					
+					$attachment_id = media_handle_upload('ad_image', $saved_ad_id);
+					
+					if (!is_wp_error($attachment_id)) {
+						set_post_thumbnail($saved_ad_id, $attachment_id);
+					} else {
+						$error_message = 'Ad saved but failed to upload image: ' . $attachment_id->get_error_message();
+					}
 				}
 				
-				$success_message = $is_edit ? 'Ad updated successfully!' : 'Ad created successfully! Pending admin approval.';
-				
-				if (!current_user_can('administrator')) {
-					wp_redirect(home_url('/ads-manager/?success=ad_' . ($is_edit ? 'updated' : 'created')));
-					exit;
+				if (!isset($error_message)) {
+					$success_message = $is_edit ? 'Ad updated successfully!' : 'Ad created successfully! Pending admin approval.';
+					
+					if (!current_user_can('administrator')) {
+						wp_redirect(home_url('/ads-manager/?success=ad_' . ($is_edit ? 'updated' : 'created')));
+						exit;
+					}
 				}
 			} else {
 				$error_message = 'Failed to ' . ($is_edit ? 'update' : 'create') . ' ad. Please try again.';
@@ -104,13 +116,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ad_form_nonce'])) {
 get_header();
 
 $ad_locations = array(
-	'sidebar' => 'Sidebar',
-	'footer' => 'Footer',
-	'homepage' => 'Homepage',
-	'header' => 'Header',
-	'event_single' => 'Single Event Page',
-	'event_archive' => 'Events Archive',
-	'between_content' => 'Between Content'
+	'home_1' => 'Homepage Slot 1',
+	'home_2' => 'Homepage Slot 2',
+	'home_3' => 'Homepage Slot 3',
+	'sidebar_1' => 'Sidebar Slot 1',
+	'sidebar_2' => 'Sidebar Slot 2',
+	'sidebar_3' => 'Sidebar Slot 3',
+	'sidebar_4' => 'Sidebar Slot 4',
+	'events_1' => 'Events Page Slot 1',
+	'events_2' => 'Events Page Slot 2',
+	'events_3' => 'Events Page Slot 3',
+	'events_4' => 'Events Page Slot 4'
 );
 
 if ($is_edit && $ad) {
@@ -123,7 +139,7 @@ if ($is_edit && $ad) {
 } else {
 	$current_title = '';
 	$current_click_url = '';
-	$current_location = 'sidebar';
+	$current_location = 'home_1';
 	$current_start_date = date('Y-m-d');
 	$current_end_date = date('Y-m-d', strtotime('+30 days'));
 	$current_image = '';
@@ -207,9 +223,9 @@ if ($is_edit && $ad) {
 										<p class="upload-hint">Recommended: 800x600px, PNG or JPG</p>
 									</div>
 								<?php endif; ?>
-								<input type="hidden" name="featured_image_id" id="featured_image_id" value="<?php echo $is_edit ? get_post_thumbnail_id($ad_id) : ''; ?>">
 								<input type="file" name="ad_image" id="ad_image_input" accept="image/*" style="display: none;">
 							</div>
+							<p class="form-help">Upload a high-quality image for your ad. This is required.</p>
 						</div>
 					</div>
 
@@ -331,11 +347,10 @@ document.addEventListener('DOMContentLoaded', function() {
 	const imageInput = document.getElementById('ad_image_input');
 	const uploadArea = document.getElementById('image-upload-area');
 	const uploadPlaceholder = document.getElementById('upload-placeholder');
-	const featuredImageId = document.getElementById('featured_image_id');
 
 	if (uploadArea && imageInput) {
 		uploadArea.addEventListener('click', function(e) {
-			if (e.target.id !== 'remove-image-btn') {
+			if (e.target.id !== 'remove-image-btn' && !e.target.classList.contains('remove-image-btn')) {
 				imageInput.click();
 			}
 		});
@@ -402,10 +417,13 @@ document.addEventListener('DOMContentLoaded', function() {
 		`;
 		preview.style.display = 'block';
 
-		document.getElementById('remove-image-btn').addEventListener('click', function(e) {
-			e.stopPropagation();
-			removeImage();
-		});
+		const removeBtn = document.getElementById('remove-image-btn');
+		if (removeBtn) {
+			removeBtn.addEventListener('click', function(e) {
+				e.stopPropagation();
+				removeImage();
+			});
+		}
 	}
 
 	function removeImage() {
@@ -418,9 +436,6 @@ document.addEventListener('DOMContentLoaded', function() {
 		}
 		if (imageInput) {
 			imageInput.value = '';
-		}
-		if (featuredImageId) {
-			featuredImageId.value = '';
 		}
 	}
 
@@ -458,6 +473,37 @@ document.addEventListener('DOMContentLoaded', function() {
 				endDate.value = this.value;
 			}
 		});
+	}
+});
+
+// Fix for drag-and-drop file upload - ensure file is assigned to input
+document.addEventListener('DOMContentLoaded', function() {
+	const imageInput = document.getElementById('ad_image_input');
+	const uploadArea = document.getElementById('image-upload-area');
+
+	if (uploadArea && imageInput) {
+		// Override the drop event to properly assign files
+		const newDropHandler = function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+			uploadArea.classList.remove('drag-over');
+
+			const files = e.dataTransfer.files;
+			if (files.length > 0 && files[0].type.match('image.*')) {
+				// Assign the file to the input element
+				const dataTransfer = new DataTransfer();
+				dataTransfer.items.add(files[0]);
+				imageInput.files = dataTransfer.files;
+
+				// Trigger change event to show preview
+				const event = new Event('change', { bubbles: true });
+				imageInput.dispatchEvent(event);
+			}
+		};
+
+		// Remove old listeners and add new one
+		uploadArea.removeEventListener('drop', newDropHandler);
+		uploadArea.addEventListener('drop', newDropHandler);
 	}
 });
 </script>
@@ -511,6 +557,24 @@ document.addEventListener('DOMContentLoaded', function() {
 	background: var(--event-primary-light);
 	border-color: var(--event-primary);
 	transform: translateY(-2px);
+}
+
+.success-notice {
+	background: #d4edda;
+	border: 2px solid #c3e6cb;
+	color: #155724;
+	padding: 16px 20px;
+	border-radius: 8px;
+	font-weight: 600;
+}
+
+.error-notice {
+	background: #f8d7da;
+	border: 2px solid #f5c6cb;
+	color: #721c24;
+	padding: 16px 20px;
+	border-radius: 8px;
+	font-weight: 600;
 }
 
 .ad-create-layout {

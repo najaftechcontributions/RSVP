@@ -523,10 +523,17 @@
 	border-color: #2196f3;
 }
 
-.deactivate-btn:hover {
+.deactivate-btn:hover,
+.pause-btn:hover {
 	background: #ff9800;
 	color: #fff;
 	border-color: #ff9800;
+}
+
+.play-btn:hover {
+	background: #4caf50;
+	color: #fff;
+	border-color: #4caf50;
 }
 
 .edit-btn:hover {

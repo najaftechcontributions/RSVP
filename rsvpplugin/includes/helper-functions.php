@@ -152,6 +152,16 @@ function event_rsvp_get_active_vendor_ads($location = '') {
 				'value' => $today,
 				'compare' => '>=',
 				'type' => 'DATE'
+			),
+			array(
+				'key' => 'ad_status',
+				'value' => 'active',
+				'compare' => '='
+			),
+			array(
+				'key' => 'ad_approval_status',
+				'value' => 'approved',
+				'compare' => '='
 			)
 		)
 	);
@@ -227,7 +237,23 @@ function event_rsvp_get_available_spots($event_id) {
 	return max(0, $max_attendees - count($current_attendees));
 }
 
-function event_rsvp_display_vendor_ad($location, $preview = false) {
+function event_rsvp_get_ad_locations() {
+	return array(
+		'home_1' => 'Homepage Slot 1',
+		'home_2' => 'Homepage Slot 2',
+		'home_3' => 'Homepage Slot 3',
+		'sidebar_1' => 'Sidebar Slot 1',
+		'sidebar_2' => 'Sidebar Slot 2',
+		'sidebar_3' => 'Sidebar Slot 3',
+		'sidebar_4' => 'Sidebar Slot 4',
+		'events_1' => 'Events Page Slot 1',
+		'events_2' => 'Events Page Slot 2',
+		'events_3' => 'Events Page Slot 3',
+		'events_4' => 'Events Page Slot 4',
+	);
+}
+
+function event_rsvp_display_vendor_ad($location, $preview = false, $show_all = true) {
 	$today = date('Y-m-d');
 	
 	$args = array(
@@ -280,12 +306,28 @@ function event_rsvp_display_vendor_ad($location, $preview = false) {
 		return '';
 	}
 	
-	$ad = $ads[array_rand($ads)];
-	$ad_id = $ad->ID;
+	// If more than 1 ad assigned to a location, show them stacked
+	if (count($ads) > 1 || $show_all) {
+		ob_start();
+		echo '<div class="vendor-ads-multiple vendor-ads-stacked vendor-ads-location-' . esc_attr($location) . '" style="display: flex; flex-direction: column; gap: 20px;">';
+		foreach ($ads as $ad) {
+			echo event_rsvp_render_single_ad($ad->ID, $location, $preview);
+		}
+		echo '</div>';
+		return ob_get_clean();
+	}
 	
-	$thumbnail_url = get_the_post_thumbnail_url($ad_id, 'medium');
+	// Single ad - show random one
+	$ad = $ads[array_rand($ads)];
+	return event_rsvp_render_single_ad($ad->ID, $location, $preview);
+}
+
+function event_rsvp_render_single_ad($ad_id, $location = '', $preview = false) {
+	$thumbnail_url = get_the_post_thumbnail_url($ad_id, 'large');
 	$click_url = get_post_meta($ad_id, 'click_url', true);
 	$ad_title = get_the_title($ad_id);
+	$ad_status = get_post_meta($ad_id, 'ad_status', true);
+	$approval_status = get_post_meta($ad_id, 'ad_approval_status', true);
 	
 	if (empty($thumbnail_url)) {
 		if ($preview && (is_admin() || current_user_can('administrator'))) {
@@ -294,7 +336,12 @@ function event_rsvp_display_vendor_ad($location, $preview = false) {
 		return '';
 	}
 	
+	// Check if ad should be displayed
 	if (!$preview) {
+		if ($ad_status !== 'active' || $approval_status !== 'approved') {
+			return '';
+		}
+		
 		$current_impressions = intval(get_post_meta($ad_id, 'ad_impressions', true));
 		update_post_meta($ad_id, 'ad_impressions', $current_impressions + 1);
 	}
@@ -309,7 +356,7 @@ function event_rsvp_display_vendor_ad($location, $preview = false) {
 			<?php if (!empty($click_url)) : ?>
 				<a href="<?php echo esc_url($click_url); ?>" target="_blank" rel="noopener sponsored" class="vendor-ad-link" data-ad-id="<?php echo $ad_id; ?>" <?php echo $preview ? 'onclick="return false;"' : ''; ?>>
 					<div class="vendor-ad-image">
-						<img src="<?php echo esc_url($thumbnail_url); ?>=" alt="<?php echo esc_attr($ad_title); ?>" loading="lazy">
+						<img src="<?php echo esc_url($thumbnail_url); ?>" alt="<?php echo esc_attr($ad_title); ?>" loading="lazy">
 					</div>
 					<div class="vendor-ad-overlay">
 						<span class="vendor-ad-title"><?php echo esc_html($ad_title); ?></span>

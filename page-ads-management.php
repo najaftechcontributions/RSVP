@@ -45,13 +45,17 @@ foreach ($all_ads as $ad) {
 }
 
 $ad_locations = array(
-	'sidebar' => 'Sidebar',
-	'footer' => 'Footer',
-	'homepage' => 'Homepage',
-	'header' => 'Header',
-	'event_single' => 'Single Event Page',
-	'event_archive' => 'Events Archive',
-	'between_content' => 'Between Content'
+	'home_1' => 'Homepage Slot 1',
+	'home_2' => 'Homepage Slot 2',
+	'home_3' => 'Homepage Slot 3',
+	'sidebar_1' => 'Sidebar Slot 1',
+	'sidebar_2' => 'Sidebar Slot 2',
+	'sidebar_3' => 'Sidebar Slot 3',
+	'sidebar_4' => 'Sidebar Slot 4',
+	'events_1' => 'Events Page Slot 1',
+	'events_2' => 'Events Page Slot 2',
+	'events_3' => 'Events Page Slot 3',
+	'events_4' => 'Events Page Slot 4'
 );
 ?>
 
@@ -213,7 +217,13 @@ $ad_locations = array(
 											</div>
 										</td>
 										<td class="ad-vendor-cell">
-											<?php echo esc_html($author->display_name); ?>
+											<?php
+											if ($author && !is_wp_error($author)) {
+												echo esc_html($author->display_name);
+											} else {
+												echo '<em>Unknown</em>';
+											}
+											?>
 										</td>
 										<td class="ad-location-cell">
 											<select class="ad-location-select" data-ad-id="<?php echo $ad->ID; ?>" data-current="<?php echo esc_attr($slot_location); ?>">
@@ -282,6 +292,10 @@ $ad_locations = array(
 										</td>
 										<td class="ad-actions-cell">
 											<div class="action-buttons">
+												<button class="action-btn preview-shortcode-btn" data-ad-id="<?php echo $ad->ID; ?>" title="Preview Ad">
+													👁️
+												</button>
+
 												<?php if ($approval_status !== 'approved') : ?>
 													<button class="action-btn approve-btn" data-ad-id="<?php echo $ad->ID; ?>" title="Approve Ad">
 														✓
@@ -295,11 +309,11 @@ $ad_locations = array(
 												<?php endif; ?>
 												
 												<?php if ($ad_status === 'active') : ?>
-													<button class="action-btn deactivate-btn" data-ad-id="<?php echo $ad->ID; ?>" title="Deactivate Ad">
+													<button class="action-btn pause-btn deactivate-btn" data-ad-id="<?php echo $ad->ID; ?>" title="Pause Ad">
 														⏸️
 													</button>
 												<?php else : ?>
-													<button class="action-btn activate-btn" data-ad-id="<?php echo $ad->ID; ?>" title="Activate Ad">
+													<button class="action-btn play-btn activate-btn" data-ad-id="<?php echo $ad->ID; ?>" title="Play Ad">
 														▶️
 													</button>
 												<?php endif; ?>
@@ -362,7 +376,7 @@ $ad_locations = array(
 								<div class="pending-ad-info">
 									<h3 class="pending-ad-title"><?php echo esc_html(get_the_title($ad->ID)); ?></h3>
 									<div class="pending-ad-meta">
-										<span class="meta-item"><strong>Vendor:</strong> <?php echo esc_html($author->display_name); ?></span>
+										<span class="meta-item"><strong>Vendor:</strong> <?php echo $author && !is_wp_error($author) ? esc_html($author->display_name) : '<em>Unknown</em>'; ?></span>
 										<span class="meta-item"><strong>Location:</strong> <?php echo esc_html($ad_locations[$slot_location] ?? ucfirst($slot_location)); ?></span>
 										<span class="meta-item"><strong>Duration:</strong> <?php echo esc_html(date('M j', strtotime($start_date)) . ' - ' . date('M j', strtotime($end_date))); ?></span>
 										<?php if (!empty($click_url)) : ?>
@@ -750,6 +764,10 @@ document.addEventListener('DOMContentLoaded', function() {
 					if (data.success) {
 						alert(data.data.message);
 						this.setAttribute('data-current', newLocation);
+						// Reload page to update placements tab
+						setTimeout(() => {
+							location.reload();
+						}, 1000);
 					} else {
 						alert('Error: ' + (data.data || 'Unknown error'));
 						this.value = currentLocation;

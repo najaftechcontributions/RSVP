@@ -144,6 +144,107 @@
 	margin: 0 auto;
 }
 
+/* Location-based ad slots */
+.vendor-ad-home_1,
+.vendor-ad-home_2,
+.vendor-ad-home_3 {
+	max-width: 100%;
+	margin: 40px 0;
+}
+
+.vendor-ad-home_1 .vendor-ad-container,
+.vendor-ad-home_2 .vendor-ad-container,
+.vendor-ad-home_3 .vendor-ad-container {
+	border-radius: 16px;
+	max-width: 1200px;
+	margin: 0 auto;
+}
+
+.vendor-ad-sidebar_1,
+.vendor-ad-sidebar_2,
+.vendor-ad-sidebar_3,
+.vendor-ad-sidebar_4 {
+	max-width: 350px;
+	margin: 24px auto;
+}
+
+.vendor-ad-sidebar_1 .vendor-ad-container,
+.vendor-ad-sidebar_2 .vendor-ad-container,
+.vendor-ad-sidebar_3 .vendor-ad-container,
+.vendor-ad-sidebar_4 .vendor-ad-container {
+	border-radius: 8px;
+}
+
+.vendor-ad-events_1,
+.vendor-ad-events_2,
+.vendor-ad-events_3,
+.vendor-ad-events_4 {
+	max-width: 100%;
+	margin: 32px 0;
+}
+
+.vendor-ad-events_1 .vendor-ad-container,
+.vendor-ad-events_2 .vendor-ad-container,
+.vendor-ad-events_3 .vendor-ad-container,
+.vendor-ad-events_4 .vendor-ad-container {
+	border-radius: 12px;
+}
+
+/* Multiple ads display */
+.vendor-ads-multiple {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+	margin: 24px 0;
+}
+
+.vendor-ads-multiple.vendor-ads-location-home_1,
+.vendor-ads-multiple.vendor-ads-location-home_2,
+.vendor-ads-multiple.vendor-ads-location-home_3 {
+	gap: 40px;
+	margin: 40px 0;
+}
+
+.vendor-ads-multiple.vendor-ads-location-sidebar_1,
+.vendor-ads-multiple.vendor-ads-location-sidebar_2,
+.vendor-ads-multiple.vendor-ads-location-sidebar_3,
+.vendor-ads-multiple.vendor-ads-location-sidebar_4 {
+	gap: 20px;
+	margin: 20px 0;
+}
+
+.vendor-ads-multiple.vendor-ads-location-events_1,
+.vendor-ads-multiple.vendor-ads-location-events_2,
+.vendor-ads-multiple.vendor-ads-location-events_3,
+.vendor-ads-multiple.vendor-ads-location-events_4 {
+	gap: 32px;
+	margin: 32px 0;
+}
+
+/* Preview notice for empty slots */
+.vendor-ad-preview-notice {
+	padding: 20px;
+	background: #f8f9fa;
+	border: 2px dashed #ddd;
+	border-radius: 8px;
+	text-align: center;
+	margin: 10px 0;
+	font-size: 14px;
+	color: #666;
+}
+
+.vendor-ad-preview-notice strong {
+	display: block;
+	font-size: 16px;
+	color: #333;
+	margin-bottom: 8px;
+}
+
+.vendor-ad-preview-notice small {
+	font-size: 12px;
+	color: #999;
+}
+
 .vendor-ad-sponsored-label {
 	position: absolute;
 	top: 12px;
