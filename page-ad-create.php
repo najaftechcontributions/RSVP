@@ -47,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ad_form_nonce'])) {
 		$slot_location = sanitize_text_field($_POST['slot_location'] ?? 'sidebar');
 		$ad_start_date = sanitize_text_field($_POST['ad_start_date'] ?? '');
 		$ad_end_date = sanitize_text_field($_POST['ad_end_date'] ?? '');
+		$rendering_style = sanitize_text_field($_POST['rendering_style'] ?? 'default');
 		
 		if (empty($ad_title)) {
 			$error_message = 'Please provide an ad title.';
@@ -72,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ad_form_nonce'])) {
 				update_post_meta($saved_ad_id, 'slot_location', $slot_location);
 				update_post_meta($saved_ad_id, 'ad_start_date', $ad_start_date);
 				update_post_meta($saved_ad_id, 'ad_end_date', $ad_end_date);
+				update_post_meta($saved_ad_id, 'rendering_style', $rendering_style);
 				
 				if ($is_edit) {
 					update_post_meta($saved_ad_id, 'ad_status', get_post_meta($saved_ad_id, 'ad_status', true) ?: 'inactive');
@@ -136,6 +138,7 @@ if ($is_edit && $ad) {
 	$current_start_date = get_post_meta($ad_id, 'ad_start_date', true);
 	$current_end_date = get_post_meta($ad_id, 'ad_end_date', true);
 	$current_image = get_the_post_thumbnail_url($ad_id, 'medium');
+	$current_rendering_style = get_post_meta($ad_id, 'rendering_style', true) ?: 'default';
 } else {
 	$current_title = '';
 	$current_click_url = '';
@@ -143,6 +146,7 @@ if ($is_edit && $ad) {
 	$current_start_date = date('Y-m-d');
 	$current_end_date = date('Y-m-d', strtotime('+30 days'));
 	$current_image = '';
+	$current_rendering_style = 'default';
 }
 ?>
 
@@ -242,6 +246,18 @@ if ($is_edit && $ad) {
 								<?php endforeach; ?>
 							</select>
 							<p class="form-help">Choose where your ad will appear on the website.</p>
+						</div>
+
+						<div class="form-group">
+							<label for="rendering_style" class="form-label">Rendering Style</label>
+							<select id="rendering_style" name="rendering_style" class="form-select">
+								<option value="default" <?php selected($current_rendering_style, 'default'); ?>>Default</option>
+								<option value="banner" <?php selected($current_rendering_style, 'banner'); ?>>Banner (Full Width)</option>
+								<option value="card" <?php selected($current_rendering_style, 'card'); ?>>Card (with Shadow)</option>
+								<option value="minimal" <?php selected($current_rendering_style, 'minimal'); ?>>Minimal (Simple)</option>
+								<option value="overlay" <?php selected($current_rendering_style, 'overlay'); ?>>Overlay (Hover Effect)</option>
+							</select>
+							<p class="form-help">Choose how your ad will be displayed. Default uses the standard responsive layout.</p>
 						</div>
 
 						<div class="form-row">

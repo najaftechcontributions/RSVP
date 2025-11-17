@@ -72,6 +72,11 @@
 .primary-button {
 	background: linear-gradient(135deg, #503AA8 0%, #6B52C3 100%);
 	color: #fff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: row;
+    min-height: 46px;
 	border: none;
 }
 

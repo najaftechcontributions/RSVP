@@ -192,6 +192,7 @@ function event_rsvp_single_ad_shortcode($atts) {
 	$click_url = get_post_meta($ad_id, 'click_url', true);
 	$ad_title = get_the_title($ad_id);
 	$slot_location = get_post_meta($ad_id, 'slot_location', true);
+	$rendering_style = get_post_meta($ad_id, 'rendering_style', true) ?: 'default';
 
 	if (empty($thumbnail_url)) {
 		if (is_admin() || current_user_can('administrator')) {
@@ -208,9 +209,12 @@ function event_rsvp_single_ad_shortcode($atts) {
 
 	$preview_label = $is_preview ? '<div class="ad-preview-label" style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; z-index: 10;">PREVIEW</div>' : '';
 
+	// Add rendering style class
+	$style_class = $rendering_style !== 'default' ? ' vendor-ad-style-' . $rendering_style : '';
+
 	ob_start();
 	?>
-	<div class="vendor-ad-single vendor-ad-wrapper vendor-ad-<?php echo esc_attr($slot_location); ?>" data-ad-id="<?php echo $ad_id; ?>">
+	<div class="vendor-ad-single vendor-ad-wrapper vendor-ad-<?php echo esc_attr($slot_location); ?><?php echo esc_attr($style_class); ?>" data-ad-id="<?php echo $ad_id; ?>" data-style="<?php echo esc_attr($rendering_style); ?>">
 		<div class="vendor-ad-container" style="position: relative;">
 			<?php echo $preview_label; ?>
 			<?php if (!empty($click_url)) : ?>

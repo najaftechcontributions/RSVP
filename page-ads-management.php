@@ -70,9 +70,9 @@ $ad_locations = array(
 				<p class="dashboard-subtitle">Manage, approve, and monitor all advertising across your platform</p>
 			</div>
 			<div class="header-actions">
-				<a href="<?php echo esc_url(admin_url('edit.php?post_type=vendor_ad')); ?>" class="action-button secondary-button">
+				<!-- <a href="<?php echo esc_url(admin_url('edit.php?post_type=vendor_ad')); ?>" class="action-button secondary-button">
 					📋 All Ads
-				</a>
+				</a> -->
 				<a href="<?php echo esc_url(admin_url('post-new.php?post_type=vendor_ad')); ?>" class="action-button primary-button">
 					<span class="button-icon">➕</span>
 					<span class="button-text">Create New Ad</span>
@@ -136,7 +136,7 @@ $ad_locations = array(
 
 		<div style="height:40px" aria-hidden="true"></div>
 
-		<div class="management-tabs">
+		<div class="management-tabs " style="margin-bottom:15px;">
 			<button class="tab-button active" data-tab="all-ads">📋 All Ads</button>
 			<button class="tab-button" data-tab="pending">⏳ Pending Approval (<?php echo count($pending_ads); ?>)</button>
 			<button class="tab-button" data-tab="placements">📍 Ad Placements</button>
@@ -159,7 +159,6 @@ $ad_locations = array(
 								<tr>
 									<th>Ad Preview</th>
 									<th>Details</th>
-									<th>Vendor</th>
 									<th>Location</th>
 									<th>Schedule</th>
 									<th>Status</th>
@@ -214,16 +213,8 @@ $ad_locations = array(
 														🔗 <?php echo esc_html(wp_trim_words($click_url, 5, '...')); ?>
 													</a>
 												<?php endif; ?>
+												<span class="schedule-date">Author:<br><?php print_r($author->user_login); ?></span>
 											</div>
-										</td>
-										<td class="ad-vendor-cell">
-											<?php
-											if ($author && !is_wp_error($author)) {
-												echo esc_html($author->display_name);
-											} else {
-												echo '<em>Unknown</em>';
-											}
-											?>
 										</td>
 										<td class="ad-location-cell">
 											<select class="ad-location-select" data-ad-id="<?php echo $ad->ID; ?>" data-current="<?php echo esc_attr($slot_location); ?>">
@@ -318,9 +309,9 @@ $ad_locations = array(
 													</button>
 												<?php endif; ?>
 												
-												<a href="<?php echo esc_url(get_edit_post_link($ad->ID)); ?>" class="action-btn edit-btn" title="Edit Ad">
+												<!-- <a href="<?php echo esc_url(get_edit_post_link($ad->ID)); ?>" class="action-btn edit-btn" title="Edit Ad">
 													✏️
-												</a>
+												</a> -->
 												
 												<button class="action-btn delete-btn" data-ad-id="<?php echo $ad->ID; ?>" title="Delete Ad">
 													🗑️

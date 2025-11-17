@@ -559,6 +559,151 @@
 	}
 }
 
+/* Rendering Style Variations */
+
+/* Banner Style - Full width, horizontal layout */
+.vendor-ad-style-banner .vendor-ad-container {
+	border-radius: 8px;
+	box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+}
+
+.vendor-ad-style-banner .vendor-ad-image {
+	aspect-ratio: 4 / 1;
+}
+
+.vendor-ad-style-banner .vendor-ad-image img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.vendor-ad-style-banner .vendor-ad-overlay {
+	background: linear-gradient(to right, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+	opacity: 1;
+	transform: translateY(0);
+	padding: 20px 32px;
+	align-items: flex-start;
+	justify-content: center;
+}
+
+.vendor-ad-style-banner .vendor-ad-title {
+	font-size: 24px;
+}
+
+/* Card Style - Elevated card with shadow */
+.vendor-ad-style-card .vendor-ad-container {
+	border-radius: 16px;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+	border: 1px solid rgba(0, 0, 0, 0.05);
+	background: #fff;
+}
+
+.vendor-ad-style-card .vendor-ad-container:hover {
+	transform: translateY(-8px);
+	box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+}
+
+.vendor-ad-style-card .vendor-ad-image {
+	border-radius: 16px 16px 0 0;
+}
+
+/* Minimal Style - Clean and simple */
+.vendor-ad-style-minimal .vendor-ad-container {
+	border-radius: 6px;
+	box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+	transition: box-shadow 0.3s ease;
+}
+
+.vendor-ad-style-minimal .vendor-ad-container:hover {
+	transform: none;
+	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+}
+
+.vendor-ad-style-minimal .vendor-ad-overlay {
+	background: rgba(255, 255, 255, 0.95);
+	bottom: auto;
+	top: 0;
+	padding: 12px 16px;
+	opacity: 0;
+	transform: translateY(-10px);
+}
+
+.vendor-ad-style-minimal .vendor-ad-link:hover .vendor-ad-overlay {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.vendor-ad-style-minimal .vendor-ad-title {
+	color: #1a1a1a;
+	font-size: 16px;
+	text-shadow: none;
+}
+
+.vendor-ad-style-minimal .vendor-ad-cta {
+	color: #2196F3;
+	font-size: 13px;
+}
+
+/* Overlay Style - Strong hover effects */
+.vendor-ad-style-overlay .vendor-ad-container {
+	border-radius: 12px;
+	box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+}
+
+.vendor-ad-style-overlay .vendor-ad-overlay {
+	background: linear-gradient(to top, rgba(33, 150, 243, 0.95) 0%, rgba(33, 150, 243, 0.85) 50%, rgba(33, 150, 243, 0.6) 100%);
+	top: 0;
+	bottom: 0;
+	padding: 32px 24px;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+}
+
+.vendor-ad-style-overlay .vendor-ad-title {
+	font-size: 22px;
+}
+
+.vendor-ad-style-overlay .vendor-ad-cta {
+	color: #FFF;
+	background: rgba(255, 255, 255, 0.2);
+	padding: 8px 16px;
+	border-radius: 20px;
+	backdrop-filter: blur(10px);
+}
+
+@media (max-width: 1024px) {
+	.vendor-ad-style-banner .vendor-ad-image {
+		aspect-ratio: 3 / 1;
+	}
+
+	.vendor-ad-style-banner .vendor-ad-title {
+		font-size: 20px;
+	}
+}
+
+@media (max-width: 768px) {
+	.vendor-ad-style-banner .vendor-ad-image {
+		aspect-ratio: 2 / 1;
+	}
+
+	.vendor-ad-style-banner .vendor-ad-overlay {
+		padding: 16px 20px;
+	}
+
+	.vendor-ad-style-banner .vendor-ad-title {
+		font-size: 18px;
+	}
+
+	.vendor-ad-style-overlay .vendor-ad-title {
+		font-size: 18px;
+	}
+
+	.vendor-ad-style-overlay .vendor-ad-overlay {
+		padding: 24px 16px;
+	}
+}
+
 @media (max-width: 480px) {
 	.vendor-ad-title {
 		font-size: 14px;
@@ -576,5 +721,21 @@
 	.vendor-ad-sponsored-label {
 		font-size: 10px;
 		padding: 6px 10px;
+	}
+
+	.vendor-ad-style-banner .vendor-ad-image {
+		aspect-ratio: 16 / 9;
+	}
+
+	.vendor-ad-style-banner .vendor-ad-title {
+		font-size: 16px;
+	}
+
+	.vendor-ad-style-overlay .vendor-ad-title {
+		font-size: 16px;
+	}
+
+	.vendor-ad-style-overlay .vendor-ad-overlay {
+		padding: 20px 12px;
 	}
 }

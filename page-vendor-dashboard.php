@@ -53,12 +53,22 @@ $expired_ads = array();
 foreach ($vendor_ads as $ad) {
 	$start_date = get_post_meta($ad->ID, 'ad_start_date', true);
 	$end_date = get_post_meta($ad->ID, 'ad_end_date', true);
+	$ad_status = get_post_meta($ad->ID, 'ad_status', true);
+	$approval_status = get_post_meta($ad->ID, 'ad_approval_status', true);
 	
-	if ($today >= $start_date && $today <= $end_date) {
+	// Check if properly approved and active
+	$is_approved = ($approval_status === 'approved');
+	$is_active_status = ($ad_status === 'active');
+	$is_in_date_range = ($today >= $start_date && $today <= $end_date);
+	
+	// Active ads must be approved, active status, and within date range
+	if ($is_approved && $is_active_status && $is_in_date_range) {
 		$active_ads[] = $ad;
-	} elseif ($today < $start_date) {
+	} elseif ($today < $start_date && $is_approved) {
+		// Upcoming ads are approved but haven't started yet
 		$upcoming_ads[] = $ad;
 	} else {
+		// Everything else (expired, rejected, inactive)
 		$expired_ads[] = $ad;
 	}
 }
@@ -104,7 +114,7 @@ foreach ($vendor_ads as $ad) {
 
 		<?php if (isset($_GET['ad_deleted']) && $_GET['ad_deleted'] === 'success') : ?>
 			<div class="success-notice">
-				��� Ad deleted successfully!
+				✓ Ad deleted successfully!
 			</div>
 			<div style="height:20px" aria-hidden="true"></div>
 		<?php endif; ?>
@@ -130,7 +140,7 @@ foreach ($vendor_ads as $ad) {
 				<div class="stat-icon">⚪</div>
 				<div class="stat-content">
 					<div class="stat-value"><?php echo count($expired_ads); ?></div>
-					<div class="stat-label">Expired Ads</div>
+					<div class="stat-label">Inactive/Expired</div>
 				</div>
 			</div>
 
@@ -148,7 +158,7 @@ foreach ($vendor_ads as $ad) {
 		<div class="ads-tabs">
 			<button class="tab-button active" data-tab="active">Active (<?php echo count($active_ads); ?>)</button>
 			<button class="tab-button" data-tab="upcoming">Upcoming (<?php echo count($upcoming_ads); ?>)</button>
-			<button class="tab-button" data-tab="expired">Expired (<?php echo count($expired_ads); ?>)</button>
+			<button class="tab-button" data-tab="expired">Inactive/Expired (<?php echo count($expired_ads); ?>)</button>
 			<button class="tab-button" data-tab="all">All Ads (<?php echo count($vendor_ads); ?>)</button>
 		</div>
 
@@ -162,9 +172,12 @@ foreach ($vendor_ads as $ad) {
 						$click_url = get_post_meta($ad->ID, 'click_url', true);
 						$clicks = get_post_meta($ad->ID, 'ad_clicks', true) ?: 0;
 						$impressions = get_post_meta($ad->ID, 'ad_impressions', true) ?: 0;
+						$ad_status = get_post_meta($ad->ID, 'ad_status', true);
+						$approval_status = get_post_meta($ad->ID, 'ad_approval_status', true);
+						$rendering_style = get_post_meta($ad->ID, 'rendering_style', true) ?: 'default';
 						?>
-						<div class="ad-card ad-active">
-							<div class="ad-status-badge active">🟢 Active</div>
+						<div class="ad-card ad-active" data-ad-id="<?php echo $ad->ID; ?>" data-status="<?php echo esc_attr($ad_status); ?>" data-approval="<?php echo esc_attr($approval_status); ?>">
+							<div class="ad-status-badge active">🟢 Active & Approved</div>
 							
 							<?php if (has_post_thumbnail($ad->ID)) : ?>
 								<div class="ad-preview">
@@ -182,7 +195,7 @@ foreach ($vendor_ads as $ad) {
 								<div class="ad-meta">
 									<div class="ad-meta-item">
 										<span class="meta-label">📍 Location:</span>
-										<span class="meta-value"><?php echo esc_html(ucfirst($slot_location)); ?></span>
+										<span class="meta-value"><?php echo esc_html(ucfirst(str_replace('_', ' ', $slot_location))); ?></span>
 									</div>
 									<div class="ad-meta-item">
 										<span class="meta-label">📅 Start:</span>
@@ -215,6 +228,30 @@ foreach ($vendor_ads as $ad) {
 									</a>
 								</div>
 
+								<div class="ad-shortcodes-section">
+									<h4 class="shortcodes-title">📋 Shortcodes</h4>
+									<div class="shortcode-item">
+										<label class="shortcode-label">Individual Ad:</label>
+										<div class="shortcode-input-wrapper">
+											<code class="shortcode-code">[ad id="<?php echo $ad->ID; ?>"]</code>
+											<button class="copy-shortcode-mini" data-shortcode='[ad id="<?php echo $ad->ID; ?>"]' title="Copy">📋</button>
+										</div>
+									</div>
+									<div class="shortcode-item">
+										<label class="shortcode-label">Location-Based:</label>
+										<div class="shortcode-input-wrapper">
+											<code class="shortcode-code">[vendor_ad location="<?php echo esc_attr($slot_location); ?>"]</code>
+											<button class="copy-shortcode-mini" data-shortcode='[vendor_ad location="<?php echo esc_attr($slot_location); ?>"]' title="Copy">📋</button>
+										</div>
+									</div>
+									<?php if ($rendering_style !== 'default') : ?>
+										<div class="style-info">
+											<span class="style-label">🎨 Rendering Style:</span>
+											<span class="style-badge"><?php echo esc_html(ucfirst($rendering_style)); ?></span>
+										</div>
+									<?php endif; ?>
+								</div>
+
 								<div class="ad-actions">
 									<button class="ad-action-button preview-button" data-ad-id="<?php echo $ad->ID; ?>" title="Preview Ad">
 										👁️ Preview
@@ -236,7 +273,7 @@ foreach ($vendor_ads as $ad) {
 				<div class="empty-state">
 					<div class="empty-icon">📢</div>
 					<h3>No Active Ads</h3>
-					<p>You don't have any active ads at the moment.</p>
+					<p>You don't have any active and approved ads at the moment.</p>
 					<a href="<?php echo esc_url(home_url('/ad-create/')); ?>" class="empty-action-button">
 						Create Your First Ad
 					</a>
@@ -252,8 +289,10 @@ foreach ($vendor_ads as $ad) {
 						$end_date = get_post_meta($ad->ID, 'ad_end_date', true);
 						$slot_location = get_post_meta($ad->ID, 'slot_location', true);
 						$click_url = get_post_meta($ad->ID, 'click_url', true);
+						$ad_status = get_post_meta($ad->ID, 'ad_status', true);
+						$approval_status = get_post_meta($ad->ID, 'ad_approval_status', true);
 						?>
-						<div class="ad-card ad-upcoming">
+						<div class="ad-card ad-upcoming" data-ad-id="<?php echo $ad->ID; ?>">
 							<div class="ad-status-badge upcoming">🔵 Upcoming</div>
 							
 							<?php if (has_post_thumbnail($ad->ID)) : ?>
@@ -272,7 +311,7 @@ foreach ($vendor_ads as $ad) {
 								<div class="ad-meta">
 									<div class="ad-meta-item">
 										<span class="meta-label">📍 Location:</span>
-										<span class="meta-value"><?php echo esc_html(ucfirst($slot_location)); ?></span>
+										<span class="meta-value"><?php echo esc_html(ucfirst(str_replace('_', ' ', $slot_location))); ?></span>
 									</div>
 									<div class="ad-meta-item">
 										<span class="meta-label">📅 Starts:</span>
@@ -281,6 +320,14 @@ foreach ($vendor_ads as $ad) {
 									<div class="ad-meta-item">
 										<span class="meta-label">⏰ Ends:</span>
 										<span class="meta-value"><?php echo esc_html(date('M j, Y', strtotime($end_date))); ?></span>
+									</div>
+									<div class="ad-meta-item">
+										<span class="meta-label">⚙️ Status:</span>
+										<span class="meta-value"><?php echo ucfirst($ad_status ?: 'pending'); ?></span>
+									</div>
+									<div class="ad-meta-item">
+										<span class="meta-label">✅ Approval:</span>
+										<span class="meta-value"><?php echo ucfirst($approval_status ?: 'pending'); ?></span>
 									</div>
 								</div>
 
@@ -327,9 +374,19 @@ foreach ($vendor_ads as $ad) {
 						$click_url = get_post_meta($ad->ID, 'click_url', true);
 						$clicks = get_post_meta($ad->ID, 'ad_clicks', true) ?: 0;
 						$impressions = get_post_meta($ad->ID, 'ad_impressions', true) ?: 0;
+						$ad_status = get_post_meta($ad->ID, 'ad_status', true);
+						$approval_status = get_post_meta($ad->ID, 'ad_approval_status', true);
+						
+						// Determine the specific status
+						$status_label = '⚪ Expired';
+						if ($approval_status === 'rejected') {
+							$status_label = '❌ Rejected';
+						} elseif ($ad_status !== 'active') {
+							$status_label = '⏸️ Inactive';
+						}
 						?>
-						<div class="ad-card ad-expired">
-							<div class="ad-status-badge expired">⚪ Expired</div>
+						<div class="ad-card ad-expired" data-ad-id="<?php echo $ad->ID; ?>">
+							<div class="ad-status-badge expired"><?php echo $status_label; ?></div>
 							
 							<?php if (has_post_thumbnail($ad->ID)) : ?>
 								<div class="ad-preview">
@@ -347,10 +404,10 @@ foreach ($vendor_ads as $ad) {
 								<div class="ad-meta">
 									<div class="ad-meta-item">
 										<span class="meta-label">📍 Location:</span>
-										<span class="meta-value"><?php echo esc_html(ucfirst($slot_location)); ?></span>
+										<span class="meta-value"><?php echo esc_html(ucfirst(str_replace('_', ' ', $slot_location))); ?></span>
 									</div>
 									<div class="ad-meta-item">
-										<span class="meta-label">📅 Ran:</span>
+										<span class="meta-label">📅 Period:</span>
 										<span class="meta-value"><?php echo esc_html(date('M j', strtotime($start_date)) . ' - ' . date('M j, Y', strtotime($end_date))); ?></span>
 									</div>
 									<div class="ad-meta-item">
@@ -360,6 +417,14 @@ foreach ($vendor_ads as $ad) {
 									<div class="ad-meta-item">
 										<span class="meta-label">🖱️ Clicks:</span>
 										<span class="meta-value"><?php echo esc_html($clicks); ?></span>
+									</div>
+									<div class="ad-meta-item">
+										<span class="meta-label">⚙️ Status:</span>
+										<span class="meta-value"><?php echo ucfirst($ad_status ?: 'inactive'); ?></span>
+									</div>
+									<div class="ad-meta-item">
+										<span class="meta-label">✅ Approval:</span>
+										<span class="meta-value"><?php echo ucfirst($approval_status ?: 'pending'); ?></span>
 									</div>
 								</div>
 
@@ -383,8 +448,8 @@ foreach ($vendor_ads as $ad) {
 			<?php else : ?>
 				<div class="empty-state">
 					<div class="empty-icon">⚪</div>
-					<h3>No Expired Ads</h3>
-					<p>You don't have any expired ads yet.</p>
+					<h3>No Inactive/Expired Ads</h3>
+					<p>All your ads are active or upcoming!</p>
 				</div>
 			<?php endif; ?>
 		</div>
@@ -397,7 +462,9 @@ foreach ($vendor_ads as $ad) {
 							<tr>
 								<th>Ad Name</th>
 								<th>Location</th>
-								<th>Status</th>
+								<th>Date Status</th>
+								<th>Ad Status</th>
+								<th>Approval</th>
 								<th>Start Date</th>
 								<th>End Date</th>
 								<th>Views</th>
@@ -412,16 +479,19 @@ foreach ($vendor_ads as $ad) {
 								$slot_location = get_post_meta($ad->ID, 'slot_location', true);
 								$clicks = get_post_meta($ad->ID, 'ad_clicks', true) ?: 0;
 								$impressions = get_post_meta($ad->ID, 'ad_impressions', true) ?: 0;
+								$ad_status = get_post_meta($ad->ID, 'ad_status', true) ?: 'inactive';
+								$approval_status = get_post_meta($ad->ID, 'ad_approval_status', true) ?: 'pending';
 								
+								// Calculate date-based status
 								if ($today >= $start_date && $today <= $end_date) {
-									$status = '<span class="status-badge active">🟢 Active</span>';
+									$date_status = '<span class="status-badge active">🟢 Active Period</span>';
 								} elseif ($today < $start_date) {
-									$status = '<span class="status-badge upcoming">🔵 Upcoming</span>';
+									$date_status = '<span class="status-badge upcoming">🔵 Upcoming</span>';
 								} else {
-									$status = '<span class="status-badge expired">⚪ Expired</span>';
+									$date_status = '<span class="status-badge expired">⚪ Expired</span>';
 								}
 								?>
-								<tr>
+								<tr data-ad-id="<?php echo $ad->ID; ?>">
 									<td class="ad-name-cell">
 										<div class="ad-name-wrapper">
 											<?php if (has_post_thumbnail($ad->ID)) : ?>
@@ -432,8 +502,10 @@ foreach ($vendor_ads as $ad) {
 											<span><?php echo esc_html(get_the_title($ad->ID)); ?></span>
 										</div>
 									</td>
-									<td><?php echo esc_html(ucfirst($slot_location)); ?></td>
-									<td><?php echo $status; ?></td>
+									<td><?php echo esc_html(ucfirst(str_replace('_', ' ', $slot_location))); ?></td>
+									<td><?php echo $date_status; ?></td>
+									<td><span class="status-badge <?php echo $ad_status === 'active' ? 'active' : 'inactive'; ?>"><?php echo ucfirst($ad_status); ?></span></td>
+									<td><span class="status-badge <?php echo $approval_status === 'approved' ? 'approved' : ($approval_status === 'rejected' ? 'rejected' : 'pending'); ?>"><?php echo ucfirst($approval_status); ?></span></td>
 									<td><?php echo esc_html(date('M j, Y', strtotime($start_date))); ?></td>
 									<td><?php echo esc_html(date('M j, Y', strtotime($end_date))); ?></td>
 									<td><?php echo esc_html($impressions); ?></td>
@@ -594,16 +666,122 @@ foreach ($vendor_ads as $ad) {
 	border-color: #ccc;
 }
 
-.preview-button {
-	background: #2196f3;
-	color: #fff;
-	border: none;
+.ad-shortcodes-section {
+	background: #f8f9fa;
+	border: 2px solid #e9ecef;
+	border-radius: 8px;
+	padding: 1rem;
+	margin-bottom: 1.25rem;
 }
 
-.preview-button:hover {
-	background: #1976d2;
-	transform: translateY(-2px);
-	box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+.shortcodes-title {
+	font-size: 0.9375rem;
+	font-weight: 700;
+	margin: 0 0 0.75rem 0;
+	color: #495057;
+}
+
+.shortcode-item {
+	margin-bottom: 0.75rem;
+}
+
+.shortcode-item:last-child {
+	margin-bottom: 0;
+}
+
+.shortcode-label {
+	display: block;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: #6c757d;
+	margin-bottom: 0.25rem;
+}
+
+.shortcode-input-wrapper {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.shortcode-code {
+	flex: 1;
+	background: #fff;
+	border: 1px solid #dee2e6;
+	border-radius: 4px;
+	padding: 0.5rem 0.75rem;
+	font-size: 0.8125rem;
+	font-family: 'Courier New', monospace;
+	color: #212529;
+	word-break: break-all;
+}
+
+.copy-shortcode-mini {
+	background: #007bff;
+	color: #fff;
+	border: none;
+	border-radius: 4px;
+	padding: 0.5rem 0.75rem;
+	cursor: pointer;
+	font-size: 1rem;
+	transition: all 0.3s ease;
+	flex-shrink: 0;
+}
+
+.copy-shortcode-mini:hover {
+	background: #0056b3;
+	transform: scale(1.05);
+}
+
+.copy-shortcode-mini:active {
+	transform: scale(0.95);
+}
+
+.style-info {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-top: 0.5rem;
+	padding-top: 0.5rem;
+	border-top: 1px solid #dee2e6;
+}
+
+.style-label {
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: #6c757d;
+}
+
+.style-badge {
+	background: #6f42c1;
+	color: #fff;
+	padding: 0.25rem 0.75rem;
+	border-radius: 12px;
+	font-size: 0.75rem;
+	font-weight: 600;
+}
+
+.status-badge {
+	display: inline-block;
+	padding: 0.375rem 0.75rem;
+	border-radius: 20px;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.status-badge.approved {
+	background: #d1fae5;
+	color: #065f46;
+}
+
+.status-badge.pending {
+	background: #fef3c7;
+	color: #92400e;
+}
+
+.status-badge.rejected {
+	background: #fee2e2;
+	color: #991b1b;
 }
 </style>
 
@@ -613,15 +791,33 @@ document.addEventListener('DOMContentLoaded', function() {
 	const tabContents = document.querySelectorAll('.tab-content');
 	const nonce = '<?php echo wp_create_nonce('event_rsvp_ad_management'); ?>';
 
+	// Tab switching
 	tabButtons.forEach(button => {
 		button.addEventListener('click', function() {
 			const targetTab = this.getAttribute('data-tab');
-
 			tabButtons.forEach(btn => btn.classList.remove('active'));
 			tabContents.forEach(content => content.classList.remove('active'));
-
 			this.classList.add('active');
 			document.getElementById('tab-' + targetTab).classList.add('active');
+		});
+	});
+
+	// Copy shortcode functionality
+	document.querySelectorAll('.copy-shortcode-mini').forEach(btn => {
+		btn.addEventListener('click', function() {
+			const shortcode = this.getAttribute('data-shortcode');
+			navigator.clipboard.writeText(shortcode).then(() => {
+				const originalHTML = this.innerHTML;
+				this.innerHTML = '✓';
+				this.style.background = '#28a745';
+				setTimeout(() => {
+					this.innerHTML = originalHTML;
+					this.style.background = '';
+				}, 2000);
+			}).catch(err => {
+				console.error('Failed to copy:', err);
+				alert('Failed to copy shortcode. Please copy manually.');
+			});
 		});
 	});
 
