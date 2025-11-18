@@ -457,6 +457,16 @@ function event_rsvp_approve_ad() {
 
 	update_post_meta($ad_id, 'ad_approval_status', 'approved');
 
+	// Clear WordPress object cache for this post
+	clean_post_cache($ad_id);
+
+	// Clear all vendor_ad caches
+	$location = get_post_meta($ad_id, 'slot_location', true);
+	wp_cache_delete('event_rsvp_active_ads', 'vendor_ad');
+	if ($location) {
+		wp_cache_delete('event_rsvp_active_ads_' . $location, 'vendor_ad');
+	}
+
 	wp_send_json_success(array(
 		'message' => 'Ad approved successfully!'
 	));
@@ -480,6 +490,16 @@ function event_rsvp_reject_ad() {
 
 	update_post_meta($ad_id, 'ad_approval_status', 'rejected');
 	update_post_meta($ad_id, 'ad_status', 'inactive');
+
+	// Clear WordPress object cache for this post
+	clean_post_cache($ad_id);
+
+	// Clear all vendor_ad caches
+	$location = get_post_meta($ad_id, 'slot_location', true);
+	wp_cache_delete('event_rsvp_active_ads', 'vendor_ad');
+	if ($location) {
+		wp_cache_delete('event_rsvp_active_ads_' . $location, 'vendor_ad');
+	}
 
 	wp_send_json_success(array(
 		'message' => 'Ad rejected successfully!'
@@ -516,6 +536,16 @@ function event_rsvp_toggle_ad_status() {
 
 	update_post_meta($ad_id, 'ad_status', $new_status);
 
+	// Clear WordPress object cache for this post
+	clean_post_cache($ad_id);
+
+	// Clear all vendor_ad caches
+	$location = get_post_meta($ad_id, 'slot_location', true);
+	wp_cache_delete('event_rsvp_active_ads', 'vendor_ad');
+	if ($location) {
+		wp_cache_delete('event_rsvp_active_ads_' . $location, 'vendor_ad');
+	}
+
 	wp_send_json_success(array(
 		'message' => $message,
 		'new_status' => $new_status
@@ -538,9 +568,21 @@ function event_rsvp_delete_ad() {
 		return;
 	}
 
+	// Get location before deleting
+	$location = get_post_meta($ad_id, 'slot_location', true);
+
 	$result = wp_delete_post($ad_id, true);
 
 	if ($result) {
+		// Clear WordPress object cache for this post
+		clean_post_cache($ad_id);
+
+		// Clear all vendor_ad caches
+		wp_cache_delete('event_rsvp_active_ads', 'vendor_ad');
+		if ($location) {
+			wp_cache_delete('event_rsvp_active_ads_' . $location, 'vendor_ad');
+		}
+
 		wp_send_json_success(array(
 			'message' => 'Ad deleted successfully!'
 		));
@@ -574,6 +616,13 @@ function event_rsvp_change_ad_location() {
 	}
 
 	update_post_meta($ad_id, 'slot_location', $location);
+
+	// Clear WordPress object cache for this post
+	clean_post_cache($ad_id);
+
+	// Clear all vendor_ad caches
+	wp_cache_delete('event_rsvp_active_ads', 'vendor_ad');
+	wp_cache_delete('event_rsvp_active_ads_' . $location, 'vendor_ad');
 
 	wp_send_json_success(array(
 		'message' => 'Ad location changed successfully!'
