@@ -256,6 +256,7 @@ if ($is_edit && $ad) {
 								<option value="card" <?php selected($current_rendering_style, 'card'); ?>>Card (with Shadow)</option>
 								<option value="minimal" <?php selected($current_rendering_style, 'minimal'); ?>>Minimal (Simple)</option>
 								<option value="overlay" <?php selected($current_rendering_style, 'overlay'); ?>>Overlay (Hover Effect)</option>
+								<option value="vertical" <?php selected($current_rendering_style, 'vertical'); ?>>Vertical (Portrait)</option>
 							</select>
 							<p class="form-help">Choose how your ad will be displayed. Default uses the standard responsive layout.</p>
 						</div>

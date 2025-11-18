@@ -672,6 +672,57 @@
 	backdrop-filter: blur(10px);
 }
 
+/* Vertical Style - Portrait layout with content below image */
+.vendor-ad-style-vertical {
+	max-width: 360px;
+	margin: 24px auto;
+}
+
+.vendor-ad-style-vertical .vendor-ad-container {
+	border-radius: 12px;
+	box-shadow: 0 6px 28px rgba(0, 0, 0, 0.12);
+	display: flex;
+	flex-direction: column;
+}
+
+.vendor-ad-style-vertical .vendor-ad-container:hover {
+	transform: translateY(-6px);
+	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+}
+
+.vendor-ad-style-vertical .vendor-ad-image {
+	aspect-ratio: 3 / 4;
+	border-radius: 12px 12px 0 0;
+}
+
+.vendor-ad-style-vertical .vendor-ad-image img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.vendor-ad-style-vertical .vendor-ad-overlay {
+	position: static;
+	background: #fff;
+	padding: 20px;
+	opacity: 1;
+	transform: none;
+	border-radius: 0 0 12px 12px;
+	gap: 12px;
+}
+
+.vendor-ad-style-vertical .vendor-ad-title {
+	color: #1a1a1a;
+	font-size: 18px;
+	text-shadow: none;
+	line-height: 1.4;
+}
+
+.vendor-ad-style-vertical .vendor-ad-cta {
+	color: #2196F3;
+	font-weight: 700;
+}
+
 @media (max-width: 1024px) {
 	.vendor-ad-style-banner .vendor-ad-image {
 		aspect-ratio: 3 / 1;
@@ -679,6 +730,14 @@
 
 	.vendor-ad-style-banner .vendor-ad-title {
 		font-size: 20px;
+	}
+
+	.vendor-ad-style-vertical {
+		max-width: 340px;
+	}
+
+	.vendor-ad-style-vertical .vendor-ad-title {
+		font-size: 17px;
 	}
 }
 
@@ -701,6 +760,18 @@
 
 	.vendor-ad-style-overlay .vendor-ad-overlay {
 		padding: 24px 16px;
+	}
+
+	.vendor-ad-style-vertical {
+		max-width: 100%;
+	}
+
+	.vendor-ad-style-vertical .vendor-ad-overlay {
+		padding: 16px;
+	}
+
+	.vendor-ad-style-vertical .vendor-ad-title {
+		font-size: 16px;
 	}
 }
 
@@ -737,5 +808,18 @@
 
 	.vendor-ad-style-overlay .vendor-ad-overlay {
 		padding: 20px 12px;
+	}
+
+	.vendor-ad-style-vertical .vendor-ad-overlay {
+		padding: 14px;
+		gap: 10px;
+	}
+
+	.vendor-ad-style-vertical .vendor-ad-title {
+		font-size: 15px;
+	}
+
+	.vendor-ad-style-vertical .vendor-ad-cta {
+		font-size: 12px;
 	}
 }
