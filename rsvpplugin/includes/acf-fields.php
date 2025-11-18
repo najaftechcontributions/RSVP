@@ -42,7 +42,10 @@ function event_rsvp_register_acf_fields() {
 				'key' => 'field_venue_map_url',
 				'label' => 'Venue Map URL',
 				'name' => 'venue_map_url',
-				'type' => 'url',
+				'type' => 'textarea',
+				'rows' => 4,
+				'instructions' => 'Paste Google Maps embed iframe code or just the URL. The system will automatically extract the map URL.',
+				'placeholder' => 'Paste Google Maps iframe or URL here...',
 			),
 			array(
 				'key' => 'field_event_hashtag',
@@ -291,3 +294,19 @@ function event_rsvp_register_acf_fields() {
 endif;
 
 add_action('acf/init', 'event_rsvp_register_acf_fields');
+
+function event_rsvp_extract_map_url($value, $post_id, $field) {
+	if (empty($value)) {
+		return $value;
+	}
+
+	if (strpos($value, '<iframe') !== false) {
+		preg_match('/src=["\']([^"\']+)["\']/', $value, $matches);
+		if (!empty($matches[1])) {
+			return $matches[1];
+		}
+	}
+
+	return $value;
+}
+add_filter('acf/update_value/name=venue_map_url', 'event_rsvp_extract_map_url', 10, 3);

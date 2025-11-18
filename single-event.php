@@ -125,11 +125,19 @@ while ( have_posts() ) :
 						</div>
 					<?php endif; ?>
 
-					<?php if ($venue_map_url) : ?>
+					<?php if ($venue_map_url) :
+						$map_src = $venue_map_url;
+						if (strpos($venue_map_url, '<iframe') !== false) {
+							preg_match('/src=["\']([^"\']+)["\']/', $venue_map_url, $matches);
+							if (!empty($matches[1])) {
+								$map_src = $matches[1];
+							}
+						}
+					?>
 						<div class="event-map-section">
 							<h3>Event Location</h3>
 							<div class="map-embed">
-								<iframe src="<?php echo esc_url($venue_map_url); ?>" width="100%" height="400" style="border:0; border-radius: var(--event-radius);" allowfullscreen="" loading="lazy"></iframe>
+								<iframe src="<?php echo esc_url($map_src); ?>" width="100%" height="400" style="border:0; border-radius: var(--event-radius);" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
 							</div>
 						</div>
 					<?php endif; ?>
@@ -463,7 +471,11 @@ while ( have_posts() ) :
 					<div class="rsvp-card">
 						<h3>RSVP for This Event</h3>
 						
-						<?php if ($is_full) : ?>
+						<?php if ($is_past) : ?>
+						<div class="rsvp-full-message">
+							⏰ This event is over. RSVPs are no longer accepted.
+						</div>
+					<?php elseif ($is_full) : ?>
 							<div class="rsvp-full-message">
 								⚠ This event is at full capacity. Please check back later for cancellations.
 							</div>
@@ -556,7 +568,7 @@ while ( have_posts() ) :
 						<div class="event-admin-actions">
 							<h4>Event Management</h4>
 							<a href="<?php echo esc_url(home_url('/event-create/?event_id=' . $event_id)); ?>" class="admin-action-button">
-								✏️ Edit Event
+								✏��� Edit Event
 							</a>
 							<a href="<?php echo esc_url(home_url('/check-in/?event_id=' . $event_id)); ?>" class="admin-action-button">
 								✓ Check-In Page

@@ -120,14 +120,18 @@ $author_name = get_the_author_meta('display_name', get_post_field('post_author',
 	</div>
 
 	<div class="event-card-footer">
-		<?php if (!$is_past && !$is_full) : ?>
+		<?php if ($is_past) : ?>
+			<a href="<?php echo get_permalink($event_id); ?>" class="event-action-button event-action-past">
+				📄 View Details
+			</a>
+		<?php elseif ($is_full) : ?>
+			<a href="<?php echo get_permalink($event_id); ?>" class="event-action-button event-action-full">
+				👁️ View Event
+			</a>
+		<?php else : ?>
 			<button class="event-action-button open-join-modal" data-event-id="<?php echo esc_attr($event_id); ?>" data-modal-id="join-event-modal-<?php echo esc_attr($event_id); ?>">
 				✨ RSVP Now
 			</button>
-		<?php else : ?>
-			<a href="<?php echo get_permalink($event_id); ?>" class="event-action-button">
-				<?php echo $is_past ? '📄 View Details' : '👁️ View Event'; ?>
-			</a>
 		<?php endif; ?>
 	</div>
 
