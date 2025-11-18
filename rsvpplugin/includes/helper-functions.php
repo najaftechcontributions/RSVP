@@ -237,6 +237,19 @@ function event_rsvp_get_available_spots($event_id) {
 	return max(0, $max_attendees - count($current_attendees));
 }
 
+function event_rsvp_is_event_past($event_id) {
+	$event_date = get_field('event_date', $event_id);
+
+	if (empty($event_date)) {
+		return false;
+	}
+
+	$event_timestamp = strtotime($event_date);
+	$current_timestamp = current_time('timestamp');
+
+	return $current_timestamp > $event_timestamp;
+}
+
 function event_rsvp_get_ad_locations() {
 	return array(
 		'home_1' => 'Homepage Slot 1',

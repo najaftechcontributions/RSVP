@@ -25,6 +25,11 @@ function event_rsvp_handle_rsvp_submission() {
 		exit;
 	}
 
+	if (event_rsvp_is_event_past($event_id)) {
+		wp_redirect(add_query_arg('rsvp', 'past', get_permalink($event_id)));
+		exit;
+	}
+
 	if (event_rsvp_is_event_full($event_id)) {
 		wp_redirect(add_query_arg('rsvp', 'full', get_permalink($event_id)));
 		exit;

@@ -305,7 +305,7 @@ foreach ($all_user_events as $event) {
 								👁️ View
 							</a>
 							<a href="<?php echo admin_url('?action=export_attendees&event_id=' . $event_id); ?>" class="action-button action-export">
-								�� Export
+								Export
 							</a>
 						</div>
 					</article>

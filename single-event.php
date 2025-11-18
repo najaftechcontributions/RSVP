@@ -24,6 +24,7 @@ while ( have_posts() ) :
 	$stats = event_rsvp_get_event_stats($event_id);
 	$available_spots = event_rsvp_get_available_spots($event_id);
 	$is_full = event_rsvp_is_event_full($event_id);
+	$is_past = event_rsvp_is_event_past($event_id);
 	
 	$formatted_date = $event_date ? date('F j, Y', strtotime($event_date)) : '';
 	$formatted_time = $event_date ? date('g:i A', strtotime($event_date)) : '';
@@ -48,6 +49,13 @@ while ( have_posts() ) :
 					<?php else : ?>
 						<br>Check your email for confirmation.
 					<?php endif; ?>
+				</div>
+				<div style="height:20px" aria-hidden="true"></div>
+			<?php endif; ?>
+
+			<?php if (isset($_GET['rsvp']) && $_GET['rsvp'] === 'past') : ?>
+				<div class="error-notice">
+					⚠ Sorry, this event has already passed. RSVPs are no longer accepted.
 				</div>
 				<div style="height:20px" aria-hidden="true"></div>
 			<?php endif; ?>
@@ -179,7 +187,7 @@ while ( have_posts() ) :
 														<span class="attendee-status status-<?php echo esc_attr($rsvp_status); ?>">
 															<?php
 															if ($rsvp_status === 'yes') {
-																echo '��� Attending';
+																echo 'Attending';
 															} elseif ($rsvp_status === 'maybe') {
 																echo '? Maybe';
 															} else {
