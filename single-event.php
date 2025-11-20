@@ -11,15 +11,28 @@ while ( have_posts() ) :
 	the_post();
 	
 	$event_id = get_the_ID();
-	$event_date = get_field('event_date');
-	$event_end_date = get_field('event_end_date');
-	$venue_address = get_field('venue_address');
-	$venue_map_url = get_field('venue_map_url');
-	$event_hashtag = get_field('event_hashtag');
-	$social_links = get_field('social_links');
-	$visibility = get_field('visibility');
-	$max_attendees = get_field('max_attendees');
-	$qr_schedule_days = get_field('qr_schedule_days');
+
+	if (!function_exists('get_field')) {
+		$event_date = get_post_meta($event_id, 'event_date', true);
+		$event_end_date = get_post_meta($event_id, 'event_end_date', true);
+		$venue_address = get_post_meta($event_id, 'venue_address', true);
+		$venue_map_url = get_post_meta($event_id, 'venue_map_url', true);
+		$event_hashtag = get_post_meta($event_id, 'event_hashtag', true);
+		$social_links = get_post_meta($event_id, 'social_links', true);
+		$visibility = get_post_meta($event_id, 'visibility', true);
+		$max_attendees = get_post_meta($event_id, 'max_attendees', true);
+		$qr_schedule_days = get_post_meta($event_id, 'qr_schedule_days', true);
+	} else {
+		$event_date = get_field('event_date');
+		$event_end_date = get_field('event_end_date');
+		$venue_address = get_field('venue_address');
+		$venue_map_url = get_field('venue_map_url');
+		$event_hashtag = get_field('event_hashtag');
+		$social_links = get_field('social_links');
+		$visibility = get_field('visibility');
+		$max_attendees = get_field('max_attendees');
+		$qr_schedule_days = get_field('qr_schedule_days');
+	}
 	
 	$stats = event_rsvp_get_event_stats($event_id);
 	$available_spots = event_rsvp_get_available_spots($event_id);
@@ -568,7 +581,7 @@ while ( have_posts() ) :
 						<div class="event-admin-actions">
 							<h4>Event Management</h4>
 							<a href="<?php echo esc_url(home_url('/event-create/?event_id=' . $event_id)); ?>" class="admin-action-button">
-								✏��� Edit Event
+								✏️ Edit Event
 							</a>
 							<a href="<?php echo esc_url(home_url('/check-in/?event_id=' . $event_id)); ?>" class="admin-action-button">
 								✓ Check-In Page

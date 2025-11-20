@@ -9,11 +9,19 @@ if (!isset($event_id)) {
 	$event_id = get_the_ID();
 }
 
-$event_date = get_field('event_date', $event_id);
-$event_end_date = get_field('event_end_date', $event_id);
-$venue_address = get_field('venue_address', $event_id);
-$max_attendees = get_field('max_attendees', $event_id);
-$event_hashtag = get_field('event_hashtag', $event_id);
+if (!function_exists('get_field')) {
+	$event_date = get_post_meta($event_id, 'event_date', true);
+	$event_end_date = get_post_meta($event_id, 'event_end_date', true);
+	$venue_address = get_post_meta($event_id, 'venue_address', true);
+	$max_attendees = get_post_meta($event_id, 'max_attendees', true);
+	$event_hashtag = get_post_meta($event_id, 'event_hashtag', true);
+} else {
+	$event_date = get_field('event_date', $event_id);
+	$event_end_date = get_field('event_end_date', $event_id);
+	$venue_address = get_field('venue_address', $event_id);
+	$max_attendees = get_field('max_attendees', $event_id);
+	$event_hashtag = get_field('event_hashtag', $event_id);
+}
 
 $stats = event_rsvp_get_event_stats($event_id);
 $available_spots = event_rsvp_get_available_spots($event_id);

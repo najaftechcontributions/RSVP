@@ -204,7 +204,7 @@ $user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 							<td class="feature-name">Create Events</td>
 							<td class="feature-value">—</td>
 							<td class="feature-value">✓</td>
-							<td class="feature-value">��</td>
+							<td class="feature-value">—</td>
 							<td class="feature-value">✓</td>
 						</tr>
 						<tr>

@@ -238,7 +238,11 @@ function event_rsvp_get_available_spots($event_id) {
 }
 
 function event_rsvp_is_event_past($event_id) {
-	$event_date = get_field('event_date', $event_id);
+	if (!function_exists('get_field')) {
+		$event_date = get_post_meta($event_id, 'event_date', true);
+	} else {
+		$event_date = get_field('event_date', $event_id);
+	}
 
 	if (empty($event_date)) {
 		return false;
