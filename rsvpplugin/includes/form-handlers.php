@@ -163,7 +163,77 @@ function event_rsvp_handle_acf_event_submission($post_id) {
 		}
 	}
 
-	// All ACF fields (including venue_map_url) are automatically saved by ACF
-	// The venue_map_url extraction filter runs via acf/update_value hook
+	// Handle venue map URL - allow iframe content
+	// Prioritize raw_venue_map_url if it exists (preserves iframe content)
+	if (isset($_POST['raw_venue_map_url']) && !empty($_POST['raw_venue_map_url'])) {
+		$venue_map = $_POST['raw_venue_map_url'];
+
+		// Allow specific iframe attributes for Google Maps embeds
+		$allowed_html = array(
+			'iframe' => array(
+				'src' => true,
+				'width' => true,
+				'height' => true,
+				'frameborder' => true,
+				'style' => true,
+				'allowfullscreen' => true,
+				'loading' => true,
+				'referrerpolicy' => true,
+				'allow' => true,
+			),
+		);
+
+		$venue_map = wp_kses($venue_map, $allowed_html);
+		update_field('venue_map_url', $venue_map, $post_id);
+	} elseif (isset($_POST['acf']['field_venue_map_url'])) {
+		$venue_map = $_POST['acf']['field_venue_map_url'];
+
+		// Allow specific iframe attributes for Google Maps embeds
+		$allowed_html = array(
+			'iframe' => array(
+				'src' => true,
+				'width' => true,
+				'height' => true,
+				'frameborder' => true,
+				'style' => true,
+				'allowfullscreen' => true,
+				'loading' => true,
+				'referrerpolicy' => true,
+				'allow' => true,
+			),
+		);
+
+		$venue_map = wp_kses($venue_map, $allowed_html);
+		update_field('venue_map_url', $venue_map, $post_id);
+	}
 }
 add_action('acf/save_post', 'event_rsvp_handle_acf_event_submission', 20);
+
+/**
+ * Allow unfiltered HTML in ACF frontend forms for venue_map_url field
+ * This enables users to paste Google Maps iframe code without it being stripped
+ */
+function event_rsvp_allow_venue_map_html() {
+	global $post;
+
+	// Check if we're on a page using the event create template
+	if (is_page() && $post) {
+		$template = get_page_template_slug($post->ID);
+		if ($template === 'page-event-create.php') {
+			return true;
+		}
+
+		// Also check by page slug or title as fallback
+		if (in_array($post->post_name, array('create-event', 'event-create', 'host-event'))) {
+			return true;
+		}
+	}
+
+	// Allow for AJAX requests from event create page
+	if (defined('DOING_AJAX') && DOING_AJAX && isset($_POST['_acf_post_id'])) {
+		return true;
+	}
+
+	return false;
+}
+add_filter('acf/allow_unfiltered_html', 'event_rsvp_allow_venue_map_html');

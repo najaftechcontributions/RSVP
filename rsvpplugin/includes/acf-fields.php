@@ -295,24 +295,32 @@ endif;
 
 add_action('acf/init', 'event_rsvp_register_acf_fields');
 
-function event_rsvp_extract_map_url($value, $post_id, $field) {
-	// Return empty values as-is
-	if (empty($value)) {
-		return $value;
-	}
-
-	// Trim whitespace
-	$value = trim($value);
-
-	// If it's an iframe embed code, extract the src URL
-	if (strpos($value, '<iframe') !== false) {
-		preg_match('/src=["\']([^"\']+)["\']/', $value, $matches);
-		if (!empty($matches[1])) {
-			return $matches[1];
-		}
-	}
-
-	// If it's already a URL, return as-is
+/**
+ * Allow iframe tags in venue_map_url field
+ * This allows users to paste Google Maps embed codes
+ */
+add_filter('acf/update_value/key=field_venue_map_url', 'allow_iframe_in_venue_map_url', 10, 3);
+function allow_iframe_in_venue_map_url($value, $post_id, $field) {
+	// Remove any sanitization - return raw value to preserve iframe tags
+	remove_filter('content_save_pre', 'wp_filter_post_kses');
+	remove_filter('content_filtered_save_pre', 'wp_filter_post_kses');
 	return $value;
 }
-add_filter('acf/update_value/name=venue_map_url', 'event_rsvp_extract_map_url', 10, 3);
+
+/**
+ * Format venue_map_url on load to preserve iframe content
+ */
+add_filter('acf/load_value/key=field_venue_map_url', 'load_venue_map_url_value', 10, 3);
+function load_venue_map_url_value($value, $post_id, $field) {
+	// Return the raw value without any filtering
+	return $value;
+}
+
+/**
+ * Format venue_map_url for output
+ */
+add_filter('acf/format_value/key=field_venue_map_url', 'format_venue_map_url_value', 10, 3);
+function format_venue_map_url_value($value, $post_id, $field) {
+	// Don't escape iframe tags when displaying
+	return $value;
+}

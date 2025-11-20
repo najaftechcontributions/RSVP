@@ -223,6 +223,21 @@ jQuery(document).ready(function($) {
 		// Remove the remove button
 		$('#remove-featured-image').remove();
 	});
+
+	// Preserve iframe content in venue_map_url field
+	// Store the raw value before ACF processes it
+	var venueMapField = $('textarea[name="acf[field_venue_map_url]"]');
+	if (venueMapField.length) {
+		// Before form submission, ensure raw value is preserved
+		$('form.acf-form').on('submit', function(e) {
+			var rawValue = venueMapField.val();
+			// Store in a hidden field to bypass ACF sanitization
+			if ($('#raw_venue_map_url').length === 0) {
+				$(this).append('<input type="hidden" name="raw_venue_map_url" id="raw_venue_map_url" value="">');
+			}
+			$('#raw_venue_map_url').val(rawValue);
+		});
+	}
 });
 </script>
 
