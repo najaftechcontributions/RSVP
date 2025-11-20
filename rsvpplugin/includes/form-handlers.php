@@ -134,16 +134,36 @@ function event_rsvp_logout_redirect() {
 add_action('wp_logout', 'event_rsvp_logout_redirect');
 
 function event_rsvp_handle_acf_event_submission($post_id) {
+	// Skip if not an event post type
 	if (get_post_type($post_id) !== 'event') {
 		return;
 	}
 
-	if (isset($_POST['event_featured_image_id']) && !empty($_POST['event_featured_image_id'])) {
+	// Skip if autosave or revision
+	if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+		return;
+	}
+
+	if (wp_is_post_revision($post_id)) {
+		return;
+	}
+
+	// Handle featured image
+	if (isset($_POST['event_featured_image_id'])) {
 		$attachment_id = intval($_POST['event_featured_image_id']);
 
 		if ($attachment_id > 0) {
-			set_post_thumbnail($post_id, $attachment_id);
+			// Verify attachment exists
+			if (get_post($attachment_id) && get_post_type($attachment_id) === 'attachment') {
+				set_post_thumbnail($post_id, $attachment_id);
+			}
+		} else {
+			// Remove featured image if field is empty (user clicked remove)
+			delete_post_thumbnail($post_id);
 		}
 	}
+
+	// All ACF fields (including venue_map_url) are automatically saved by ACF
+	// The venue_map_url extraction filter runs via acf/update_value hook
 }
 add_action('acf/save_post', 'event_rsvp_handle_acf_event_submission', 20);

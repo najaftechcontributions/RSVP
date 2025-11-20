@@ -16,11 +16,13 @@ if (!current_user_can('edit_posts') && !current_user_can('edit_events')) {
 
 $event_id = isset($_GET['event_id']) ? intval($_GET['event_id']) : 0;
 $is_edit_mode = false;
+$current_featured_image_id = 0;
 
 if ($event_id > 0) {
 	$event = get_post($event_id);
 	if ($event && $event->post_type === 'event' && (get_current_user_id() == $event->post_author || current_user_can('administrator'))) {
 		$is_edit_mode = true;
+		$current_featured_image_id = get_post_thumbnail_id($event_id);
 	} else {
 		wp_die('You do not have permission to edit this event.');
 	}
@@ -53,6 +55,40 @@ get_header();
 					<?php if (function_exists('acf_form')) : ?>
 						
 						<?php
+						// Build the featured image section HTML to be included in the form
+						$featured_image_html = '
+						<div class="featured-image-upload-section">
+							<h3>Featured Image</h3>
+							<p class="field-description">Upload a high-quality image to make your event stand out</p>
+							
+							<div class="featured-image-preview">';
+						
+						if ($is_edit_mode && has_post_thumbnail($event_id)) {
+							$featured_image_html .= '
+								<div class="current-featured-image">
+									' . get_the_post_thumbnail($event_id, 'large') . '
+								</div>';
+						}
+						
+						$featured_image_html .= '
+							</div>
+
+							<div class="image-upload-controls">
+								<button type="button" id="upload-featured-image" class="upload-image-button">
+									📷 ' . (($is_edit_mode && has_post_thumbnail($event_id)) ? 'Change Featured Image' : 'Upload Featured Image') . '
+								</button>';
+						
+						if ($is_edit_mode && has_post_thumbnail($event_id)) {
+							$featured_image_html .= '
+								<button type="button" id="remove-featured-image" class="remove-image-button">
+									✕ Remove Image
+								</button>';
+						}
+						
+						$featured_image_html .= '
+							</div>
+						</div>';
+
 						$form_args = array(
 							'post_id' => $is_edit_mode ? $event_id : 'new_post',
 							'post_title' => true,
@@ -61,13 +97,13 @@ get_header();
 							'return' => home_url('/host-dashboard/?event_created=success'),
 							'submit_value' => $is_edit_mode ? '✓ Update Event' : '✓ Create Event',
 							'updated_message' => $is_edit_mode ? 'Event updated successfully! Redirecting...' : 'Event created successfully! Redirecting...',
-							'html_before_fields' => '<div class="acf-event-form"><input type="hidden" id="event_featured_image_id" name="event_featured_image_id" value="">',
-							'html_after_fields' => '</div>',
+							'html_before_fields' => '<div class="acf-event-form"><input type="hidden" id="event_featured_image_id" name="event_featured_image_id" value="' . esc_attr($current_featured_image_id) . '">',
+							'html_after_fields' => $featured_image_html . '</div>',
 							'uploader' => 'wp',
 							'honeypot' => true,
 							'label_placement' => 'top',
 							'instruction_placement' => 'label',
-							'html_submit_button' => '<button type="submit" class="acf-button acf-submit-button">' . ($is_edit_mode ? '✓ Update Event' : '✓ Create Event') . '</button>',
+							'html_submit_button' => '<button type="submit" class="acf-button acf-submit-button" style="margin-top: 15px;">' . ($is_edit_mode ? '✓ Update Event' : '✓ Create Event') . '</button>',
 						);
 
 						if (!$is_edit_mode) {
@@ -80,30 +116,6 @@ get_header();
 
 						acf_form($form_args);
 						?>
-
-						<div class="featured-image-upload-section">
-							<h3>Featured Image</h3>
-							<p class="field-description">Upload a high-quality image to make your event stand out</p>
-							
-							<div class="featured-image-preview">
-								<?php if ($is_edit_mode && has_post_thumbnail($event_id)) : ?>
-									<div class="current-featured-image">
-										<?php echo get_the_post_thumbnail($event_id, 'large'); ?>
-									</div>
-								<?php endif; ?>
-							</div>
-
-							<div class="image-upload-controls">
-								<button type="button" id="upload-featured-image" class="upload-image-button" data-event-id="<?php echo esc_attr($event_id); ?>">
-									📷 <?php echo ($is_edit_mode && has_post_thumbnail($event_id)) ? 'Change Featured Image' : 'Upload Featured Image'; ?>
-								</button>
-								<?php if ($is_edit_mode && has_post_thumbnail($event_id)) : ?>
-									<button type="button" id="remove-featured-image" class="remove-image-button" data-event-id="<?php echo esc_attr($event_id); ?>">
-										✕ Remove Image
-									</button>
-								<?php endif; ?>
-							</div>
-						</div>
 
 					<?php else : ?>
 						<div class="acf-not-found">
@@ -160,9 +172,7 @@ get_header();
 
 <script>
 jQuery(document).ready(function($) {
-	var eventId = <?php echo $is_edit_mode ? $event_id : 0; ?>;
-	var isEditMode = <?php echo $is_edit_mode ? 'true' : 'false'; ?>;
-
+	// Featured image upload handler
 	$('#upload-featured-image').on('click', function(e) {
 		e.preventDefault();
 		
@@ -177,42 +187,23 @@ jQuery(document).ready(function($) {
 		customUploader.on('select', function() {
 			var attachment = customUploader.state().get('selection').first().toJSON();
 			
-			if (isEditMode && eventId > 0) {
-				$.ajax({
-					url: '<?php echo admin_url('admin-ajax.php'); ?>',
-					type: 'POST',
-					data: {
-						action: 'set_event_featured_image',
-						event_id: eventId,
-						attachment_id: attachment.id,
-						nonce: '<?php echo wp_create_nonce('set_featured_image'); ?>'
-					},
-					success: function(response) {
-						if (response.success) {
-							location.reload();
-						} else {
-							alert('Failed to set featured image: ' + (response.data || 'Unknown error'));
-						}
-					},
-					error: function() {
-						alert('Failed to set featured image. Please try again.');
-					}
-				});
-			} else {
-				$('#event_featured_image_id').val(attachment.id);
+			// Update hidden field with attachment ID
+			$('#event_featured_image_id').val(attachment.id);
 
-				$('.featured-image-preview').html('<div class="current-featured-image"><img src="' + attachment.url + '" alt="Featured Image Preview" /></div>');
-				$('#upload-featured-image').text('📷 Change Featured Image');
-				
-				if ($('#remove-featured-image').length === 0) {
-					$('.image-upload-controls').append('<button type="button" id="remove-featured-image" class="remove-image-button">✕ Remove Image</button>');
-				}
+			// Update preview
+			$('.featured-image-preview').html('<div class="current-featured-image"><img src="' + attachment.url + '" alt="Featured Image Preview" /></div>');
+			$('#upload-featured-image').text('📷 Change Featured Image');
+			
+			// Add remove button if it doesn't exist
+			if ($('#remove-featured-image').length === 0) {
+				$('.image-upload-controls').append('<button type="button" id="remove-featured-image" class="remove-image-button">✕ Remove Image</button>');
 			}
 		});
 
 		customUploader.open();
 	});
 
+	// Remove featured image handler
 	$(document).on('click', '#remove-featured-image', function(e) {
 		e.preventDefault();
 		
@@ -220,32 +211,17 @@ jQuery(document).ready(function($) {
 			return;
 		}
 
-		if (isEditMode && eventId > 0) {
-			$.ajax({
-				url: '<?php echo admin_url('admin-ajax.php'); ?>',
-				type: 'POST',
-				data: {
-					action: 'remove_event_featured_image',
-					event_id: eventId,
-					nonce: '<?php echo wp_create_nonce('remove_featured_image'); ?>'
-				},
-				success: function(response) {
-					if (response.success) {
-						location.reload();
-					} else {
-						alert('Failed to remove featured image: ' + (response.data || 'Unknown error'));
-					}
-				},
-				error: function() {
-					alert('Failed to remove featured image. Please try again.');
-				}
-			});
-		} else {
-			$('#event_featured_image_id').val('');
-			$('.featured-image-preview').html('');
-			$('#upload-featured-image').text('📷 Upload Featured Image');
-			$('#remove-featured-image').remove();
-		}
+		// Clear the hidden field
+		$('#event_featured_image_id').val('');
+		
+		// Clear the preview
+		$('.featured-image-preview').html('');
+		
+		// Update button text
+		$('#upload-featured-image').text('📷 Upload Featured Image');
+		
+		// Remove the remove button
+		$('#remove-featured-image').remove();
 	});
 });
 </script>

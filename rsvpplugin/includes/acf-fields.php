@@ -296,10 +296,15 @@ endif;
 add_action('acf/init', 'event_rsvp_register_acf_fields');
 
 function event_rsvp_extract_map_url($value, $post_id, $field) {
+	// Return empty values as-is
 	if (empty($value)) {
 		return $value;
 	}
 
+	// Trim whitespace
+	$value = trim($value);
+
+	// If it's an iframe embed code, extract the src URL
 	if (strpos($value, '<iframe') !== false) {
 		preg_match('/src=["\']([^"\']+)["\']/', $value, $matches);
 		if (!empty($matches[1])) {
@@ -307,6 +312,7 @@ function event_rsvp_extract_map_url($value, $post_id, $field) {
 		}
 	}
 
+	// If it's already a URL, return as-is
 	return $value;
 }
 add_filter('acf/update_value/name=venue_map_url', 'event_rsvp_extract_map_url', 10, 3);
