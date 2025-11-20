@@ -611,6 +611,198 @@ while ( have_posts() ) :
 		</div>
 	</main>
 
+	<?php
+	// Email tracking modal
+	if (isset($_GET['track_token']) && isset($_GET['show_rsvp_modal'])) :
+		$track_token = sanitize_text_field($_GET['track_token']);
+	?>
+	<div id="emailRsvpModal" class="email-rsvp-modal-overlay" style="display: flex;">
+		<div class="email-rsvp-modal-container">
+			<div class="email-rsvp-modal-header">
+				<h2>Will you attend this event?</h2>
+				<button class="email-rsvp-modal-close" aria-label="Close">&times;</button>
+			</div>
+			<div class="email-rsvp-modal-body">
+				<div class="email-rsvp-buttons">
+					<button class="email-rsvp-btn email-rsvp-yes" data-response="yes" data-token="<?php echo esc_attr($track_token); ?>" data-event-id="<?php echo esc_attr($event_id); ?>">
+						✓ Yes, I'll Attend
+					</button>
+					<button class="email-rsvp-btn email-rsvp-no" data-response="no" data-token="<?php echo esc_attr($track_token); ?>">
+						✗ No, I Can't Make It
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<style>
+	.email-rsvp-modal-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.8);
+		align-items: center;
+		justify-content: center;
+		z-index: 99999;
+		padding: 20px;
+	}
+
+	.email-rsvp-modal-container {
+		background: #ffffff;
+		border-radius: 20px;
+		width: 100%;
+		max-width: 500px;
+		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+		animation: modalSlideIn 0.3s ease;
+	}
+
+	@keyframes modalSlideIn {
+		from {
+			transform: translateY(-50px);
+			opacity: 0;
+		}
+		to {
+			transform: translateY(0);
+			opacity: 1;
+		}
+	}
+
+	.email-rsvp-modal-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 30px;
+		border-bottom: 2px solid #f0f0f0;
+	}
+
+	.email-rsvp-modal-header h2 {
+		margin: 0;
+		font-size: 24px;
+		font-weight: 700;
+		color: #2d3748;
+	}
+
+	.email-rsvp-modal-close {
+		background: none;
+		border: none;
+		font-size: 32px;
+		color: #a0aec0;
+		cursor: pointer;
+		line-height: 1;
+		padding: 0;
+		width: 32px;
+		height: 32px;
+		transition: color 0.2s ease;
+	}
+
+	.email-rsvp-modal-close:hover {
+		color: #4a5568;
+	}
+
+	.email-rsvp-modal-body {
+		padding: 40px 30px;
+	}
+
+	.email-rsvp-buttons {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
+	.email-rsvp-btn {
+		padding: 18px 30px;
+		border: none;
+		border-radius: 12px;
+		font-size: 18px;
+		font-weight: 700;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+	}
+
+	.email-rsvp-btn:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+	}
+
+	.email-rsvp-yes {
+		background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+		color: #ffffff;
+	}
+
+	.email-rsvp-no {
+		background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+		color: #ffffff;
+	}
+
+	.email-attendee-form-container {
+		margin-top: 24px;
+		padding-top: 24px;
+		border-top: 2px solid #f0f0f0;
+	}
+
+	.email-attendee-form-container h3 {
+		margin: 0 0 20px 0;
+		font-size: 18px;
+		color: #2d3748;
+	}
+
+	.email-attendee-form-container .form-group {
+		margin-bottom: 16px;
+	}
+
+	.email-attendee-form-container label {
+		display: block;
+		margin-bottom: 6px;
+		font-weight: 600;
+		color: #2d3748;
+		font-size: 14px;
+	}
+
+	.email-attendee-form-container input {
+		width: 100%;
+		padding: 12px 16px;
+		border: 2px solid #e2e8f0;
+		border-radius: 8px;
+		font-size: 15px;
+		box-sizing: border-box;
+	}
+
+	.email-attendee-form-container input:focus {
+		outline: none;
+		border-color: #667eea;
+	}
+
+	.email-attendee-submit-btn {
+		width: 100%;
+		padding: 14px 30px;
+		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+		color: #ffffff;
+		border: none;
+		border-radius: 8px;
+		font-size: 16px;
+		font-weight: 600;
+		cursor: pointer;
+		margin-top: 20px;
+		transition: all 0.3s ease;
+	}
+
+	.email-attendee-submit-btn:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+	}
+
+	@media (max-width: 600px) {
+		.email-rsvp-modal-container {
+			border-radius: 0;
+			max-width: 100%;
+			max-height: 100%;
+		}
+	}
+	</style>
+	<?php endif; ?>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 	const tabBtns = document.querySelectorAll('.attendee-tab-btn');
@@ -886,6 +1078,128 @@ document.addEventListener('DOMContentLoaded', function() {
 			}
 		`;
 		document.head.appendChild(style);
+	}
+
+	// Handle email RSVP modal
+	const emailRsvpModal = document.getElementById('emailRsvpModal');
+	if (emailRsvpModal) {
+		const closeBtn = emailRsvpModal.querySelector('.email-rsvp-modal-close');
+		const yesBtn = emailRsvpModal.querySelector('.email-rsvp-yes');
+		const noBtn = emailRsvpModal.querySelector('.email-rsvp-no');
+
+		closeBtn.addEventListener('click', function() {
+			emailRsvpModal.style.display = 'none';
+			// Remove query params from URL
+			const url = new URL(window.location.href);
+			url.searchParams.delete('track_token');
+			url.searchParams.delete('show_rsvp_modal');
+			window.history.replaceState({}, document.title, url.toString());
+		});
+
+		emailRsvpModal.addEventListener('click', function(e) {
+			if (e.target === emailRsvpModal) {
+				emailRsvpModal.style.display = 'none';
+			}
+		});
+
+		noBtn.addEventListener('click', function() {
+			const token = this.getAttribute('data-token');
+
+			// Record "no" response
+			fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+				},
+				body: new URLSearchParams({
+					action: 'event_rsvp_record_email_response',
+					token: token,
+					response: 'no',
+					nonce: '<?php echo wp_create_nonce('event_rsvp_email_response'); ?>'
+				})
+			})
+			.then(response => response.json())
+			.then(data => {
+				if (data.success) {
+					alert('Thank you for your response. We\'re sorry you can\'t make it!');
+					emailRsvpModal.style.display = 'none';
+				} else {
+					alert('Failed to record response. Please try again.');
+				}
+			})
+			.catch(error => {
+				console.error('Error:', error);
+				alert('Failed to record response. Please try again.');
+			});
+		});
+
+		yesBtn.addEventListener('click', function() {
+			const token = this.getAttribute('data-token');
+			const eventId = this.getAttribute('data-event-id');
+
+			// Show attendee form
+			const modalBody = emailRsvpModal.querySelector('.email-rsvp-modal-body');
+			modalBody.innerHTML = `
+				<div class="email-attendee-form-container">
+					<h3>Great! Please provide your details:</h3>
+					<form id="emailAttendeeForm">
+						<div class="form-group">
+							<label for="email-attendee-name">Full Name *</label>
+							<input type="text" id="email-attendee-name" name="attendee_name" required>
+						</div>
+						<div class="form-group">
+							<label for="email-attendee-email">Email Address *</label>
+							<input type="email" id="email-attendee-email" name="attendee_email" required>
+						</div>
+						<div class="form-group">
+							<label for="email-attendee-phone">Phone Number</label>
+							<input type="tel" id="email-attendee-phone" name="attendee_phone">
+						</div>
+						<button type="submit" class="email-attendee-submit-btn">Submit RSVP</button>
+					</form>
+				</div>
+			`;
+
+			const form = document.getElementById('emailAttendeeForm');
+			form.addEventListener('submit', function(e) {
+				e.preventDefault();
+
+				const formData = new FormData(form);
+				formData.append('action', 'event_rsvp_record_email_attendance');
+				formData.append('token', token);
+				formData.append('event_id', eventId);
+				formData.append('response', 'yes');
+				formData.append('nonce', '<?php echo wp_create_nonce('event_rsvp_email_response'); ?>');
+
+				const submitBtn = form.querySelector('.email-attendee-submit-btn');
+				submitBtn.disabled = true;
+				submitBtn.textContent = 'Submitting...';
+
+				fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+					method: 'POST',
+					body: formData
+				})
+				.then(response => response.json())
+				.then(data => {
+					if (data.success) {
+						alert('Thank you for your RSVP! You\'ll receive a confirmation email with your QR code for check-in.');
+						emailRsvpModal.style.display = 'none';
+						// Refresh page to show updated info
+						window.location.reload();
+					} else {
+						submitBtn.disabled = false;
+						submitBtn.textContent = 'Submit RSVP';
+						alert(data.data || 'Failed to submit RSVP. Please try again.');
+					}
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					submitBtn.disabled = false;
+					submitBtn.textContent = 'Submit RSVP';
+					alert('Failed to submit RSVP. Please try again.');
+				});
+			});
+		});
 	}
 });
 </script>

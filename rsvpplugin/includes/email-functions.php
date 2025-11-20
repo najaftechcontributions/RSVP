@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
-function event_rsvp_get_email_template($attendee_id) {
+function event_rsvp_get_confirmation_email_template($attendee_id) {
 	$attendee_email = get_post_meta($attendee_id, 'attendee_email', true);
 	$attendee_name = get_the_title($attendee_id);
 	$event_id = get_post_meta($attendee_id, 'linked_event', true);
@@ -170,7 +170,7 @@ function event_rsvp_send_qr_email_now($attendee_id) {
 	}
 
 	$subject = sprintf('✓ RSVP Confirmed: %s', $event_title);
-	$message = event_rsvp_get_email_template($attendee_id);
+	$message = event_rsvp_get_confirmation_email_template($attendee_id);
 
 	$smtp_from_email = get_option('event_rsvp_smtp_from_email', '');
 	$smtp_from_name = get_option('event_rsvp_smtp_from_name', 'Event RSVP');

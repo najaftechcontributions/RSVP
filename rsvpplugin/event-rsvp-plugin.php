@@ -46,6 +46,11 @@ class EventRSVPPlugin {
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/shortcodes.php';
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/admin-functions.php';
 		
+		// Email Invitation System
+		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/email-invitation-db.php';
+		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/email-invitation-functions.php';
+		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/email-invitation-ajax.php';
+		
 		// Simple Stripe Payment Links integration
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/simple-stripe-payments.php';
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/simple-stripe-ajax.php';
@@ -69,6 +74,10 @@ class EventRSVPPlugin {
 			wp_enqueue_style('ads-management-styles', EVENT_RSVP_PLUGIN_URL . '/assets/css/ads-management.css', array('event-rsvp-styles'), EVENT_RSVP_VERSION);
 		}
 		
+		if (is_page_template('page-email-campaigns.php')) {
+			wp_enqueue_style('email-campaigns-styles', EVENT_RSVP_PLUGIN_URL . '/assets/css/email-campaigns.css', array('event-rsvp-styles'), EVENT_RSVP_VERSION);
+		}
+		
 		if (is_page_template('page-check-in.php')) {
 			wp_enqueue_script('html5-qrcode', 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js', array(), '2.3.8', true);
 		}
@@ -79,7 +88,8 @@ class EventRSVPPlugin {
 		wp_localize_script('event-rsvp-scripts', 'eventRsvpData', array(
 			'ajax_url' => admin_url('admin-ajax.php'),
 			'nonce' => wp_create_nonce('event_rsvp_checkin'),
-			'ad_management_nonce' => wp_create_nonce('event_rsvp_ad_management')
+			'ad_management_nonce' => wp_create_nonce('event_rsvp_ad_management'),
+			'email_campaign_nonce' => wp_create_nonce('event_rsvp_email_campaign')
 		));
 	}
 	
