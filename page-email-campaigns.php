@@ -27,6 +27,30 @@ if (!$has_access) {
 
 get_header();
 
+// Ensure required functions are loaded
+$plugin_dir = get_template_directory() . '/rsvpplugin/includes/';
+
+if (!function_exists('event_rsvp_create_email_invitation_tables')) {
+	require_once $plugin_dir . 'email-invitation-db.php';
+}
+
+if (!function_exists('event_rsvp_get_campaigns_by_host')) {
+	require_once $plugin_dir . 'email-invitation-functions.php';
+}
+
+if (!function_exists('event_rsvp_get_user_events')) {
+	require_once $plugin_dir . 'helper-functions.php';
+}
+
+// Check if tables exist, if not create them
+global $wpdb;
+$campaigns_table = $wpdb->prefix . 'event_email_campaigns';
+$table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$campaigns_table}'") === $campaigns_table;
+
+if (!$table_exists) {
+	event_rsvp_create_email_invitation_tables();
+}
+
 $user_id = get_current_user_id();
 $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 ?>
@@ -54,9 +78,23 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 
 		<?php if (!empty($campaigns)) : ?>
 			<div class="campaigns-grid">
-				<?php foreach ($campaigns as $campaign) : 
+				<?php foreach ($campaigns as $campaign) :
 					$event = get_post($campaign->event_id);
 					$stats = event_rsvp_get_campaign_stats($campaign->id);
+
+					// Initialize stats if empty
+					if (empty($stats)) {
+						$stats = (object) array(
+							'total' => 0,
+							'sent' => 0,
+							'clicked' => 0,
+							'yes_responses' => 0,
+							'no_responses' => 0,
+							'click_rate' => 0,
+							'yes_rate' => 0,
+							'pending' => 0
+						);
+					}
 				?>
 					<article class="campaign-card" data-campaign-id="<?php echo $campaign->id; ?>">
 						<div class="campaign-header">
