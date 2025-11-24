@@ -172,7 +172,7 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 								</button>
 							<?php endif; ?>
 							<button class="action-btn delete-campaign-btn" data-campaign-id="<?php echo $campaign->id; ?>">
-								🗑️ Delete
+							🗑️ Delete
 							</button>
 						</div>
 
@@ -276,7 +276,9 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 
 				<div id="manualRecipientsForm" class="manual-recipients-section" style="display: none;">
 					<h4>Add Recipients</h4>
-					<textarea id="manualEmailsList" class="form-input" rows="6" placeholder="Enter emails separated by space, comma, or new line:&#10;email@example.com email2@example.com&#10;Or with names:&#10;email@example.com, John Doe&#10;email2@example.com, Jane Smith"></textarea>
+					<p class="form-help" style="margin-bottom: 10px;">Enter emails separated by spaces, commas, or new lines. You can optionally include names.</p>
+					<textarea id="manualEmailsList" class="form-input" rows="8" placeholder="john@example.com jane@example.com bob@company.com&#10;or&#10;jane@example.com, Jane Smith&#10;bob@company.com Bob Johnson"></textarea>
+					<small class="form-help">✓ Formats: space-separated, one per line, or email@example.com, Name</small>
 					<div class="form-actions">
 						<button type="button" id="cancelManualRecipientsBtn" class="secondary-button">Cancel</button>
 						<button type="button" id="saveManualRecipientsBtn" class="primary-button">Add Recipients</button>
@@ -443,6 +445,29 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 				return;
 			}
 
+			// Basic client-side validation
+			const lines = emails.split('\n');
+			let hasValidEmail = false;
+			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+			for (let line of lines) {
+				line = line.trim();
+				if (!line) continue;
+
+				// Extract email part (before comma if present)
+				let emailPart = line.split(',')[0].trim();
+
+				if (emailRegex.test(emailPart)) {
+					hasValidEmail = true;
+					break;
+				}
+			}
+
+			if (!hasValidEmail) {
+				alert('✗ No valid email addresses found. Please check the format:\nemail@example.com\nor\nemail@example.com, Name');
+				return;
+			}
+
 			const button = $(this);
 			button.prop('disabled', true).text('Adding...');
 
@@ -465,8 +490,9 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 						alert('✗ Error: ' + response.data);
 					}
 				},
-				error: function() {
-					alert('✗ Failed to add recipients');
+				error: function(xhr, status, error) {
+					alert('✗ Failed to add recipients. Please try again or contact support.');
+					console.error('AJAX Error:', status, error, xhr.responseText);
 				},
 				complete: function() {
 					button.prop('disabled', false).text('Add Recipients');

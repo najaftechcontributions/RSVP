@@ -142,11 +142,25 @@ function event_rsvp_add_campaign_recipients($campaign_id, $recipients)
 	$duplicates = 0;
 
 	foreach ($recipients as $recipient) {
-		// Sanitize email first
-		$clean_email = sanitize_email($recipient['email']);
+		// Ensure email key exists
+		if (!isset($recipient['email']) || empty($recipient['email'])) {
+			error_log('Recipient missing email: ' . print_r($recipient, true));
+			$skipped++;
+			continue;
+		}
+
+		// Sanitize email
+		$clean_email = sanitize_email(trim($recipient['email']));
 
 		// Validate sanitized email
-		if (empty($clean_email) || !is_email($clean_email)) {
+		if (empty($clean_email)) {
+			error_log('Email became empty after sanitization: ' . $recipient['email']);
+			$skipped++;
+			continue;
+		}
+
+		if (!is_email($clean_email)) {
+			error_log('Email failed validation: ' . $clean_email);
 			$skipped++;
 			continue;
 		}
@@ -164,13 +178,14 @@ function event_rsvp_add_campaign_recipients($campaign_id, $recipients)
 		}
 
 		$tracking_token = wp_generate_password(32, false, false);
+		$recipient_name = isset($recipient['name']) ? sanitize_text_field(trim($recipient['name'])) : '';
 
 		$insert_result = $wpdb->insert(
 			$table,
 			array(
 				'campaign_id' => $campaign_id,
 				'email' => $clean_email,
-				'name' => isset($recipient['name']) ? sanitize_text_field($recipient['name']) : '',
+				'name' => $recipient_name,
 				'tracking_token' => $tracking_token,
 				'sent_status' => 'pending'
 			),
@@ -182,7 +197,9 @@ function event_rsvp_add_campaign_recipients($campaign_id, $recipients)
 		} else {
 			// Log database error for debugging
 			if ($wpdb->last_error) {
-				error_log('Email recipient insert failed: ' . $wpdb->last_error);
+				error_log('Email recipient insert failed for ' . $clean_email . ': ' . $wpdb->last_error);
+			} else {
+				error_log('Email recipient insert failed for ' . $clean_email . ' (unknown error)');
 			}
 			$skipped++;
 		}
@@ -253,11 +270,26 @@ function event_rsvp_parse_csv_recipients($file_path)
 	}
 
 	while (($row = fgetcsv($handle)) !== false) {
-		if (isset($row[$email_col]) && is_email($row[$email_col])) {
-			$recipients[] = array(
-				'email' => $row[$email_col],
-				'name' => $name_col !== false && isset($row[$name_col]) ? $row[$name_col] : ''
-			);
+		if (isset($row[$email_col])) {
+			$email_part = trim($row[$email_col]);
+
+			// Validate email format before adding
+			if (!empty($email_part) && filter_var($email_part, FILTER_VALIDATE_EMAIL)) {
+				$clean_email = sanitize_email($email_part);
+
+				// Double-check after sanitization
+				if (!empty($clean_email) && is_email($clean_email)) {
+					$name_value = '';
+					if ($name_col !== false && isset($row[$name_col])) {
+						$name_value = sanitize_text_field(trim($row[$name_col]));
+					}
+
+					$recipients[] = array(
+						'email' => $clean_email,
+						'name' => $name_value
+					);
+				}
+			}
 		}
 	}
 

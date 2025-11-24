@@ -100,7 +100,8 @@ function event_rsvp_ajax_upload_csv_recipients()
 		$recipients = event_rsvp_parse_csv_recipients($movefile['file']);
 
 		if (empty($recipients)) {
-			wp_send_json_error('No valid email addresses found in CSV');
+			@unlink($movefile['file']);
+			wp_send_json_error('No valid email addresses found in CSV. Make sure your CSV has an "email" column with valid email addresses.');
 			return;
 		}
 
@@ -108,12 +109,21 @@ function event_rsvp_ajax_upload_csv_recipients()
 
 		@unlink($movefile['file']);
 
-		$message = sprintf('%d recipient(s) added!', $result['added']);
+		if ($result['added'] === 0) {
+			if ($result['duplicates'] > 0) {
+				wp_send_json_error(sprintf('All %d email(s) from CSV already exist in this campaign.', $result['duplicates']));
+			} else {
+				wp_send_json_error('Failed to add emails from CSV. Please check the file format and try again.');
+			}
+			return;
+		}
+
+		$message = sprintf('✓ Successfully added %d recipient(s)!', $result['added']);
 		if ($result['duplicates'] > 0) {
 			$message .= sprintf(' (%d duplicate(s) skipped)', $result['duplicates']);
 		}
 		if ($result['skipped'] > 0) {
-			$message .= sprintf(' (%d invalid)', $result['skipped']);
+			$message .= sprintf(' (%d invalid email(s) skipped)', $result['skipped']);
 		}
 
 		wp_send_json_success(array(
@@ -122,7 +132,7 @@ function event_rsvp_ajax_upload_csv_recipients()
 			'total' => $result['total']
 		));
 	} else {
-		wp_send_json_error($movefile['error']);
+		wp_send_json_error('File upload failed: ' . (isset($movefile['error']) ? $movefile['error'] : 'Unknown error'));
 	}
 }
 add_action('wp_ajax_event_rsvp_upload_csv_recipients', 'event_rsvp_ajax_upload_csv_recipients');
@@ -158,8 +168,9 @@ function event_rsvp_ajax_add_manual_recipients()
 	// Normalize line breaks to handle different OS formats
 	$emails = str_replace(array("\r\n", "\r"), "\n", $emails);
 
-	// Split by newlines, commas, spaces, tabs - handle all common separators
-	$email_lines = preg_split('/[\n,;\s]+/', $emails, -1, PREG_SPLIT_NO_EMPTY);
+	// Also handle comma-separated emails (but preserve "email, Name" format)
+	// We'll process this line by line
+	$email_lines = explode("\n", $emails);
 	$recipients = array();
 	$invalid_emails = array();
 
@@ -170,49 +181,117 @@ function event_rsvp_ajax_add_manual_recipients()
 			continue;
 		}
 
-		// Check if line contains "email Name" or "email, Name" format
-		$name = '';
-
-		// Try to extract name if format is "email, Name" or "email Name Name"
+		// Check if line contains "email, Name" format (comma indicates name)
 		if (strpos($line, ',') !== false) {
-			$parts = explode(',', $line, 2);
-			$email_part = trim($parts[0]);
-			$name = isset($parts[1]) ? trim($parts[1]) : '';
-		} else {
-			// Check if there are multiple words (email followed by name)
-			$parts = preg_split('/\s+/', $line, 2);
-			$email_part = trim($parts[0]);
-			// Only treat second part as name if first part is a valid email
-			if (isset($parts[1]) && is_email($email_part)) {
-				$name = trim($parts[1]);
-			} else {
-				$email_part = $line;
+			// Split by comma to separate email and name
+			$parts = array_map('trim', explode(',', $line, 2));
+			$email_part = $parts[0];
+			$name = isset($parts[1]) ? $parts[1] : '';
+
+			// Validate email BEFORE sanitization to catch format issues
+			if (empty($email_part) || !filter_var($email_part, FILTER_VALIDATE_EMAIL)) {
+				if (!empty($line)) {
+					$invalid_emails[] = $line;
+				}
+				continue;
 			}
-		}
 
-		// Sanitize email
-		$email = sanitize_email($email_part);
+			// Now sanitize the validated email
+			$email = sanitize_email($email_part);
 
-		// Validate email
-		if (!empty($email) && is_email($email)) {
-			$recipients[] = array(
-				'email' => $email,
-				'name' => $name
-			);
-		} else if (!empty($line)) {
-			$invalid_emails[] = $line;
+			// Double-check after sanitization
+			if (!empty($email) && is_email($email)) {
+				$recipients[] = array(
+					'email' => $email,
+					'name' => sanitize_text_field($name)
+				);
+			} else {
+				$invalid_emails[] = $line;
+			}
+		} else {
+			// No comma - could be space-separated emails or single email with name
+			// Split by whitespace to check for multiple items
+			$parts = preg_split('/[\s\t]+/', $line);
+
+			// Check if we have multiple email addresses (space-separated)
+			$has_multiple_emails = false;
+			$email_count = 0;
+			foreach ($parts as $part) {
+				if (strpos($part, '@') !== false && filter_var($part, FILTER_VALIDATE_EMAIL)) {
+					$email_count++;
+				}
+			}
+
+			// If we have multiple emails on one line, process each separately
+			if ($email_count > 1) {
+				foreach ($parts as $part) {
+					$part = trim($part);
+					if (empty($part)) continue;
+
+					// Validate email
+					if (filter_var($part, FILTER_VALIDATE_EMAIL)) {
+						$email = sanitize_email($part);
+						if (!empty($email) && is_email($email)) {
+							$recipients[] = array(
+								'email' => $email,
+								'name' => ''
+							);
+						} else {
+							$invalid_emails[] = $part;
+						}
+					} else {
+						// Not an email - could be part of a name or invalid
+						if (strpos($part, '@') !== false) {
+							// Contains @ but invalid format
+							$invalid_emails[] = $part;
+						}
+					}
+				}
+			} else {
+				// Single email, possibly followed by name
+				$email_part = $parts[0];
+				$name = '';
+
+				// If there are additional parts and first part is an email, rest is name
+				if (count($parts) > 1 && strpos($email_part, '@') !== false) {
+					array_shift($parts); // Remove email from parts
+					$name = implode(' ', $parts); // Join remaining parts as name
+				}
+
+				// Validate email BEFORE sanitization
+				if (empty($email_part) || !filter_var($email_part, FILTER_VALIDATE_EMAIL)) {
+					if (!empty($line)) {
+						$invalid_emails[] = $line;
+					}
+					continue;
+				}
+
+				// Sanitize the validated email
+				$email = sanitize_email($email_part);
+
+				// Double-check after sanitization
+				if (!empty($email) && is_email($email)) {
+					$recipients[] = array(
+						'email' => $email,
+						'name' => sanitize_text_field($name)
+					);
+				} else {
+					$invalid_emails[] = $line;
+				}
+			}
 		}
 	}
 
 	if (empty($recipients)) {
 		if (!empty($invalid_emails)) {
-			$error_msg = 'No valid email addresses found. Invalid: ' . implode(', ', array_slice($invalid_emails, 0, 3));
+			$error_msg = 'No valid email addresses found. Check format of: ' . implode(', ', array_slice($invalid_emails, 0, 3));
 			if (count($invalid_emails) > 3) {
-				$error_msg .= ' and ' . (count($invalid_emails) - 3) . ' more';
+				$error_msg .= ' (and ' . (count($invalid_emails) - 3) . ' more)';
 			}
+			$error_msg .= '. Use format: email@example.com or email@example.com, Name';
 			wp_send_json_error($error_msg);
 		} else {
-			wp_send_json_error('No email addresses entered');
+			wp_send_json_error('No email addresses entered. Please enter at least one valid email address.');
 		}
 		return;
 	}
@@ -221,11 +300,14 @@ function event_rsvp_ajax_add_manual_recipients()
 
 	if ($result['added'] === 0) {
 		if ($result['duplicates'] > 0) {
-			wp_send_json_error(sprintf('All %d email(s) already exist in this campaign', $result['duplicates']));
+			wp_send_json_error(sprintf('All %d email(s) already exist in this campaign. Try adding new email addresses.', $result['duplicates']));
 		} elseif ($result['skipped'] > 0) {
-			wp_send_json_error(sprintf('Failed to add %d email(s) - validation error', $result['skipped']));
+			// Provide more context about what might have gone wrong
+			$error_details = 'Failed to add email(s). Possible reasons: invalid email format, special characters, or database error. ';
+			$error_details .= 'Check browser console for details or contact support.';
+			wp_send_json_error($error_details);
 		} else {
-			wp_send_json_error('Failed to add emails - please check database connection');
+			wp_send_json_error('Failed to add emails. Please check database connection or contact support.');
 		}
 		return;
 	}
