@@ -218,7 +218,7 @@ while ( have_posts() ) :
 														</span>
 														<?php if ($checked_in) : ?>
 															<span class="attendee-checked-in">
-																✓ Checked In
+																��� Checked In
 																<?php if ($checkin_time) : ?>
 																	<small>(<?php echo date('M j, g:i A', strtotime($checkin_time)); ?>)</small>
 																<?php endif; ?>
@@ -612,22 +612,67 @@ while ( have_posts() ) :
 	</main>
 
 	<?php
-	// Email tracking modal
-	if (isset($_GET['track_token']) && isset($_GET['show_rsvp_modal'])) :
+	// Handle email tracking from email links
+	$track_token = '';
+	$show_modal = false;
+	$recipient_data = null;
+
+	if (isset($_GET['email_track'])) {
+		$token = sanitize_text_field($_GET['email_track']);
+		// Track the email open
+		if (function_exists('event_rsvp_track_email_open')) {
+			event_rsvp_track_email_open($token);
+		}
+		$track_token = $token;
+	} elseif (isset($_GET['track_token'])) {
 		$track_token = sanitize_text_field($_GET['track_token']);
+	}
+
+	// Check if user already responded or if we should show modal
+	if (!empty($track_token)) {
+		global $wpdb;
+		$recipients_table = $wpdb->prefix . 'event_email_recipients';
+
+		$recipient_data = $wpdb->get_row($wpdb->prepare(
+			"SELECT * FROM $recipients_table WHERE tracking_token = %s",
+			$track_token
+		));
+
+		// Check if already responded
+		if ($recipient_data && !empty($recipient_data->response) && $recipient_data->response !== 'pending') {
+			// Already responded - redirect to clean URL
+			if (isset($_GET['track_token']) || isset($_GET['email_track'])) {
+				?>
+				<script>
+					window.location.href = <?php echo json_encode(get_permalink($event_id)); ?>;
+				</script>
+				<?php
+				exit;
+			}
+		} else {
+			// Not responded yet - show modal
+			$show_modal = true;
+		}
+	}
+
+	// Email tracking modal
+	if ($show_modal && $recipient_data) :
 	?>
 	<div id="emailRsvpModal" class="email-rsvp-modal-overlay" style="display: flex;">
 		<div class="email-rsvp-modal-container">
 			<div class="email-rsvp-modal-header">
-				<h2>Will you attend this event?</h2>
+				<h2><?php echo esc_html(get_the_title($event_id)); ?></h2>
 				<button class="email-rsvp-modal-close" aria-label="Close">&times;</button>
 			</div>
 			<div class="email-rsvp-modal-body">
+				<div class="email-rsvp-question">
+					<p style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; text-align: center; color: #2d3748;">Will you attend this event?</p>
+				</div>
 				<div class="email-rsvp-buttons">
 					<button class="email-rsvp-btn email-rsvp-yes" data-response="yes" data-token="<?php echo esc_attr($track_token); ?>" data-event-id="<?php echo esc_attr($event_id); ?>">
 						✓ Yes, I'll Attend
 					</button>
-					<button class="email-rsvp-btn email-rsvp-no" data-response="no" data-token="<?php echo esc_attr($track_token); ?>">
+					<button class="email-rsvp-btn email-rsvp-no" data-response="no" data-token="<?php echo esc_attr($track_token); ?>" data-event-id="<?php echo esc_attr($event_id); ?>">
 						✗ No, I Can't Make It
 					</button>
 				</div>
@@ -1087,23 +1132,33 @@ document.addEventListener('DOMContentLoaded', function() {
 		const yesBtn = emailRsvpModal.querySelector('.email-rsvp-yes');
 		const noBtn = emailRsvpModal.querySelector('.email-rsvp-no');
 
-		closeBtn.addEventListener('click', function() {
-			emailRsvpModal.style.display = 'none';
-			// Remove query params from URL
+		const cleanUrl = function() {
 			const url = new URL(window.location.href);
 			url.searchParams.delete('track_token');
 			url.searchParams.delete('show_rsvp_modal');
+			url.searchParams.delete('email_track');
 			window.history.replaceState({}, document.title, url.toString());
+		};
+
+		closeBtn.addEventListener('click', function() {
+			emailRsvpModal.style.display = 'none';
+			cleanUrl();
 		});
 
 		emailRsvpModal.addEventListener('click', function(e) {
 			if (e.target === emailRsvpModal) {
 				emailRsvpModal.style.display = 'none';
+				cleanUrl();
 			}
 		});
 
 		noBtn.addEventListener('click', function() {
 			const token = this.getAttribute('data-token');
+			const eventId = this.getAttribute('data-event-id');
+			const originalText = this.innerHTML;
+
+			this.disabled = true;
+			this.innerHTML = '⏳ Processing...';
 
 			// Record "no" response
 			fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
@@ -1121,16 +1176,22 @@ document.addEventListener('DOMContentLoaded', function() {
 			.then(response => response.json())
 			.then(data => {
 				if (data.success) {
-					alert('Thank you for your response. We\'re sorry you can\'t make it!');
-					emailRsvpModal.style.display = 'none';
+					emailRsvpModal.innerHTML = '<div style="padding: 40px; text-align: center;"><div style="font-size: 64px; margin-bottom: 20px;">✓</div><h2 style="margin: 0 0 16px 0; color: #2d3748;">Thank you for your response</h2><p style="margin: 0; color: #718096;">We\'re sorry you can\'t make it!</p></div>';
+					setTimeout(function() {
+						window.location.href = window.location.pathname;
+					}, 2000);
 				} else {
+					this.disabled = false;
+					this.innerHTML = originalText;
 					alert('Failed to record response. Please try again.');
 				}
-			})
+			}.bind(this))
 			.catch(error => {
 				console.error('Error:', error);
+				this.disabled = false;
+				this.innerHTML = originalText;
 				alert('Failed to record response. Please try again.');
-			});
+			}.bind(this));
 		});
 
 		yesBtn.addEventListener('click', function() {
@@ -1182,10 +1243,10 @@ document.addEventListener('DOMContentLoaded', function() {
 				.then(response => response.json())
 				.then(data => {
 					if (data.success) {
-						alert('Thank you for your RSVP! You\'ll receive a confirmation email with your QR code for check-in.');
-						emailRsvpModal.style.display = 'none';
-						// Refresh page to show updated info
-						window.location.reload();
+						emailRsvpModal.innerHTML = '<div style="padding: 40px; text-align: center;"><div style="font-size: 64px; margin-bottom: 20px;">✓</div><h2 style="margin: 0 0 16px 0; color: #2d3748;">Thank you for your RSVP!</h2><p style="margin: 0; color: #718096;">You\'ll receive a confirmation email with your QR code for check-in.</p></div>';
+						setTimeout(function() {
+							window.location.href = window.location.pathname;
+						}, 2000);
 					} else {
 						submitBtn.disabled = false;
 						submitBtn.textContent = 'Submit RSVP';
