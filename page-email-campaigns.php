@@ -61,6 +61,22 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 
 		<div style="height:40px" aria-hidden="true"></div>
 
+		<?php
+		$smtp_enabled = get_option('event_rsvp_smtp_enabled', false);
+		$smtp_configured = get_option('event_rsvp_smtp_username', '') && get_option('event_rsvp_smtp_password', '');
+
+		if (!$smtp_enabled || !$smtp_configured) : ?>
+			<div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 15px 20px; margin-bottom: 20px;">
+				<p style="margin: 0; color: #856404;">
+					<strong>⚠️ SMTP Not Configured:</strong>
+					To send email campaigns, please configure your SMTP settings in
+					<a href="<?php echo admin_url('admin.php?page=event-rsvp-email-settings'); ?>" style="color: #856404; text-decoration: underline;">
+						Email Settings
+					</a>
+				</p>
+			</div>
+		<?php endif; ?>
+
 		<div class="page-header">
 			<div class="header-content">
 				<div class="header-text">
@@ -260,7 +276,7 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 
 				<div id="manualRecipientsForm" class="manual-recipients-section" style="display: none;">
 					<h4>Add Recipients</h4>
-					<textarea id="manualEmailsList" class="form-input" rows="6" placeholder="Enter emails, one per line. Format:&#10;email@example.com&#10;email@example.com, Name&#10;email@example.com, Full Name"></textarea>
+					<textarea id="manualEmailsList" class="form-input" rows="6" placeholder="Enter emails separated by space, comma, or new line:&#10;email@example.com email2@example.com&#10;Or with names:&#10;email@example.com, John Doe&#10;email2@example.com, Jane Smith"></textarea>
 					<div class="form-actions">
 						<button type="button" id="cancelManualRecipientsBtn" class="secondary-button">Cancel</button>
 						<button type="button" id="saveManualRecipientsBtn" class="primary-button">Add Recipients</button>

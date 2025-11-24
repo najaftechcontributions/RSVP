@@ -155,29 +155,65 @@ function event_rsvp_ajax_add_manual_recipients()
 		return;
 	}
 
-	$email_lines = explode("\n", $emails);
+	// Normalize line breaks to handle different OS formats
+	$emails = str_replace(array("\r\n", "\r"), "\n", $emails);
+
+	// Split by newlines, commas, spaces, tabs - handle all common separators
+	$email_lines = preg_split('/[\n,;\s]+/', $emails, -1, PREG_SPLIT_NO_EMPTY);
 	$recipients = array();
+	$invalid_emails = array();
 
 	foreach ($email_lines as $line) {
 		$line = trim($line);
+
 		if (empty($line)) {
 			continue;
 		}
 
-		$parts = preg_split('/[,\t]+/', $line, 2);
-		$email = trim($parts[0]);
-		$name = isset($parts[1]) ? trim($parts[1]) : '';
+		// Check if line contains "email Name" or "email, Name" format
+		$name = '';
 
-		if (is_email($email)) {
+		// Try to extract name if format is "email, Name" or "email Name Name"
+		if (strpos($line, ',') !== false) {
+			$parts = explode(',', $line, 2);
+			$email_part = trim($parts[0]);
+			$name = isset($parts[1]) ? trim($parts[1]) : '';
+		} else {
+			// Check if there are multiple words (email followed by name)
+			$parts = preg_split('/\s+/', $line, 2);
+			$email_part = trim($parts[0]);
+			// Only treat second part as name if first part is a valid email
+			if (isset($parts[1]) && is_email($email_part)) {
+				$name = trim($parts[1]);
+			} else {
+				$email_part = $line;
+			}
+		}
+
+		// Sanitize email
+		$email = sanitize_email($email_part);
+
+		// Validate email
+		if (!empty($email) && is_email($email)) {
 			$recipients[] = array(
 				'email' => $email,
 				'name' => $name
 			);
+		} else if (!empty($line)) {
+			$invalid_emails[] = $line;
 		}
 	}
 
 	if (empty($recipients)) {
-		wp_send_json_error('No valid email addresses found');
+		if (!empty($invalid_emails)) {
+			$error_msg = 'No valid email addresses found. Invalid: ' . implode(', ', array_slice($invalid_emails, 0, 3));
+			if (count($invalid_emails) > 3) {
+				$error_msg .= ' and ' . (count($invalid_emails) - 3) . ' more';
+			}
+			wp_send_json_error($error_msg);
+		} else {
+			wp_send_json_error('No email addresses entered');
+		}
 		return;
 	}
 
@@ -185,9 +221,11 @@ function event_rsvp_ajax_add_manual_recipients()
 
 	if ($result['added'] === 0) {
 		if ($result['duplicates'] > 0) {
-			wp_send_json_error(sprintf('All %d email(s) already exist', $result['duplicates']));
+			wp_send_json_error(sprintf('All %d email(s) already exist in this campaign', $result['duplicates']));
+		} elseif ($result['skipped'] > 0) {
+			wp_send_json_error(sprintf('Failed to add %d email(s) - validation error', $result['skipped']));
 		} else {
-			wp_send_json_error('No valid emails added');
+			wp_send_json_error('Failed to add emails - please check database connection');
 		}
 		return;
 	}

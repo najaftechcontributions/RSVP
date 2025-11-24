@@ -142,7 +142,11 @@ function event_rsvp_add_campaign_recipients($campaign_id, $recipients)
 	$duplicates = 0;
 
 	foreach ($recipients as $recipient) {
-		if (!is_email($recipient['email'])) {
+		// Sanitize email first
+		$clean_email = sanitize_email($recipient['email']);
+
+		// Validate sanitized email
+		if (empty($clean_email) || !is_email($clean_email)) {
 			$skipped++;
 			continue;
 		}
@@ -151,7 +155,7 @@ function event_rsvp_add_campaign_recipients($campaign_id, $recipients)
 		$existing = $wpdb->get_var($wpdb->prepare(
 			"SELECT id FROM $table WHERE campaign_id = %d AND email = %s",
 			$campaign_id,
-			sanitize_email($recipient['email'])
+			$clean_email
 		));
 
 		if ($existing) {
@@ -161,11 +165,11 @@ function event_rsvp_add_campaign_recipients($campaign_id, $recipients)
 
 		$tracking_token = wp_generate_password(32, false, false);
 
-		$wpdb->insert(
+		$insert_result = $wpdb->insert(
 			$table,
 			array(
 				'campaign_id' => $campaign_id,
-				'email' => sanitize_email($recipient['email']),
+				'email' => $clean_email,
 				'name' => isset($recipient['name']) ? sanitize_text_field($recipient['name']) : '',
 				'tracking_token' => $tracking_token,
 				'sent_status' => 'pending'
@@ -173,8 +177,14 @@ function event_rsvp_add_campaign_recipients($campaign_id, $recipients)
 			array('%d', '%s', '%s', '%s', '%s')
 		);
 
-		if ($wpdb->insert_id) {
+		if ($insert_result !== false && $wpdb->insert_id) {
 			$added++;
+		} else {
+			// Log database error for debugging
+			if ($wpdb->last_error) {
+				error_log('Email recipient insert failed: ' . $wpdb->last_error);
+			}
+			$skipped++;
 		}
 	}
 
@@ -342,6 +352,11 @@ function event_rsvp_send_campaign_email($recipient_id)
 		'Reply-To: ' . ($smtp_from_email ?: get_option('admin_email'))
 	);
 
+	// Add error logging for debugging
+	add_action('wp_mail_failed', function($wp_error) use ($recipient) {
+		error_log('Campaign Email Failed for ' . $recipient->email . ': ' . $wp_error->get_error_message());
+	});
+
 	$result = wp_mail($recipient->email, $subject, $message, $headers);
 
 	if ($result) {
@@ -368,6 +383,8 @@ function event_rsvp_send_campaign_email($recipient_id)
 			array('%d'),
 			array('%d')
 		);
+
+		error_log('Campaign Email sent successfully to: ' . $recipient->email);
 	} else {
 		$wpdb->update(
 			$recipients_table,
@@ -376,6 +393,8 @@ function event_rsvp_send_campaign_email($recipient_id)
 			array('%s'),
 			array('%d')
 		);
+
+		error_log('Campaign Email failed to send to: ' . $recipient->email . ' (no specific error)');
 	}
 
 	return $result;
