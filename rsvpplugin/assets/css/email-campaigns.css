@@ -534,6 +534,63 @@
 	letter-spacing: 0.5px;
 }
 
+.campaign-stats-header {
+	margin-bottom: 30px;
+	padding-bottom: 20px;
+	border-bottom: 2px solid #edf2f7;
+}
+
+.campaign-stats-header h3 {
+	margin: 0 0 8px 0;
+	font-size: 26px;
+	font-weight: 700;
+	color: #2d3748;
+}
+
+.campaign-meta {
+	margin: 4px 0;
+	font-size: 14px;
+	color: #718096;
+}
+
+.campaign-recipients-section {
+	margin-top: 40px;
+	padding-top: 30px;
+	border-top: 2px solid #edf2f7;
+}
+
+.campaign-recipients-section h4 {
+	margin: 0 0 20px 0;
+	font-size: 18px;
+	font-weight: 700;
+	color: #2d3748;
+}
+
+.recipients-table-container {
+	overflow-x: auto;
+	border-radius: 8px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.status-badge.status-failed {
+	background: #fed7d7;
+	color: #c53030;
+}
+
+.status-badge.status-pending {
+	background: #feebc8;
+	color: #c05621;
+}
+
+.error-message {
+	background: #fed7d7;
+	color: #c53030;
+	padding: 20px;
+	border-radius: 8px;
+	text-align: center;
+	font-size: 15px;
+}
+
 @media (max-width: 768px) {
 	.header-content {
 		flex-direction: column;

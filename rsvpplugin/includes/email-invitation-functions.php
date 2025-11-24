@@ -15,7 +15,22 @@ function event_rsvp_get_email_templates()
 	global $wpdb;
 	$table = $wpdb->prefix . 'event_email_templates';
 
-	return $wpdb->get_results("SELECT * FROM $table ORDER BY is_default DESC, name ASC");
+	// Check if table exists
+	$table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table}'") === $table;
+
+	if (!$table_exists) {
+		error_log('Email templates table does not exist. Creating tables...');
+		event_rsvp_create_email_invitation_tables();
+	}
+
+	$results = $wpdb->get_results("SELECT * FROM $table ORDER BY is_default DESC, name ASC");
+
+	if ($wpdb->last_error) {
+		error_log('Database error in get_email_templates: ' . $wpdb->last_error);
+		return array();
+	}
+
+	return $results ? $results : array();
 }
 
 function event_rsvp_get_email_template($id)
@@ -384,10 +399,22 @@ function event_rsvp_send_campaign_email($recipient_id)
 		'Reply-To: ' . ($smtp_from_email ?: get_option('admin_email'))
 	);
 
-	// Add error logging for debugging
-	add_action('wp_mail_failed', function($wp_error) use ($recipient) {
-		error_log('Campaign Email Failed for ' . $recipient->email . ': ' . $wp_error->get_error_message());
+	// Enhanced error logging for debugging
+	$error_logged = false;
+	$error_message = '';
+	add_action('wp_mail_failed', function($wp_error) use ($recipient, &$error_logged, &$error_message) {
+		$error_message = $wp_error->get_error_message();
+		error_log('Campaign Email Failed for ' . $recipient->email . ': ' . $error_message);
+		$error_logged = true;
 	});
+
+	// Verify SMTP configuration before sending
+	$smtp_enabled = get_option('event_rsvp_smtp_enabled', false);
+	$smtp_username = get_option('event_rsvp_smtp_username', '');
+	$smtp_password = get_option('event_rsvp_smtp_password', '');
+
+	error_log("Attempting to send campaign email to {$recipient->email} (Campaign ID: {$campaign->id}, Event: {$template_data['event_name']})");
+	error_log("SMTP Enabled: " . ($smtp_enabled ? 'Yes' : 'No') . ", Username configured: " . (!empty($smtp_username) ? 'Yes' : 'No'));
 
 	$result = wp_mail($recipient->email, $subject, $message, $headers);
 
@@ -416,7 +443,7 @@ function event_rsvp_send_campaign_email($recipient_id)
 			array('%d')
 		);
 
-		error_log('Campaign Email sent successfully to: ' . $recipient->email);
+		error_log("✓ Campaign Email sent successfully to: {$recipient->email} (Subject: {$subject})");
 	} else {
 		$wpdb->update(
 			$recipients_table,
@@ -426,7 +453,11 @@ function event_rsvp_send_campaign_email($recipient_id)
 			array('%d')
 		);
 
-		error_log('Campaign Email failed to send to: ' . $recipient->email . ' (no specific error)');
+		if (!$error_logged) {
+			error_log("✗ Campaign Email failed to send to: {$recipient->email} (wp_mail returned false, check SMTP settings)");
+		} else {
+			error_log("✗ Campaign Email error details: " . $error_message);
+		}
 	}
 
 	return $result;

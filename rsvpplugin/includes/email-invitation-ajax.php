@@ -464,6 +464,19 @@ function event_rsvp_ajax_send_campaign()
 		return;
 	}
 
+	// Check SMTP configuration
+	$smtp_enabled = get_option('event_rsvp_smtp_enabled', false);
+	$smtp_username = get_option('event_rsvp_smtp_username', '');
+	$smtp_password = get_option('event_rsvp_smtp_password', '');
+
+	if (!$smtp_enabled || empty($smtp_username) || empty($smtp_password)) {
+		error_log('Campaign send attempt with incomplete SMTP configuration');
+		wp_send_json_error('SMTP is not properly configured. Please configure SMTP settings before sending campaigns.');
+		return;
+	}
+
+	error_log("Starting campaign {$campaign_id} with " . count($recipients) . " recipients");
+
 	event_rsvp_update_campaign($campaign_id, array(
 		'status' => 'sending',
 		'sent_time' => current_time('mysql')
@@ -537,10 +550,14 @@ function event_rsvp_ajax_get_campaign_stats()
 	}
 
 	$stats = event_rsvp_get_campaign_stats($campaign_id);
+	$recipients = event_rsvp_get_campaign_recipients($campaign_id);
+	$event_name = get_the_title($campaign->event_id);
 
 	wp_send_json_success(array(
 		'stats' => $stats,
-		'campaign' => $campaign
+		'campaign' => $campaign,
+		'recipients' => $recipients,
+		'event_name' => $event_name
 	));
 }
 add_action('wp_ajax_event_rsvp_get_campaign_stats', 'event_rsvp_ajax_get_campaign_stats');
@@ -589,11 +606,23 @@ function event_rsvp_ajax_get_email_templates()
 		return;
 	}
 
-	$templates = event_rsvp_get_email_templates();
+	try {
+		$templates = event_rsvp_get_email_templates();
 
-	wp_send_json_success(array(
-		'templates' => $templates
-	));
+		if ($templates === false || $templates === null) {
+			error_log('Email templates query returned null/false - database might not be initialized');
+			$templates = array();
+		}
+
+		error_log('Email templates loaded: ' . count($templates) . ' templates found');
+
+		wp_send_json_success(array(
+			'templates' => $templates
+		));
+	} catch (Exception $e) {
+		error_log('Error loading email templates: ' . $e->getMessage());
+		wp_send_json_error('Failed to load templates: ' . $e->getMessage());
+	}
 }
 add_action('wp_ajax_event_rsvp_get_email_templates', 'event_rsvp_ajax_get_email_templates');
 

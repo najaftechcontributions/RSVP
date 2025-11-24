@@ -46,10 +46,20 @@ if (!function_exists('event_rsvp_get_user_events')) {
 // Check if tables exist, if not create them
 global $wpdb;
 $campaigns_table = $wpdb->prefix . 'event_email_campaigns';
-$table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$campaigns_table}'") === $campaigns_table;
+$templates_table = $wpdb->prefix . 'event_email_templates';
+$campaigns_table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$campaigns_table}'") === $campaigns_table;
+$templates_table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$templates_table}'") === $templates_table;
 
-if (!$table_exists) {
+if (!$campaigns_table_exists || !$templates_table_exists) {
 	event_rsvp_create_email_invitation_tables();
+	error_log('Email campaign tables created');
+}
+
+// Verify templates exist
+$template_count = $wpdb->get_var("SELECT COUNT(*) FROM $templates_table");
+if ($template_count == 0) {
+	event_rsvp_insert_default_email_templates();
+	error_log('Default email templates inserted');
 }
 
 $user_id = get_current_user_id();
@@ -63,7 +73,10 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 
 		<?php
 		$smtp_enabled = get_option('event_rsvp_smtp_enabled', false);
-		$smtp_configured = get_option('event_rsvp_smtp_username', '') && get_option('event_rsvp_smtp_password', '');
+		$smtp_username = get_option('event_rsvp_smtp_username', '');
+		$smtp_password = get_option('event_rsvp_smtp_password', '');
+		$smtp_host = get_option('event_rsvp_smtp_host', '');
+		$smtp_configured = !empty($smtp_username) && !empty($smtp_password) && !empty($smtp_host);
 
 		if (!$smtp_enabled || !$smtp_configured) : ?>
 			<div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 15px 20px; margin-bottom: 20px;">
@@ -73,6 +86,19 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 					<a href="<?php echo admin_url('admin.php?page=event-rsvp-email-settings'); ?>" style="color: #856404; text-decoration: underline;">
 						Email Settings
 					</a>
+				</p>
+				<div style="margin-top: 10px; font-size: 13px; color: #856404;">
+					Status: SMTP Enabled: <?php echo $smtp_enabled ? '✓ Yes' : '✗ No'; ?> |
+					Host: <?php echo !empty($smtp_host) ? '✓ Configured' : '✗ Not set'; ?> |
+					Username: <?php echo !empty($smtp_username) ? '✓ Set' : '✗ Not set'; ?> |
+					Password: <?php echo !empty($smtp_password) ? '✓ Set' : '✗ Not set'; ?>
+				</div>
+			</div>
+		<?php elseif ($smtp_enabled && $smtp_configured) : ?>
+			<div style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 15px 20px; margin-bottom: 20px;">
+				<p style="margin: 0; color: #155724;">
+					<strong>✓ SMTP Configured:</strong>
+					Email system is ready. Host: <?php echo esc_html($smtp_host); ?> | Username: <?php echo esc_html($smtp_username); ?>
 				</p>
 			</div>
 		<?php endif; ?>
@@ -164,7 +190,7 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 
 						<div class="campaign-actions">
 							<button class="action-btn view-campaign-btn" data-campaign-id="<?php echo $campaign->id; ?>">
-								📊 View Stats
+								📊 View Details
 							</button>
 							<?php if ($campaign->status === 'draft') : ?>
 								<button class="action-btn manage-campaign-btn" data-campaign-id="<?php echo $campaign->id; ?>">
@@ -235,7 +261,17 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 				<div class="form-group">
 					<label for="campaignTemplate">Email Template</label>
 					<select id="campaignTemplate" name="template_id" class="form-input">
-						<option value="0">Default Template</option>
+						<option value="">Loading templates...</option>
+						<?php
+						// Load templates server-side as fallback
+						$available_templates = event_rsvp_get_email_templates();
+						if (!empty($available_templates)) {
+							echo '<option value="0">Use Default HTML Template</option>';
+							foreach ($available_templates as $tmpl) {
+								echo '<option value="' . $tmpl->id . '">' . esc_html($tmpl->name) . '</option>';
+							}
+						}
+						?>
 					</select>
 					<button type="button" id="previewTemplateBtn" class="secondary-button" style="margin-top: 10px;">
 						👁️ Preview Template
@@ -310,7 +346,7 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 <div id="campaignStatsModal" class="modal-overlay" style="display: none;">
 	<div class="modal-container modal-large">
 		<div class="modal-header">
-			<h2 class="modal-title">Campaign Statistics</h2>
+			<h2 class="modal-title">Campaign Details</h2>
 			<button class="modal-close" aria-label="Close">&times;</button>
 		</div>
 		<div class="modal-body">
@@ -349,29 +385,38 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 					nonce: eventRsvpData.email_campaign_nonce
 				},
 				success: function(response) {
+					console.log('Templates AJAX response:', response);
+
 					if (response.success && response.data.templates) {
 						templates = response.data.templates;
 						const select = $('#campaignTemplate');
-						select.find('option:not(:first)').remove();
 
-						if (templates.length === 0) {
+						// Only update if we got templates from AJAX
+						if (templates.length > 0) {
+							console.log('✓ Loaded ' + templates.length + ' templates via AJAX');
+							select.empty();
 							select.append($('<option>', {
-								value: '',
-								text: 'No templates available - Database not initialized',
-								disabled: true
+								value: '0',
+								text: 'Use Default HTML Template'
 							}));
-						} else {
 							templates.forEach(function(template) {
 								select.append($('<option>', {
 									value: template.id,
 									text: template.name + (template.description ? ' - ' + template.description : '')
 								}));
 							});
+						} else {
+							console.warn('⚠ No templates returned from AJAX, using server-side templates');
 						}
+					} else {
+						console.error('✗ Failed to load templates via AJAX:', response);
+						// Keep server-side loaded templates as fallback
 					}
 				},
-				error: function() {
-					console.error('Failed to load templates');
+				error: function(xhr, status, error) {
+					console.error('✗ AJAX error loading templates:', status, error, xhr.responseText);
+					// Keep server-side loaded templates as fallback - don't modify select
+					console.log('Using server-side loaded templates as fallback');
 				}
 			});
 		}
@@ -629,6 +674,8 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 		});
 
 		function loadCampaignStats(campaignId) {
+			$('#campaignStatsContent').html('<div class="loading-spinner">Loading campaign details...</div>');
+
 			$.ajax({
 				url: eventRsvpData.ajax_url,
 				type: 'POST',
@@ -641,21 +688,58 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 					if (response.success) {
 						const stats = response.data.stats;
 						const campaign = response.data.campaign;
+						const recipients = response.data.recipients || [];
 
-						let html = '<h3>' + campaign.campaign_name + '</h3>';
+						let html = '<div class="campaign-stats-header">';
+						html += '<h3>' + campaign.campaign_name + '</h3>';
+						html += '<p class="campaign-meta">Event: ' + (response.data.event_name || 'Unknown') + '</p>';
+						if (campaign.sent_time) {
+							html += '<p class="campaign-meta">Sent: ' + campaign.sent_time + '</p>';
+						}
+						html += '</div>';
+
 						html += '<div class="stats-grid">';
 						html += '<div class="stat-card"><div class="stat-number">' + stats.total + '</div><div class="stat-label">Total Recipients</div></div>';
 						html += '<div class="stat-card"><div class="stat-number">' + stats.sent + '</div><div class="stat-label">Emails Sent</div></div>';
+						html += '<div class="stat-card"><div class="stat-number">' + stats.pending + '</div><div class="stat-label">Pending</div></div>';
+						html += '<div class="stat-card"><div class="stat-number">' + stats.failed + '</div><div class="stat-label">Failed</div></div>';
 						html += '<div class="stat-card"><div class="stat-number">' + stats.clicked + '</div><div class="stat-label">Clicked</div></div>';
 						html += '<div class="stat-card"><div class="stat-number">' + stats.yes_responses + '</div><div class="stat-label">Yes Responses</div></div>';
 						html += '<div class="stat-card"><div class="stat-number">' + stats.no_responses + '</div><div class="stat-label">No Responses</div></div>';
 						html += '<div class="stat-card"><div class="stat-number">' + stats.click_rate + '%</div><div class="stat-label">Click Rate</div></div>';
-						html += '<div class="stat-card"><div class="stat-number">' + stats.yes_rate + '%</div><div class="stat-label">Yes Rate</div></div>';
-						html += '<div class="stat-card"><div class="stat-number">' + stats.pending + '</div><div class="stat-label">Pending</div></div>';
 						html += '</div>';
 
+						if (recipients.length > 0) {
+							html += '<div class="campaign-recipients-section">';
+							html += '<h4>Email Status Details (' + recipients.length + ' recipients)</h4>';
+							html += '<div class="recipients-table-container">';
+							html += '<table class="recipients-table">';
+							html += '<thead><tr><th>Email</th><th>Name</th><th>Status</th><th>Sent Time</th><th>Clicked</th><th>Response</th></tr></thead>';
+							html += '<tbody>';
+
+							recipients.forEach(function(r) {
+								const statusClass = r.sent_status === 'sent' ? 'status-sent' : (r.sent_status === 'failed' ? 'status-failed' : 'status-pending');
+								html += '<tr>';
+								html += '<td>' + (r.email || 'N/A') + '</td>';
+								html += '<td>' + (r.name || '-') + '</td>';
+								html += '<td><span class="status-badge ' + statusClass + '">' + (r.sent_status || 'pending') + '</span></td>';
+								html += '<td>' + (r.sent_time ? new Date(r.sent_time).toLocaleString() : '-') + '</td>';
+								html += '<td>' + (r.clicked_status == 1 ? '✓ Yes' : '-') + '</td>';
+								html += '<td>' + (r.response ? '<strong>' + r.response.toUpperCase() + '</strong>' : '-') + '</td>';
+								html += '</tr>';
+							});
+
+							html += '</tbody></table>';
+							html += '</div></div>';
+						}
+
 						$('#campaignStatsContent').html(html);
+					} else {
+						$('#campaignStatsContent').html('<div class="error-message">Failed to load campaign details: ' + (response.data || 'Unknown error') + '</div>');
 					}
+				},
+				error: function() {
+					$('#campaignStatsContent').html('<div class="error-message">Failed to load campaign details. Please try again.</div>');
 				}
 			});
 		}
