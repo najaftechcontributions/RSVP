@@ -377,7 +377,7 @@ while ( have_posts() ) :
 															</button>
 														<?php endif; ?>
 														<button type="button" class="attendee-action-btn send-email-btn" data-attendee-id="<?php echo esc_attr($attendee->ID); ?>" title="Send/Resend Email">
-															<span class="btn-icon">📧</span>
+															<span class="btn-icon">����</span>
 															<span class="btn-text"><?php echo $email_sent ? 'Resend Email' : 'Send Email'; ?></span>
 														</button>
 													</div>
@@ -666,7 +666,7 @@ while ( have_posts() ) :
 			</div>
 			<div class="email-rsvp-modal-body">
 				<div class="email-rsvp-question">
-					<p style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; text-align: center; color: #2d3748;">Will you attend this event?</p>
+					<p class="modal-question-text">Will you attend this event?</p>
 				</div>
 				<div class="email-rsvp-buttons">
 					<button class="email-rsvp-btn email-rsvp-yes" data-response="yes" data-token="<?php echo esc_attr($track_token); ?>" data-event-id="<?php echo esc_attr($event_id); ?>">
@@ -747,6 +747,14 @@ while ( have_posts() ) :
 
 	.email-rsvp-modal-body {
 		padding: 40px 30px;
+	}
+
+	.modal-question-text {
+		margin: 0 0 20px 0;
+		font-size: 18px;
+		font-weight: 600;
+		text-align: center;
+		color: #2d3748;
 	}
 
 	.email-rsvp-buttons {
@@ -838,6 +846,26 @@ while ( have_posts() ) :
 		box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 	}
 
+	.rsvp-success-message {
+		padding: 40px;
+		text-align: center;
+	}
+
+	.success-icon {
+		font-size: 64px;
+		margin-bottom: 20px;
+	}
+
+	.success-title {
+		margin: 0 0 16px 0;
+		color: #2d3748;
+	}
+
+	.success-description {
+		margin: 0;
+		color: #718096;
+	}
+
 	@media (max-width: 600px) {
 		.email-rsvp-modal-container {
 			border-radius: 0;
@@ -886,7 +914,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			container.innerHTML = '<div class="loading-mini">Loading...</div>';
 		}
 
-		fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+		fetch(<?php echo json_encode(admin_url('admin-ajax.php')); ?>, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded',
@@ -894,7 +922,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			body: new URLSearchParams({
 				action: 'event_rsvp_get_checked_in_attendees',
 				event_id: eventId,
-				nonce: '<?php echo wp_create_nonce('event_rsvp_checkin'); ?>'
+				nonce: <?php echo json_encode(wp_create_nonce('event_rsvp_checkin')); ?>
 			})
 		})
 		.then(response => response.json())
@@ -929,7 +957,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	function refreshAttendeeCounts() {
 		const eventId = <?php echo $event_id; ?>;
 
-		fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+		fetch(<?php echo json_encode(admin_url('admin-ajax.php')); ?>, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded',
@@ -937,7 +965,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			body: new URLSearchParams({
 				action: 'event_rsvp_get_attendee_counts',
 				event_id: eventId,
-				nonce: '<?php echo wp_create_nonce('event_rsvp_counts'); ?>'
+				nonce: <?php echo json_encode(wp_create_nonce('event_rsvp_counts')); ?>
 			})
 		})
 		.then(response => response.json())
@@ -1048,7 +1076,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			btnElement.disabled = true;
 			btnElement.innerHTML = '<span class="btn-icon">⏳</span><span class="btn-text">Sending...</span>';
 
-			fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+			fetch(<?php echo json_encode(admin_url('admin-ajax.php')); ?>, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded',
@@ -1056,7 +1084,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				body: new URLSearchParams({
 					action: 'event_rsvp_resend_qr_email',
 					attendee_id: attendeeId,
-					nonce: '<?php echo wp_create_nonce('event_rsvp_resend_qr'); ?>'
+					nonce: <?php echo json_encode(wp_create_nonce('event_rsvp_resend_qr')); ?>
 				})
 			})
 			.then(response => response.json())
@@ -1126,11 +1154,19 @@ document.addEventListener('DOMContentLoaded', function() {
 	}
 
 	// Handle email RSVP modal
-	const emailRsvpModal = document.getElementById('emailRsvpModal');
-	if (emailRsvpModal) {
-		const closeBtn = emailRsvpModal.querySelector('.email-rsvp-modal-close');
-		const yesBtn = emailRsvpModal.querySelector('.email-rsvp-yes');
-		const noBtn = emailRsvpModal.querySelector('.email-rsvp-no');
+	try {
+		const emailRsvpModal = document.getElementById('emailRsvpModal');
+		if (emailRsvpModal) {
+			console.log('Email RSVP Modal found, attaching event listeners...');
+			const closeBtn = emailRsvpModal.querySelector('.email-rsvp-modal-close');
+			const yesBtn = emailRsvpModal.querySelector('.email-rsvp-yes');
+			const noBtn = emailRsvpModal.querySelector('.email-rsvp-no');
+
+			if (!yesBtn || !noBtn) {
+				console.error('RSVP buttons not found!', {yesBtn: yesBtn, noBtn: noBtn});
+				throw new Error('RSVP buttons not found in modal');
+			}
+			console.log('RSVP buttons found:', {yesBtn: yesBtn, noBtn: noBtn});
 
 		const cleanUrl = function() {
 			const url = new URL(window.location.href);
@@ -1153,15 +1189,22 @@ document.addEventListener('DOMContentLoaded', function() {
 		});
 
 		noBtn.addEventListener('click', function() {
+			console.log('No button clicked');
 			const token = this.getAttribute('data-token');
 			const eventId = this.getAttribute('data-event-id');
 			const originalText = this.innerHTML;
+
+			if (!token || !eventId) {
+				console.error('Missing token or event ID', {token: token, eventId: eventId});
+				alert('Error: Missing required data. Please try clicking the link in your email again.');
+				return;
+			}
 
 			this.disabled = true;
 			this.innerHTML = '⏳ Processing...';
 
 			// Record "no" response
-			fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+			fetch(<?php echo json_encode(admin_url('admin-ajax.php')); ?>, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded',
@@ -1170,13 +1213,17 @@ document.addEventListener('DOMContentLoaded', function() {
 					action: 'event_rsvp_record_email_response',
 					token: token,
 					response: 'no',
-					nonce: '<?php echo wp_create_nonce('event_rsvp_email_response'); ?>'
+					nonce: <?php echo json_encode(wp_create_nonce('event_rsvp_email_response')); ?>
 				})
 			})
-			.then(response => response.json())
-			.then(data => {
+			.then(response => {
+				console.log('Response received:', response);
+				return response.json();
+			})
+			.then(function(data) {
+				console.log('Response data:', data);
 				if (data.success) {
-					emailRsvpModal.innerHTML = '<div style="padding: 40px; text-align: center;"><div style="font-size: 64px; margin-bottom: 20px;">✓</div><h2 style="margin: 0 0 16px 0; color: #2d3748;">Thank you for your response</h2><p style="margin: 0; color: #718096;">We\'re sorry you can\'t make it!</p></div>';
+					emailRsvpModal.innerHTML = '<div class="rsvp-success-message"><div class="success-icon">✓</div><h2 class="success-title">Thank you for your response</h2><p class="success-description">We\'re sorry you can\'t make it!</p></div>';
 					setTimeout(function() {
 						window.location.href = window.location.pathname;
 					}, 2000);
@@ -1186,17 +1233,24 @@ document.addEventListener('DOMContentLoaded', function() {
 					alert('Failed to record response. Please try again.');
 				}
 			}.bind(this))
-			.catch(error => {
-				console.error('Error:', error);
+			.catch(function(error) {
+				console.error('Error recording NO response:', error);
 				this.disabled = false;
 				this.innerHTML = originalText;
-				alert('Failed to record response. Please try again.');
+				alert('Failed to record response. Please try again. Error: ' + error.message);
 			}.bind(this));
 		});
 
 		yesBtn.addEventListener('click', function() {
+			console.log('Yes button clicked');
 			const token = this.getAttribute('data-token');
 			const eventId = this.getAttribute('data-event-id');
+
+			if (!token || !eventId) {
+				console.error('Missing token or event ID', {token: token, eventId: eventId});
+				alert('Error: Missing required data. Please try clicking the link in your email again.');
+				return;
+			}
 
 			// Show attendee form
 			const modalBody = emailRsvpModal.querySelector('.email-rsvp-modal-body');
@@ -1230,20 +1284,24 @@ document.addEventListener('DOMContentLoaded', function() {
 				formData.append('token', token);
 				formData.append('event_id', eventId);
 				formData.append('response', 'yes');
-				formData.append('nonce', '<?php echo wp_create_nonce('event_rsvp_email_response'); ?>');
+				formData.append('nonce', <?php echo json_encode(wp_create_nonce('event_rsvp_email_response')); ?>);
 
 				const submitBtn = form.querySelector('.email-attendee-submit-btn');
 				submitBtn.disabled = true;
 				submitBtn.textContent = 'Submitting...';
 
-				fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+				fetch(<?php echo json_encode(admin_url('admin-ajax.php')); ?>, {
 					method: 'POST',
 					body: formData
 				})
-				.then(response => response.json())
+				.then(response => {
+					console.log('Attendance form response received:', response);
+					return response.json();
+				})
 				.then(data => {
+					console.log('Attendance form data:', data);
 					if (data.success) {
-						emailRsvpModal.innerHTML = '<div style="padding: 40px; text-align: center;"><div style="font-size: 64px; margin-bottom: 20px;">✓</div><h2 style="margin: 0 0 16px 0; color: #2d3748;">Thank you for your RSVP!</h2><p style="margin: 0; color: #718096;">You\'ll receive a confirmation email with your QR code for check-in.</p></div>';
+						emailRsvpModal.innerHTML = '<div class="rsvp-success-message"><div class="success-icon">✓</div><h2 class="success-title">Thank you for your RSVP!</h2><p class="success-description">You\'ll receive a confirmation email with your QR code for check-in.</p></div>';
 						setTimeout(function() {
 							window.location.href = window.location.pathname;
 						}, 2000);
@@ -1254,13 +1312,19 @@ document.addEventListener('DOMContentLoaded', function() {
 					}
 				})
 				.catch(error => {
-					console.error('Error:', error);
+					console.error('Error submitting attendance form:', error);
 					submitBtn.disabled = false;
 					submitBtn.textContent = 'Submit RSVP';
-					alert('Failed to submit RSVP. Please try again.');
+					alert('Failed to submit RSVP. Please try again. Error: ' + error.message);
 				});
 			});
 		});
+		} else {
+			console.log('Email RSVP Modal not found in DOM');
+		}
+	} catch (error) {
+		console.error('Error initializing email RSVP modal:', error);
+		alert('There was an error loading the RSVP form. Please refresh the page and try again.');
 	}
 });
 </script>

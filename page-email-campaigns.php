@@ -79,7 +79,7 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 		$smtp_configured = !empty($smtp_username) && !empty($smtp_password) && !empty($smtp_host);
 
 		if (!$smtp_enabled || !$smtp_configured) : ?>
-			<div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 15px 20px; margin-bottom: 20px;">
+			<!-- <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 15px 20px; margin-bottom: 20px;">
 				<p style="margin: 0; color: #856404;">
 					<strong>⚠️ SMTP Not Configured:</strong>
 					To send email campaigns, please configure your SMTP settings in
@@ -93,14 +93,9 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 					Username: <?php echo !empty($smtp_username) ? '✓ Set' : '✗ Not set'; ?> |
 					Password: <?php echo !empty($smtp_password) ? '✓ Set' : '✗ Not set'; ?>
 				</div>
-			</div>
+			</div> -->
 		<?php elseif ($smtp_enabled && $smtp_configured) : ?>
-			<div style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 15px 20px; margin-bottom: 20px;">
-				<p style="margin: 0; color: #155724;">
-					<strong>✓ SMTP Configured:</strong>
-					Email system is ready. Host: <?php echo esc_html($smtp_host); ?> | Username: <?php echo esc_html($smtp_username); ?>
-				</p>
-			</div>
+			<!-- ix -->
 		<?php endif; ?>
 
 		<div class="page-header">
