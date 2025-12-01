@@ -54,6 +54,8 @@ class EventRSVPPlugin {
 		// Simple Stripe Payment Links integration
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/simple-stripe-payments.php';
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/simple-stripe-ajax.php';
+		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/simple-stripe-payments-upgrade.php';
+		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/upgrade-ajax.php';
 	}
 	
 	private function register_hooks() {

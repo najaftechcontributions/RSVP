@@ -457,6 +457,18 @@ while ( have_posts() ) :
 
 				<aside class="event-sidebar">
 					
+					<div class="event-share-card">
+						<h3>Share This Event</h3>
+						<p class="share-subtitle">Share this event with your friends and colleagues</p>
+						<div class="share-link-container">
+							<input type="text" id="event-share-link" value="<?php echo esc_url(get_permalink($event_id)); ?>" readonly class="share-link-input">
+							<button type="button" id="copy-share-link" class="copy-link-button" title="Copy link">
+								📋 Copy Link
+							</button>
+						</div>
+						<p class="share-note">Anyone with this link can <?php echo ($visibility === 'private') ? 'view this private event' : 'view and RSVP to this event'; ?></p>
+					</div>
+
 					<div class="event-stats-card">
 						<h3>Event Stats</h3>
 						<div class="stat-item">
@@ -1326,8 +1338,133 @@ document.addEventListener('DOMContentLoaded', function() {
 		console.error('Error initializing email RSVP modal:', error);
 		alert('There was an error loading the RSVP form. Please refresh the page and try again.');
 	}
+
+	// Copy share link functionality
+	const copyShareLinkBtn = document.getElementById('copy-share-link');
+	if (copyShareLinkBtn) {
+		copyShareLinkBtn.addEventListener('click', function() {
+			const shareLinkInput = document.getElementById('event-share-link');
+			if (shareLinkInput) {
+				shareLinkInput.select();
+				shareLinkInput.setSelectionRange(0, 99999); // For mobile devices
+
+				try {
+					document.execCommand('copy');
+					const originalText = this.innerHTML;
+					this.innerHTML = '✓ Copied!';
+					this.style.backgroundColor = '#10b981';
+
+					setTimeout(() => {
+						this.innerHTML = originalText;
+						this.style.backgroundColor = '';
+					}, 2000);
+				} catch (err) {
+					// Fallback to navigator.clipboard if available
+					if (navigator.clipboard) {
+						navigator.clipboard.writeText(shareLinkInput.value).then(() => {
+							const originalText = this.innerHTML;
+							this.innerHTML = '✓ Copied!';
+							this.style.backgroundColor = '#10b981';
+
+							setTimeout(() => {
+								this.innerHTML = originalText;
+								this.style.backgroundColor = '';
+							}, 2000);
+						}).catch(err => {
+							alert('Failed to copy link. Please copy it manually.');
+						});
+					} else {
+						alert('Copy failed. Please copy the link manually.');
+					}
+				}
+			}
+		});
+	}
 });
 </script>
+
+<style>
+.event-share-card {
+	background: #ffffff;
+	border-radius: 12px;
+	padding: 24px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	margin-bottom: 24px;
+}
+
+.event-share-card h3 {
+	margin: 0 0 8px 0;
+	font-size: 1.25rem;
+	font-weight: 700;
+	color: #1f2937;
+}
+
+.share-subtitle {
+	margin: 0 0 16px 0;
+	font-size: 0.9rem;
+	color: #6b7280;
+}
+
+.share-link-container {
+	display: flex;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.share-link-input {
+	flex: 1;
+	padding: 10px 12px;
+	border: 2px solid #e5e7eb;
+	border-radius: 8px;
+	font-size: 0.875rem;
+	color: #4b5563;
+	background-color: #f9fafb;
+}
+
+.share-link-input:focus {
+	outline: none;
+	border-color: #667eea;
+}
+
+.copy-link-button {
+	padding: 10px 16px;
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	color: #ffffff;
+	border: none;
+	border-radius: 8px;
+	font-size: 0.875rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	white-space: nowrap;
+}
+
+.copy-link-button:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.copy-link-button:active {
+	transform: translateY(0);
+}
+
+.share-note {
+	margin: 0;
+	font-size: 0.8rem;
+	color: #9ca3af;
+	font-style: italic;
+}
+
+@media (max-width: 768px) {
+	.share-link-container {
+		flex-direction: column;
+	}
+
+	.copy-link-button {
+		width: 100%;
+	}
+}
+</style>
 
 <?php
 endwhile;

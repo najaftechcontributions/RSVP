@@ -94,9 +94,15 @@ $user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 							<?php if ($user_plan === 'event_host') : ?>
 								<button class="pricing-button pricing-button-primary" disabled>Current Plan</button>
 							<?php else : ?>
-								<a href="<?php echo esc_url(event_rsvp_get_plan_url('event_host', $is_logged_in)); ?>" class="pricing-button pricing-button-primary">
-									<?php echo $is_logged_in ? 'Upgrade Now' : 'Start Hosting'; ?>
-								</a>
+								<?php if ($is_logged_in) : ?>
+									<button class="pricing-button pricing-button-primary upgrade-plan-btn" data-plan="event_host">
+										Upgrade Now
+									</button>
+								<?php else : ?>
+									<a href="<?php echo esc_url(home_url('/signup/?plan=event_host')); ?>" class="pricing-button pricing-button-primary">
+										Start Hosting
+									</a>
+								<?php endif; ?>
 							<?php endif; ?>
 						</div>
 					</div>
@@ -130,9 +136,15 @@ $user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 							<?php if ($user_plan === 'vendor') : ?>
 								<button class="pricing-button pricing-button-outline" disabled>Current Plan</button>
 							<?php else : ?>
-								<a href="<?php echo esc_url(event_rsvp_get_plan_url('vendor', $is_logged_in)); ?>" class="pricing-button pricing-button-outline">
-									<?php echo $is_logged_in ? 'Upgrade Now' : 'Start Advertising'; ?>
-								</a>
+								<?php if ($is_logged_in) : ?>
+									<button class="pricing-button pricing-button-outline upgrade-plan-btn" data-plan="vendor">
+										Upgrade Now
+									</button>
+								<?php else : ?>
+									<a href="<?php echo esc_url(home_url('/signup/?plan=vendor')); ?>" class="pricing-button pricing-button-outline">
+										Start Advertising
+									</a>
+								<?php endif; ?>
 							<?php endif; ?>
 						</div>
 					</div>
@@ -167,9 +179,15 @@ $user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 							<?php if ($user_plan === 'pro') : ?>
 								<button class="pricing-button pricing-button-primary" disabled>Current Plan</button>
 							<?php else : ?>
-								<a href="<?php echo esc_url(event_rsvp_get_plan_url('pro', $is_logged_in)); ?>" class="pricing-button pricing-button-primary">
-									<?php echo $is_logged_in ? 'Upgrade to Pro' : 'Get Pro Access'; ?>
-								</a>
+								<?php if ($is_logged_in) : ?>
+									<button class="pricing-button pricing-button-primary upgrade-plan-btn" data-plan="pro">
+										Upgrade to Pro
+									</button>
+								<?php else : ?>
+									<a href="<?php echo esc_url(home_url('/signup/?plan=pro')); ?>" class="pricing-button pricing-button-primary">
+										Get Pro Access
+									</a>
+								<?php endif; ?>
 							<?php endif; ?>
 						</div>
 					</div>
@@ -391,5 +409,56 @@ function event_rsvp_get_plan_url($plan_slug, $is_logged_in) {
 	*/
 }
 
+?>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+	const upgradeBtns = document.querySelectorAll('.upgrade-plan-btn');
+
+	upgradeBtns.forEach(btn => {
+		btn.addEventListener('click', function() {
+			const plan = this.getAttribute('data-plan');
+			const originalText = this.textContent;
+
+			// Disable button
+			this.disabled = true;
+			this.textContent = 'Processing...';
+
+			// Make AJAX request
+			fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+				},
+				body: new URLSearchParams({
+					action: 'event_rsvp_initiate_upgrade',
+					plan: plan,
+					nonce: '<?php echo wp_create_nonce('event_rsvp_upgrade'); ?>'
+				})
+			})
+			.then(response => response.json())
+			.then(data => {
+				if (data.success && data.data.checkout_url) {
+					this.textContent = 'Redirecting to checkout...';
+					// Redirect to Stripe checkout
+					window.location.href = data.data.checkout_url;
+				} else {
+					alert(data.data || 'Failed to initiate upgrade. Please try again.');
+					this.disabled = false;
+					this.textContent = originalText;
+				}
+			})
+			.catch(error => {
+				console.error('Error:', error);
+				alert('An error occurred. Please try again.');
+				this.disabled = false;
+				this.textContent = originalText;
+			});
+		});
+	});
+});
+</script>
+
+<?php
 get_footer();
 ?>

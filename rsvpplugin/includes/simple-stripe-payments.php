@@ -151,6 +151,41 @@ class Event_RSVP_Simple_Stripe {
 	}
 	
 	/**
+	 * Get user's current plan
+	 */
+	public static function get_user_plan($user_id = null) {
+		if (!$user_id) {
+			$user_id = get_current_user_id();
+		}
+
+		if (!$user_id) {
+			return '';
+		}
+
+		$plan = get_user_meta($user_id, 'event_rsvp_plan', true);
+
+		// If no plan meta, check user role
+		if (empty($plan)) {
+			$user = get_user_by('id', $user_id);
+			if ($user) {
+				$roles = $user->roles;
+				if (in_array('pro', $roles)) {
+					return 'pro';
+				} elseif (in_array('event_host', $roles)) {
+					return 'event_host';
+				} elseif (in_array('vendor', $roles)) {
+					return 'vendor';
+				} else {
+					return 'attendee';
+				}
+			}
+			return 'attendee';
+		}
+
+		return $plan;
+	}
+
+	/**
 	 * Verify payment and upgrade account (with token)
 	 */
 	public function verify_payment_and_upgrade($token, $plan_slug) {

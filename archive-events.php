@@ -10,6 +10,9 @@ get_header();
 $hashtag_filter = isset($_GET['hashtag']) ? sanitize_text_field($_GET['hashtag']) : '';
 $paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
 
+$current_user_id = get_current_user_id();
+$is_admin = current_user_can('administrator');
+
 $args = array(
 	'post_type' => 'event',
 	'posts_per_page' => 12,
@@ -18,6 +21,84 @@ $args = array(
 	'orderby' => 'meta_value',
 	'order' => 'ASC'
 );
+
+// Filter private events - only show to creator and admins
+if (!$is_admin) {
+	$meta_query = array(
+		'relation' => 'OR',
+		array(
+			'key' => 'visibility',
+			'value' => 'public',
+			'compare' => '='
+		),
+		array(
+			'key' => 'visibility',
+			'compare' => 'NOT EXISTS'
+		)
+	);
+
+	// If user is logged in, also show their own private events
+	if ($current_user_id) {
+		$meta_query = array(
+			'relation' => 'OR',
+			array(
+				'key' => 'visibility',
+				'value' => 'public',
+				'compare' => '='
+			),
+			array(
+				'key' => 'visibility',
+				'compare' => 'NOT EXISTS'
+			)
+		);
+		// Add author parameter to show user's own events regardless of visibility
+		$args['author'] = $current_user_id;
+		// But we need to use a complex query to get public events OR user's own events
+		unset($args['author']); // Remove author filter and use meta_query + post__in instead
+
+		// Get user's own event IDs
+		$user_events = get_posts(array(
+			'post_type' => 'event',
+			'author' => $current_user_id,
+			'posts_per_page' => -1,
+			'fields' => 'ids'
+		));
+
+		// Get public event IDs
+		$public_events_args = array(
+			'post_type' => 'event',
+			'posts_per_page' => -1,
+			'fields' => 'ids',
+			'meta_query' => array(
+				'relation' => 'OR',
+				array(
+					'key' => 'visibility',
+					'value' => 'public',
+					'compare' => '='
+				),
+				array(
+					'key' => 'visibility',
+					'compare' => 'NOT EXISTS'
+				)
+			)
+		);
+		$public_events = get_posts($public_events_args);
+
+		// Merge and get unique event IDs
+		$allowed_event_ids = array_unique(array_merge($user_events, $public_events));
+
+		if (!empty($allowed_event_ids)) {
+			$args['post__in'] = $allowed_event_ids;
+		} else {
+			// No events to show
+			$args['post__in'] = array(0);
+		}
+	} else {
+		$args['meta_query'] = $meta_query;
+	}
+} else {
+	// Admins see all events
+}
 
 if ($hashtag_filter) {
 	$args['meta_query'] = array(
