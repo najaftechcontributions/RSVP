@@ -218,7 +218,7 @@ while ( have_posts() ) :
 														</span>
 														<?php if ($checked_in) : ?>
 															<span class="attendee-checked-in">
-																��� Checked In
+															✓ Checked In
 																<?php if ($checkin_time) : ?>
 																	<small>(<?php echo date('M j, g:i A', strtotime($checkin_time)); ?>)</small>
 																<?php endif; ?>
@@ -377,7 +377,7 @@ while ( have_posts() ) :
 															</button>
 														<?php endif; ?>
 														<button type="button" class="attendee-action-btn send-email-btn" data-attendee-id="<?php echo esc_attr($attendee->ID); ?>" title="Send/Resend Email">
-															<span class="btn-icon">����</span>
+															<span class="btn-icon">📧</span>
 															<span class="btn-text"><?php echo $email_sent ? 'Resend Email' : 'Send Email'; ?></span>
 														</button>
 													</div>

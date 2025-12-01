@@ -532,15 +532,6 @@ class Event_RSVP_Simple_Stripe {
 		<?php
 	}
 	
-	/**
-	 * Get user's plan
-	 */
-	public static function get_user_plan($user_id = 0) {
-		if (!$user_id) {
-			$user_id = get_current_user_id();
-		}
-		return get_user_meta($user_id, 'event_rsvp_plan', true);
-	}
 }
 
 // Initialize immediately (this is loaded from theme, not plugin)
