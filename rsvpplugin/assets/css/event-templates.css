@@ -50,11 +50,27 @@
 	border-radius: 6px;
 }
 
-.single-event-page .event-hashtag {
+.single-event-page .event-hashtags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin-top: 10px;
+}
+
+.single-event-page .event-hashtag-item {
+	display: inline-block;
 	font-size: 1.1rem;
 	font-weight: 600;
 	color: var(--event-primary);
-	margin-top: 10px;
+	background-color: rgba(80, 58, 168, 0.1);
+	padding: 6px 14px;
+	border-radius: 6px;
+	transition: all 0.3s ease;
+}
+
+.single-event-page .event-hashtag-item:hover {
+	background-color: rgba(80, 58, 168, 0.2);
+	transform: translateY(-2px);
 }
 
 .single-event-page .event-content {

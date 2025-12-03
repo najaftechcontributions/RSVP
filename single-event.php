@@ -19,7 +19,13 @@ while ( have_posts() ) :
 		$venue_address = get_post_meta($event_id, 'venue_address', true);
 		$venue_map_url = get_post_meta($event_id, 'venue_map_url', true);
 		$event_hashtag = get_post_meta($event_id, 'event_hashtag', true);
-		$social_links = get_post_meta($event_id, 'social_links', true);
+		$event_hashtags = get_post_meta($event_id, 'event_hashtags', true);
+		$social_facebook = get_post_meta($event_id, 'social_facebook', true);
+		$social_twitter = get_post_meta($event_id, 'social_twitter', true);
+		$social_instagram = get_post_meta($event_id, 'social_instagram', true);
+		$social_linkedin = get_post_meta($event_id, 'social_linkedin', true);
+		$social_youtube = get_post_meta($event_id, 'social_youtube', true);
+		$social_website = get_post_meta($event_id, 'social_website', true);
 		$visibility = get_post_meta($event_id, 'visibility', true);
 		$max_attendees = get_post_meta($event_id, 'max_attendees', true);
 		$qr_schedule_days = get_post_meta($event_id, 'qr_schedule_days', true);
@@ -30,7 +36,13 @@ while ( have_posts() ) :
 		$venue_address = get_field('venue_address');
 		$venue_map_url = get_field('venue_map_url');
 		$event_hashtag = get_field('event_hashtag');
-		$social_links = get_field('social_links');
+		$event_hashtags = get_field('event_hashtags');
+		$social_facebook = get_field('social_facebook');
+		$social_twitter = get_field('social_twitter');
+		$social_instagram = get_field('social_instagram');
+		$social_linkedin = get_field('social_linkedin');
+		$social_youtube = get_field('social_youtube');
+		$social_website = get_field('social_website');
 		$visibility = get_field('visibility');
 		$max_attendees = get_field('max_attendees');
 		$qr_schedule_days = get_field('qr_schedule_days');
@@ -119,9 +131,32 @@ while ( have_posts() ) :
 							<?php endif; ?>
 						</div>
 
-						<?php if ($event_hashtag) : ?>
-							<div class="event-hashtag">
-								#<?php echo esc_html($event_hashtag); ?>
+						<?php
+						// Process hashtags from textarea (comma or newline separated)
+						$hashtags_array = array();
+						if (!empty($event_hashtags)) {
+							// Split by newlines or commas
+							$hashtags_raw = preg_split('/[\r\n,]+/', $event_hashtags);
+							foreach ($hashtags_raw as $tag) {
+								$tag = trim($tag);
+								$tag = ltrim($tag, '#'); // Remove # if user added it
+								if (!empty($tag)) {
+									$hashtags_array[] = $tag;
+								}
+							}
+						}
+						// Fallback to legacy single hashtag field
+						 if (empty($hashtags_array) && !empty($event_hashtag)) {
+							$hashtags_array[] = $event_hashtag;
+						}
+
+						if (!empty($hashtags_array)) : ?>
+							<div class="event-hashtags">
+								<?php foreach ($hashtags_array as $tag) : ?>
+									<span class="event-hashtag-item">
+										#<?php echo esc_html($tag); ?>
+									</span>
+								<?php endforeach; ?>
 							</div>
 						<?php endif; ?>
 					</div>
@@ -130,16 +165,37 @@ while ( have_posts() ) :
 						<?php the_content(); ?>
 					</div>
 
-					<?php if ($social_links && is_array($social_links)) : ?>
+					<?php
+					// Build social links array from individual fields
+					$social_links_data = array();
+					if (!empty($social_facebook)) {
+						$social_links_data[] = array('platform' => 'Facebook', 'url' => $social_facebook, 'icon' => '📘');
+					}
+					if (!empty($social_twitter)) {
+						$social_links_data[] = array('platform' => 'Twitter', 'url' => $social_twitter, 'icon' => '🐦');
+					}
+					if (!empty($social_instagram)) {
+						$social_links_data[] = array('platform' => 'Instagram', 'url' => $social_instagram, 'icon' => '📸');
+					}
+					if (!empty($social_linkedin)) {
+						$social_links_data[] = array('platform' => 'LinkedIn', 'url' => $social_linkedin, 'icon' => '💼');
+					}
+					if (!empty($social_youtube)) {
+						$social_links_data[] = array('platform' => 'YouTube', 'url' => $social_youtube, 'icon' => '📺');
+					}
+					if (!empty($social_website)) {
+						$social_links_data[] = array('platform' => 'Website', 'url' => $social_website, 'icon' => '🌐');
+					}
+
+					if (!empty($social_links_data)) : ?>
 						<div class="event-social-links">
 							<h3>Share This Event</h3>
 							<div class="social-links-list">
-								<?php foreach ($social_links as $link) : ?>
-									<?php if (!empty($link['platform']) && !empty($link['url'])) : ?>
-										<a href="<?php echo esc_url($link['url']); ?>" target="_blank" rel="noopener" class="social-link">
-											<?php echo esc_html($link['platform']); ?>
-										</a>
-									<?php endif; ?>
+								<?php foreach ($social_links_data as $link) : ?>
+									<a href="<?php echo esc_url($link['url']); ?>" target="_blank" rel="noopener" class="social-link social-link-<?php echo esc_attr(strtolower($link['platform'])); ?>">
+										<?php echo $link['icon'] . ' '; ?>
+										<?php echo esc_html($link['platform']); ?>
+									</a>
 								<?php endforeach; ?>
 							</div>
 						</div>

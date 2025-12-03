@@ -39,6 +39,7 @@ class EventRSVPPlugin {
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/post-types.php';
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/user-roles.php';
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/acf-fields.php';
+		
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/helper-functions.php';
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/ajax-handlers.php';
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/form-handlers.php';

@@ -4189,3 +4189,268 @@ body {
 		flex-direction: column;
 	}
 }
+
+/* ACF Repeater Fields for Frontend Forms */
+.acf-event-form .acf-field.acf-field-repeater {
+	margin-bottom: 24px;
+}
+
+.acf-event-form .acf-repeater {
+	border: 2px solid var(--event-border);
+	border-radius: var(--event-radius);
+	overflow: hidden;
+	background: #fff;
+}
+
+.acf-event-form .acf-repeater > table {
+	margin: 0;
+	border: none;
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.acf-event-form .acf-repeater > table > thead > tr > th {
+	background-color: var(--event-secondary);
+	color: var(--event-text);
+	font-weight: 600;
+	padding: 12px;
+	border-bottom: 2px solid var(--event-border);
+	text-align: left;
+	font-size: 0.9rem;
+}
+
+.acf-event-form .acf-repeater > table > tbody > tr > td {
+	padding: 12px;
+	border-bottom: 1px solid var(--event-border);
+	vertical-align: middle;
+	background: #fff;
+}
+
+.acf-event-form .acf-repeater > table > tbody > tr:last-child > td {
+	border-bottom: none;
+}
+
+.acf-event-form .acf-repeater > table > tbody > tr:hover > td {
+	background: var(--event-secondary);
+}
+
+.acf-event-form .acf-repeater .acf-row-handle {
+	background-color: var(--event-secondary);
+	padding: 12px;
+	cursor: move;
+	width: 40px;
+	text-align: center;
+	border-right: 1px solid var(--event-border);
+}
+
+.acf-event-form .acf-repeater .acf-row-handle .acf-icon {
+	color: var(--event-text-light);
+	font-size: 18px;
+}
+
+.acf-event-form .acf-repeater .acf-actions {
+	padding: 16px;
+	background-color: var(--event-secondary);
+	border-top: 2px solid var(--event-border);
+	text-align: left;
+}
+
+.acf-event-form .acf-repeater .acf-actions .acf-button {
+	background-color: var(--event-primary);
+	color: var(--event-dark);
+	border: none;
+	padding: 10px 20px;
+	border-radius: 8px;
+	font-size: 0.95rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	text-decoration: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.acf-event-form .acf-repeater .acf-actions .acf-button:hover {
+	background-color: var(--event-primary-hover);
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(251, 192, 45, 0.3);
+}
+
+.acf-event-form .acf-repeater .acf-icon.-minus {
+	color: var(--event-error);
+	cursor: pointer;
+	transition: color 0.2s ease;
+	font-size: 20px;
+}
+
+.acf-event-form .acf-repeater .acf-icon.-minus:hover {
+	color: #dc2626;
+}
+
+.acf-event-form .acf-repeater input[type="text"],
+.acf-event-form .acf-repeater input[type="url"],
+.acf-event-form .acf-repeater select {
+	width: 100%;
+	padding: 10px 14px;
+	border: 2px solid var(--event-border);
+	border-radius: 8px;
+	font-size: 0.95rem;
+	transition: all 0.3s ease;
+	font-family: inherit;
+}
+
+.acf-event-form .acf-repeater input[type="text"]:focus,
+.acf-event-form .acf-repeater input[type="url"]:focus,
+.acf-event-form .acf-repeater select:focus {
+	outline: none;
+	border-color: var(--event-primary);
+	box-shadow: 0 0 0 3px rgba(251, 192, 45, 0.1);
+}
+
+.acf-event-form .acf-repeater.-empty {
+	padding: 32px;
+	text-align: center;
+	color: var(--event-text-light);
+	background-color: var(--event-secondary);
+}
+
+.acf-event-form .acf-repeater.-empty:before {
+	content: "No items added yet. Click 'Add Row' to add your first entry.";
+	font-size: 0.95rem;
+}
+
+.acf-event-form .acf-label {
+	font-weight: 600;
+	color: var(--event-text);
+	margin-bottom: 10px;
+	display: block;
+	font-size: 0.95rem;
+}
+
+.acf-event-form .acf-label label {
+	font-weight: 600;
+	color: var(--event-text);
+	margin: 0;
+}
+
+.acf-event-form .acf-field .acf-label .description {
+	font-weight: normal;
+	color: var(--event-text-light);
+	font-size: 0.875rem;
+	margin-top: 4px;
+	display: block;
+}
+
+.acf-event-form .acf-notice {
+	padding: 14px 18px;
+	border-radius: 8px;
+	margin-bottom: 20px;
+	background-color: var(--event-secondary);
+	border-left: 4px solid var(--event-primary);
+	font-size: 0.95rem;
+}
+
+.acf-event-form .acf-notice.-success {
+	background-color: #d1fae5;
+	border-left-color: var(--event-success);
+	color: #065f46;
+}
+
+.acf-event-form .acf-notice.-error {
+	background-color: #fee2e2;
+	border-left-color: var(--event-error);
+	color: #991b1b;
+}
+
+.acf-event-form .acf-field {
+	margin-bottom: 20px;
+}
+
+.acf-event-form .acf-field.-error {
+	border-left: 3px solid var(--event-error);
+	padding-left: 12px;
+}
+
+.acf-event-form .acf-error-message {
+	color: var(--event-error);
+	font-size: 0.875rem;
+	margin-top: 6px;
+	display: block;
+}
+
+.acf-event-form .acf-repeater .acf-table {
+	border: none;
+}
+
+.acf-event-form .acf-repeater .acf-table > tbody > tr > td.order {
+	width: 40px;
+	padding: 12px 8px;
+	text-align: center;
+	background-color: var(--event-secondary);
+}
+
+.acf-event-form .acf-repeater .acf-table > tbody > tr > td.remove {
+	width: 40px;
+	padding: 12px 8px;
+	text-align: center;
+}
+
+.acf-event-form .acf-repeater .acf-table > tbody > tr > td.remove button {
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	padding: 4px;
+	transition: transform 0.2s ease;
+}
+
+.acf-event-form .acf-repeater .acf-table > tbody > tr > td.remove button:hover {
+	transform: scale(1.1);
+}
+
+/* Mobile responsive for ACF repeaters */
+@media (max-width: 768px) {
+	.acf-event-form .acf-repeater > table {
+		display: block;
+		overflow-x: auto;
+	}
+
+	.acf-event-form .acf-repeater > table > thead,
+	.acf-event-form .acf-repeater > table > tbody,
+	.acf-event-form .acf-repeater > table > tbody > tr,
+	.acf-event-form .acf-repeater > table > tbody > tr > td {
+		display: block;
+		width: 100%;
+	}
+
+	.acf-event-form .acf-repeater > table > thead {
+		display: none;
+	}
+
+	.acf-event-form .acf-repeater > table > tbody > tr {
+		margin-bottom: 16px;
+		border: 2px solid var(--event-border);
+		border-radius: 8px;
+		overflow: hidden;
+	}
+
+	.acf-event-form .acf-repeater > table > tbody > tr > td {
+		padding: 12px;
+		border-bottom: 1px solid var(--event-border);
+	}
+
+	.acf-event-form .acf-repeater > table > tbody > tr > td:last-child {
+		border-bottom: none;
+	}
+
+	.acf-event-form .acf-repeater .acf-row-handle {
+		width: 100%;
+		border-right: none;
+		border-bottom: 1px solid var(--event-border);
+	}
+
+	.acf-event-form .acf-repeater .acf-table > tbody > tr > td.order,
+	.acf-event-form .acf-repeater .acf-table > tbody > tr > td.remove {
+		width: 100%;
+	}
+}

@@ -56,40 +56,69 @@ function event_rsvp_register_acf_fields() {
 				'placeholder' => 'Paste Google Maps iframe or URL here...',
 			),
 			array(
-				'key' => 'field_event_hashtag',
-				'label' => 'Event Hashtag',
+				'key' => 'field_event_hashtags',
+				'label' => 'Event Hashtags',
+				'name' => 'event_hashtags',
+				'type' => 'textarea',
+				'instructions' => 'Add multiple hashtags for your event (without the # symbol). Enter one per line or separate with commas.',
+				'placeholder' => 'e.g., conference2024, networking, techsummit',
+				'rows' => 3,
+			),
+			array(
+				'key' => 'field_event_hashtag_legacy',
+				'label' => 'Event Hashtag (Legacy - Single)',
 				'name' => 'event_hashtag',
 				'type' => 'text',
+				'instructions' => 'This field is kept for backward compatibility. Use the Hashtags field above for multiple hashtags.',
 				'prepend' => '#',
 			),
 			array(
-				'key' => 'field_social_links',
-				'label' => 'Social Links',
-				'name' => 'social_links',
-				'type' => 'repeater',
-				'layout' => 'table',
-				'button_label' => 'Add Social Link',
-				'sub_fields' => array(
-					array(
-						'key' => 'field_platform',
-						'label' => 'Platform',
-						'name' => 'platform',
-						'type' => 'select',
-						'choices' => array(
-							'facebook' => 'Facebook',
-							'twitter' => 'Twitter',
-							'instagram' => 'Instagram',
-							'linkedin' => 'LinkedIn',
-							'youtube' => 'YouTube',
-						),
-					),
-					array(
-						'key' => 'field_url',
-						'label' => 'URL',
-						'name' => 'url',
-						'type' => 'url',
-					),
-				),
+				'key' => 'field_social_facebook',
+				'label' => 'Facebook URL',
+				'name' => 'social_facebook',
+				'type' => 'url',
+				'instructions' => 'Enter Facebook page or event URL',
+				'placeholder' => 'https://facebook.com/...',
+			),
+			array(
+				'key' => 'field_social_twitter',
+				'label' => 'Twitter/X URL',
+				'name' => 'social_twitter',
+				'type' => 'url',
+				'instructions' => 'Enter Twitter/X profile or event URL',
+				'placeholder' => 'https://twitter.com/...',
+			),
+			array(
+				'key' => 'field_social_instagram',
+				'label' => 'Instagram URL',
+				'name' => 'social_instagram',
+				'type' => 'url',
+				'instructions' => 'Enter Instagram profile URL',
+				'placeholder' => 'https://instagram.com/...',
+			),
+			array(
+				'key' => 'field_social_linkedin',
+				'label' => 'LinkedIn URL',
+				'name' => 'social_linkedin',
+				'type' => 'url',
+				'instructions' => 'Enter LinkedIn profile or event URL',
+				'placeholder' => 'https://linkedin.com/...',
+			),
+			array(
+				'key' => 'field_social_youtube',
+				'label' => 'YouTube URL',
+				'name' => 'social_youtube',
+				'type' => 'url',
+				'instructions' => 'Enter YouTube channel or video URL',
+				'placeholder' => 'https://youtube.com/...',
+			),
+			array(
+				'key' => 'field_social_website',
+				'label' => 'Website URL',
+				'name' => 'social_website',
+				'type' => 'url',
+				'instructions' => 'Enter event website or related URL',
+				'placeholder' => 'https://...',
 			),
 			array(
 				'key' => 'field_visibility',
@@ -304,31 +333,53 @@ endif;
 add_action('acf/init', 'event_rsvp_register_acf_fields');
 
 /**
- * Allow iframe tags in venue_map_url field
- * This allows users to paste Google Maps embed codes
+ * Register ACF filters for venue map URL field
+ * Only add filters if ACF is available
  */
-add_filter('acf/update_value/key=field_venue_map_url', 'allow_iframe_in_venue_map_url', 10, 3);
+if (!function_exists('event_rsvp_register_acf_filters')) :
+function event_rsvp_register_acf_filters() {
+	if (!function_exists('acf_add_local_field_group')) {
+		return;
+	}
+
+	/**
+	 * Allow iframe tags in venue_map_url field
+	 * This allows users to paste Google Maps embed codes
+	 */
+	add_filter('acf/update_value/key=field_venue_map_url', 'allow_iframe_in_venue_map_url', 10, 3);
+
+	/**
+	 * Format venue_map_url on load to preserve iframe content
+	 */
+	add_filter('acf/load_value/key=field_venue_map_url', 'load_venue_map_url_value', 10, 3);
+
+	/**
+	 * Format venue_map_url for output
+	 */
+	add_filter('acf/format_value/key=field_venue_map_url', 'format_venue_map_url_value', 10, 3);
+}
+endif;
+add_action('acf/init', 'event_rsvp_register_acf_filters');
+
+if (!function_exists('allow_iframe_in_venue_map_url')) :
 function allow_iframe_in_venue_map_url($value, $post_id, $field) {
 	// Remove any sanitization - return raw value to preserve iframe tags
 	remove_filter('content_save_pre', 'wp_filter_post_kses');
 	remove_filter('content_filtered_save_pre', 'wp_filter_post_kses');
 	return $value;
 }
+endif;
 
-/**
- * Format venue_map_url on load to preserve iframe content
- */
-add_filter('acf/load_value/key=field_venue_map_url', 'load_venue_map_url_value', 10, 3);
+if (!function_exists('load_venue_map_url_value')) :
 function load_venue_map_url_value($value, $post_id, $field) {
 	// Return the raw value without any filtering
 	return $value;
 }
+endif;
 
-/**
- * Format venue_map_url for output
- */
-add_filter('acf/format_value/key=field_venue_map_url', 'format_venue_map_url_value', 10, 3);
+if (!function_exists('format_venue_map_url_value')) :
 function format_venue_map_url_value($value, $post_id, $field) {
 	// Don't escape iframe tags when displaying
 	return $value;
 }
+endif;
