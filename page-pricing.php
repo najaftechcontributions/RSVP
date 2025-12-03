@@ -29,6 +29,7 @@ $user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 	<div class="container pricing-container">
 		<div class="pricing-grid">
 			
+			<!-- Attendee Plan -->
 			<div class="pricing-card-wrapper">
 				<div class="pricing-card pricing-card-attendee">
 					<div class="pricing-card-content">
@@ -67,11 +68,12 @@ $user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 				</div>
 			</div>
 
+			<!-- Pay As You Go Plan -->
 			<div class="pricing-card-wrapper">
 				<div class="pricing-card pricing-card-host">
 					<div class="pricing-card-content">
 						<h3 class="plan-name">Pay As You Go</h3>
-						<p class="plan-description">Create and manage your events</p>
+						<p class="plan-description">Perfect for individual event hosts</p>
 						
 						<div class="price-container">
 							<p class="price">$29.99</p>
@@ -79,27 +81,26 @@ $user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 						</div>
 						
 						<ul class="features-list">
-							<li>✓ 1 event</li>
-							<!-- <li>✓ 500 attendees per event</li> -->
+							<li>✓ Create up to 1 event</li>
 							<li>✓ Custom RSVP forms</li>
 							<li>✓ QR code check-in</li>
 							<li>✓ Email notifications</li>
+							<li>✓ Email campaigns</li>
 							<li>✓ CSV exports</li>
 							<li>✓ Event analytics</li>
 							<li>✓ Email support</li>
-							<!-- <li>✗ Ad posting</li> -->
 						</ul>
 						
 						<div class="pricing-cta">
-							<?php if ($user_plan === 'event_host') : ?>
+							<?php if ($user_plan === 'pay_as_you_go' || $user_plan === 'event_host') : ?>
 								<button class="pricing-button pricing-button-primary" disabled>Current Plan</button>
 							<?php else : ?>
 								<?php if ($is_logged_in) : ?>
-									<button class="pricing-button pricing-button-primary upgrade-plan-btn" data-plan="event_host">
+									<button class="pricing-button pricing-button-primary upgrade-plan-btn" data-plan="pay_as_you_go">
 										Upgrade Now
 									</button>
 								<?php else : ?>
-									<a href="<?php echo esc_url(home_url('/signup/?plan=event_host')); ?>" class="pricing-button pricing-button-primary">
+									<a href="<?php echo esc_url(home_url('/signup/?plan=pay_as_you_go')); ?>" class="pricing-button pricing-button-primary">
 										Start Hosting
 									</a>
 								<?php endif; ?>
@@ -108,11 +109,14 @@ $user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 					</div>
 				</div>
 			</div>
+
+			<!-- Event Planner Plan -->
 			<div class="pricing-card-wrapper">
-				<div class="pricing-card pricing-card-host">
+				<div class="pricing-card pricing-card-host pricing-card-featured">
+					<span class="popular-badge">Most Popular</span>
 					<div class="pricing-card-content">
 						<h3 class="plan-name">Event Planner</h3>
-						<p class="plan-description">Create and manage your events</p>
+						<p class="plan-description">For professional event planners</p>
 						
 						<div class="price-container">
 							<p class="price">$119.99</p>
@@ -120,28 +124,28 @@ $user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 						</div>
 						
 						<ul class="features-list">
-							<li>✓ 5 events</li>
-							<!-- <li>✓ 500 attendees per event</li> -->
+							<li>✓ Create up to 5 events</li>
 							<li>✓ Custom RSVP forms</li>
 							<li>✓ QR code check-in</li>
 							<li>✓ Email notifications</li>
+							<li>✓ Email campaigns</li>
 							<li>✓ CSV exports</li>
 							<li>✓ Event analytics</li>
-							<li>✓ Email support</li>
-							<!-- <li>✗ Ad posting</li> -->
+							<li>✓ Priority email support</li>
+							<li>✓ Advanced features</li>
 						</ul>
 						
 						<div class="pricing-cta">
-							<?php if ($user_plan === 'event_host') : ?>
+							<?php if ($user_plan === 'event_planner') : ?>
 								<button class="pricing-button pricing-button-primary" disabled>Current Plan</button>
 							<?php else : ?>
 								<?php if ($is_logged_in) : ?>
-									<button class="pricing-button pricing-button-primary upgrade-plan-btn" data-plan="event_host">
+									<button class="pricing-button pricing-button-primary upgrade-plan-btn" data-plan="event_planner">
 										Upgrade Now
 									</button>
 								<?php else : ?>
-									<a href="<?php echo esc_url(home_url('/signup/?plan=event_host')); ?>" class="pricing-button pricing-button-primary">
-										Start Hosting
+									<a href="<?php echo esc_url(home_url('/signup/?plan=event_planner')); ?>" class="pricing-button pricing-button-primary">
+										Start Planning
 									</a>
 								<?php endif; ?>
 							<?php endif; ?>
@@ -150,134 +154,76 @@ $user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 				</div>
 			</div>
 
+			<!-- Verbiage Plan -->
 			<div class="pricing-card-wrapper">
+				<div class="pricing-card pricing-card-pro">
+					<div class="pricing-card-content">
+						<h3 class="plan-name">Verbiage</h3>
+						<p class="plan-description">For high-volume event organizers</p>
+						
+						<div class="price-container">
+							<p class="price">Contact Us</p>
+							<p class="price-period">custom pricing</p>
+						</div>
+						
+						<ul class="features-list">
+							<li>✓ More than 5 events</li>
+							<li>✓ Custom RSVP forms</li>
+							<li>✓ QR code check-in</li>
+							<li>✓ Email notifications</li>
+							<li>✓ Email campaigns</li>
+							<li>✓ CSV exports</li>
+							<li>✓ Event analytics</li>
+							<li>✓ Priority support</li>
+							<li>✓ Custom features</li>
+						</ul>
+						
+						<div class="pricing-cta">
+							<a href="mailto:<?php echo esc_attr(get_option('admin_email')); ?>?subject=Verbiage Plan Inquiry" class="pricing-button pricing-button-outline">
+								Contact Us
+							</a>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Vendor Plan - Commented Out -->
+			<!-- <div class="pricing-card-wrapper">
 				<div class="pricing-card pricing-card-vendor">
 					<div class="pricing-card-content">
 						<h3 class="plan-name">Vendor</h3>
 						<p class="plan-description">Advertise your business or services</p>
 						
 						<div class="price-container">
-							<p class="price">$--</p>
+							<p class="price">Coming Soon</p>
 							<p class="price-period">per month</p>
 						</div>
 						
 						<ul class="features-list">
-							<li>Comming Soon</li>
-							<!-- <li>✓ Post vendor advertisements</li>
-							<li>✓ Featured ad placements</li>
-							<li>✓ Ad analytics & tracking</li>
-							<li>✓ Multiple ad slots</li>
-							<li>✓ Target event audiences</li>
-							<li>✓ Email support</li>
-							<li>✓ Browse & attend events</li>
-							<li>✗ Create events</li>
-							<li>✗ Event management</li> -->
+							<li>Coming Soon</li>
 						</ul>
-						
-						<!-- <div class="pricing-cta">
-							<?php if ($user_plan === 'vendor') : ?>
-								<button class="pricing-button pricing-button-outline" disabled>Current Plan</button>
-							<?php else : ?>
-								<?php if ($is_logged_in) : ?>
-									<button class="pricing-button pricing-button-outline upgrade-plan-btn" data-plan="vendor">
-										Upgrade Now
-									</button>
-								<?php else : ?>
-									<a href="<?php echo esc_url(home_url('/signup/?plan=vendor')); ?>" class="pricing-button pricing-button-outline">
-										Start Advertising
-									</a>
-								<?php endif; ?>
-							<?php endif; ?>
-						</div> -->
 					</div>
 				</div>
-			</div>
+			</div> -->
 
-			<div class="pricing-card-wrapper">
-				<div class="pricing-card pricing-card-pro pricing-card-featured">
-					<!-- <span class="popular-badge">Most Popular</span> -->
+			<!-- Pro Plan - Commented Out -->
+			<!-- <div class="pricing-card-wrapper">
+				<div class="pricing-card pricing-card-pro">
 					<div class="pricing-card-content">
 						<h3 class="plan-name">Pro (Both)</h3>
 						<p class="plan-description">Host events & advertise - Best value!</p>
 						
 						<div class="price-container">
-							<p class="price">$--</p>
+							<p class="price">Coming Soon</p>
 							<p class="price-period">per month</p>
 						</div>
 						
 						<ul class="features-list">
-							<li>Comming Soon</li>
-							<!--<li>✓ Everything in Event Host</li>
-							<li>✓ Everything in Vendor</li>
-							<li>✓ Unlimited events</li>
-							<li>✓ Unlimited ad postings</li>
-							<li>✓ Priority ad placement</li>
-							<li>✓ Advanced analytics</li>
-							<li>✓ Custom branding</li>
-							<li>✓ Priority support</li>
-							<li>✓ Save $9/month!</li> -->
+							<li>Coming Soon</li>
 						</ul>
-						
-						<!-- <div class="pricing-cta">
-							<?php if ($user_plan === 'pro') : ?>
-								<button class="pricing-button pricing-button-primary" disabled>Current Plan</button>
-							<?php else : ?>
-								<?php if ($is_logged_in) : ?>
-									<button class="pricing-button pricing-button-primary upgrade-plan-btn" data-plan="pro">
-										Upgrade to Pro
-									</button>
-								<?php else : ?>
-									<a href="<?php echo esc_url(home_url('/signup/?plan=pro')); ?>" class="pricing-button pricing-button-primary">
-										Get Pro Access
-									</a>
-								<?php endif; ?>
-							<?php endif; ?>
-						</div> -->
 					</div>
 				</div>
-			</div>
-			<div class="pricing-card-wrapper">
-				<div class="pricing-card pricing-card-pro pricing-card-featured">
-					<!-- <span class="popular-badge">Most Popular</span> -->
-					<div class="pricing-card-content">
-						<h3 class="plan-name">Verbiage</h3>
-						<p class="plan-description">Host events & advertise - Best value!</p>
-						
-						<!-- <div class="price-container">
-							<p class="price">$--</p>
-							<p class="price-period">per month</p>
-						</div> -->
-						
-						<ul class="features-list">
-						<li>✓ More then 5 events</li>
-							<!-- <li>✓ 500 attendees per event</li> -->
-							<li>✓ Custom RSVP forms</li>
-							<li>✓ QR code check-in</li>
-							<li>✓ Email notifications</li>
-							<li>✓ CSV exports</li>
-							<li>✓ Event analytics</li>
-							<li>✓ Email support</li>
-							<!-- <li>✗ Ad posting</li> -->
-						</ul>
-						
-						<div class="pricing-cta">
-							<?php if ($user_plan === 'pro') : ?>
-								<button class="pricing-button pricing-button-primary" disabled>Current Plan</button>
-							<?php else : ?>
-								<?php if ($is_logged_in) : ?>
-									<button class="pricing-button pricing-button-primary upgrade-plan-btn" data-plan="pro">
-										Contact Us
-									</button>
-								<?php else : ?>
-									<a href="<?php echo esc_url(home_url('/signup/?plan=pro')); ?>" class="pricing-button pricing-button-primary">
-										Contact Us
-									</a>
-								<?php endif; ?>
-							<?php endif; ?>
-						</div>
-					</div>
-				</div>
-			</div>
+			</div> -->
 
 		</div>
 
@@ -290,9 +236,9 @@ $user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 						<tr>
 							<th class="feature-column">Feature</th>
 							<th class="plan-column">Attendee</th>
-							<th class="plan-column">Event Host</th>
-							<th class="plan-column">Vendor</th>
-							<th class="plan-column plan-column-featured">Pro</th>
+							<th class="plan-column">Pay As You Go</th>
+							<th class="plan-column plan-column-featured">Event Planner</th>
+							<th class="plan-column">Verbiage</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -304,16 +250,16 @@ $user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 							<td class="feature-value">✓</td>
 						</tr>
 						<tr>
-							<td class="feature-name">Create Events</td>
+							<td class="feature-name">Events Per Month</td>
 							<td class="feature-value">—</td>
-							<td class="feature-value">✓</td>
-							<td class="feature-value">—</td>
-							<td class="feature-value">✓</td>
+							<td class="feature-value">1</td>
+							<td class="feature-value">5</td>
+							<td class="feature-value">5+</td>
 						</tr>
 						<tr>
-							<td class="feature-name">Post Advertisements</td>
+							<td class="feature-name">Email Campaigns</td>
 							<td class="feature-value">—</td>
-							<td class="feature-value">—</td>
+							<td class="feature-value">✓</td>
 							<td class="feature-value">✓</td>
 							<td class="feature-value">✓</td>
 						</tr>
@@ -321,7 +267,7 @@ $user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 							<td class="feature-name">Event Analytics</td>
 							<td class="feature-value">—</td>
 							<td class="feature-value">Basic</td>
-							<td class="feature-value">—</td>
+							<td class="feature-value">Advanced</td>
 							<td class="feature-value">Advanced</td>
 						</tr>
 						<tr>
@@ -339,32 +285,25 @@ $user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 							<td class="feature-value">✓</td>
 						</tr>
 						<tr>
-							<td class="feature-name">Custom Branding</td>
-							<td class="feature-value">—</td>
-							<td class="feature-value">—</td>
-							<td class="feature-value">—</td>
-							<td class="feature-value">✓</td>
-						</tr>
-						<tr>
 							<td class="feature-name">Data Export</td>
 							<td class="feature-value">—</td>
 							<td class="feature-value">CSV</td>
 							<td class="feature-value">CSV</td>
-							<td class="feature-value">All Formats</td>
+							<td class="feature-value">CSV</td>
 						</tr>
 						<tr>
 							<td class="feature-name">Support</td>
 							<td class="feature-value">Community</td>
 							<td class="feature-value">Email</td>
-							<td class="feature-value">Email</td>
+							<td class="feature-value">Priority</td>
 							<td class="feature-value">Priority</td>
 						</tr>
 						<tr>
 							<td class="feature-name">Monthly Cost</td>
 							<td class="feature-value">$0</td>
-							<td class="feature-value">$19</td>
-							<td class="feature-value">$29</td>
-							<td class="feature-value">$39</td>
+							<td class="feature-value">$29.99</td>
+							<td class="feature-value">$119.99</td>
+							<td class="feature-value">Custom</td>
 						</tr>
 					</tbody>
 				</table>
@@ -386,8 +325,8 @@ $user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 				</div>
 				
 				<div class="faq-item">
-					<h3 class="faq-question">What's the difference between Event Host and Vendor?</h3>
-					<p class="faq-answer">Event Host allows you to create and manage events. Vendor allows you to post advertisements. Pro gives you both capabilities!</p>
+					<h3 class="faq-question">What happens when I reach my event limit?</h3>
+					<p class="faq-answer">Once you reach your event limit, you'll need to upgrade to a higher plan or delete old events before creating new ones.</p>
 				</div>
 				
 				<div class="faq-item">
@@ -410,7 +349,7 @@ $user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 		<div class="pricing-cta-section">
 			<div class="cta-card">
 				<h2 class="cta-heading">Ready to Get Started?</h2>
-				<p class="cta-text">Join thousands who trust our platform for their events and advertising needs.</p>
+				<p class="cta-text">Join thousands who trust our platform for their events and event management needs.</p>
 				<div class="cta-buttons">
 					<a href="<?php echo esc_url(home_url('/signup/')); ?>" class="cta-button cta-button-primary">
 						Create Free Account
@@ -466,35 +405,29 @@ $user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 	opacity: 0.6;
 	cursor: not-allowed;
 }
-</style>
 
-<?php
-function event_rsvp_get_plan_url($plan_slug, $is_logged_in) {
-	if (!$is_logged_in) {
-		return home_url('/signup/?plan=' . $plan_slug);
-	}
-	
-	if (!class_exists('WooCommerce')) {
-		return home_url('/signup/?plan=' . $plan_slug);
-	}
-	
-	// Simple redirect - no WooCommerce needed
-	return home_url('/signup/?plan=' . $plan_slug);
-	/*
-	$product_id = $wc_integration->get_product_id($plan_slug);
-	
-	if (!$product_id) {
-		return home_url('/signup/?plan=' . $plan_slug);
-	}
-	
-	WC()->cart->empty_cart();
-	WC()->cart->add_to_cart($product_id);
-	
-	return wc_get_checkout_url();
-	*/
+.popular-badge {
+	position: absolute;
+	top: 15px;
+	right: 15px;
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	color: white;
+	padding: 5px 15px;
+	border-radius: 20px;
+	font-size: 0.75rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
 }
 
-?>
+.pricing-card-wrapper {
+	position: relative;
+}
+
+.pricing-card-featured {
+	border: 2px solid #667eea;
+}
+</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -505,11 +438,9 @@ document.addEventListener('DOMContentLoaded', function() {
 			const plan = this.getAttribute('data-plan');
 			const originalText = this.textContent;
 
-			// Disable button
 			this.disabled = true;
 			this.textContent = 'Processing...';
 
-			// Make AJAX request
 			fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
 				method: 'POST',
 				headers: {
@@ -525,7 +456,6 @@ document.addEventListener('DOMContentLoaded', function() {
 			.then(data => {
 				if (data.success && data.data.checkout_url) {
 					this.textContent = 'Redirecting to checkout...';
-					// Redirect to Stripe checkout
 					window.location.href = data.data.checkout_url;
 				} else {
 					alert(data.data || 'Failed to initiate upgrade. Please try again.');

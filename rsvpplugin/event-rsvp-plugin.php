@@ -39,9 +39,12 @@ class EventRSVPPlugin {
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/post-types.php';
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/user-roles.php';
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/acf-fields.php';
+		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/acf-return-url-filter.php';
 		
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/helper-functions.php';
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/ajax-handlers.php';
+		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/event-limit-functions.php';
+		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/event-creation-ajax.php';
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/form-handlers.php';
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/email-functions.php';
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/shortcodes.php';
@@ -51,6 +54,7 @@ class EventRSVPPlugin {
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/email-invitation-db.php';
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/email-invitation-functions.php';
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/email-invitation-ajax.php';
+		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/email-template-image-upload.php';
 		
 		// Simple Stripe Payment Links integration
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/simple-stripe-payments.php';

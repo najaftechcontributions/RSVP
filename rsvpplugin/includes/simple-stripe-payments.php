@@ -35,9 +35,11 @@ class Event_RSVP_Simple_Stripe {
 	 */
 	public function get_payment_links() {
 		return array(
-			'event_host' => get_option('event_rsvp_stripe_link_event_host', ''),
-			'vendor' => get_option('event_rsvp_stripe_link_vendor', ''),
-			'pro' => get_option('event_rsvp_stripe_link_pro', ''),
+			'pay_as_you_go' => get_option('event_rsvp_stripe_link_pay_as_you_go', ''),
+			'event_planner' => get_option('event_rsvp_stripe_link_event_planner', ''),
+			'event_host' => get_option('event_rsvp_stripe_link_event_host', ''), // Legacy
+			'vendor' => get_option('event_rsvp_stripe_link_vendor', ''), // Commented out
+			'pro' => get_option('event_rsvp_stripe_link_pro', ''), // Commented out
 		);
 	}
 	
@@ -213,7 +215,9 @@ class Event_RSVP_Simple_Stripe {
 				
 				// Upgrade user role
 				$role_map = array(
-					'event_host' => 'event_host',
+					'pay_as_you_go' => 'event_host',
+					'event_planner' => 'event_host',
+					'event_host' => 'event_host', // Legacy
 					'vendor' => 'vendor',
 					'pro' => 'pro'
 				);
@@ -292,7 +296,9 @@ class Event_RSVP_Simple_Stripe {
 		
 		// Upgrade user role
 		$role_map = array(
-			'event_host' => 'event_host',
+			'pay_as_you_go' => 'event_host',
+			'event_planner' => 'event_host',
+			'event_host' => 'event_host', // Legacy
 			'vendor' => 'vendor',
 			'pro' => 'pro'
 		);
@@ -393,7 +399,9 @@ class Event_RSVP_Simple_Stripe {
 		if (!$user) return;
 		
 		$plan_names = array(
-			'event_host' => 'Event Host',
+			'pay_as_you_go' => 'Pay As You Go (1 Event)',
+			'event_planner' => 'Event Planner (5 Events)',
+			'event_host' => 'Event Host (Legacy)',
 			'vendor' => 'Vendor',
 			'pro' => 'Pro (Host + Vendor)'
 		);
@@ -440,6 +448,9 @@ class Event_RSVP_Simple_Stripe {
 	 * Register settings
 	 */
 	public function register_settings() {
+		register_setting('event_rsvp_stripe_links', 'event_rsvp_stripe_link_pay_as_you_go');
+		register_setting('event_rsvp_stripe_links', 'event_rsvp_stripe_link_event_planner');
+		// Legacy and future plans
 		register_setting('event_rsvp_stripe_links', 'event_rsvp_stripe_link_event_host');
 		register_setting('event_rsvp_stripe_links', 'event_rsvp_stripe_link_vendor');
 		register_setting('event_rsvp_stripe_links', 'event_rsvp_stripe_link_pro');
@@ -473,28 +484,57 @@ class Event_RSVP_Simple_Stripe {
 				<table class="form-table">
 					<tr>
 						<th scope="row">
-							<label for="event_rsvp_stripe_link_event_host">Event Host Plan Link</label>
+							<label for="event_rsvp_stripe_link_pay_as_you_go">Pay As You Go Plan Link</label>
 						</th>
 						<td>
-							<input type="url" 
-								   id="event_rsvp_stripe_link_event_host" 
-								   name="event_rsvp_stripe_link_event_host" 
-								   value="<?php echo esc_attr(get_option('event_rsvp_stripe_link_event_host')); ?>" 
-								   class="regular-text" 
+							<input type="url"
+								   id="event_rsvp_stripe_link_pay_as_you_go"
+								   name="event_rsvp_stripe_link_pay_as_you_go"
+								   value="<?php echo esc_attr(get_option('event_rsvp_stripe_link_pay_as_you_go')); ?>"
+								   class="regular-text"
 								   placeholder="https://buy.stripe.com/...">
-							<p class="description">Stripe payment link for Event Host plan ($19/month)</p>
+							<p class="description">Stripe payment link for Pay As You Go plan - $29.99/month - 1 event limit - event_host role</p>
 						</td>
 					</tr>
+					<tr>
+						<th scope="row">
+							<label for="event_rsvp_stripe_link_event_planner">Event Planner Plan Link</label>
+						</th>
+						<td>
+							<input type="url"
+								   id="event_rsvp_stripe_link_event_planner"
+								   name="event_rsvp_stripe_link_event_planner"
+								   value="<?php echo esc_attr(get_option('event_rsvp_stripe_link_event_planner')); ?>"
+								   class="regular-text"
+								   placeholder="https://buy.stripe.com/...">
+							<p class="description">Stripe payment link for Event Planner plan - $119.99/month - 5 event limit - event_host role</p>
+						</td>
+					</tr>
+					<tr style="opacity: 0.5;">
+						<th scope="row">
+							<label for="event_rsvp_stripe_link_event_host">Event Host Plan Link (Legacy)</label>
+						</th>
+						<td>
+							<input type="url"
+								   id="event_rsvp_stripe_link_event_host"
+								   name="event_rsvp_stripe_link_event_host"
+								   value="<?php echo esc_attr(get_option('event_rsvp_stripe_link_event_host')); ?>"
+								   class="regular-text"
+								   placeholder="https://buy.stripe.com/...">
+							<p class="description">Legacy plan - Keep for existing subscribers</p>
+						</td>
+					</tr>
+					<!--
 					<tr>
 						<th scope="row">
 							<label for="event_rsvp_stripe_link_vendor">Vendor Plan Link</label>
 						</th>
 						<td>
-							<input type="url" 
-								   id="event_rsvp_stripe_link_vendor" 
-								   name="event_rsvp_stripe_link_vendor" 
-								   value="<?php echo esc_attr(get_option('event_rsvp_stripe_link_vendor')); ?>" 
-								   class="regular-text" 
+							<input type="url"
+								   id="event_rsvp_stripe_link_vendor"
+								   name="event_rsvp_stripe_link_vendor"
+								   value="<?php echo esc_attr(get_option('event_rsvp_stripe_link_vendor')); ?>"
+								   class="regular-text"
 								   placeholder="https://buy.stripe.com/...">
 							<p class="description">Stripe payment link for Vendor plan ($29/month)</p>
 						</td>
@@ -504,15 +544,16 @@ class Event_RSVP_Simple_Stripe {
 							<label for="event_rsvp_stripe_link_pro">Pro Plan Link</label>
 						</th>
 						<td>
-							<input type="url" 
-								   id="event_rsvp_stripe_link_pro" 
-								   name="event_rsvp_stripe_link_pro" 
-								   value="<?php echo esc_attr(get_option('event_rsvp_stripe_link_pro')); ?>" 
-								   class="regular-text" 
+							<input type="url"
+								   id="event_rsvp_stripe_link_pro"
+								   name="event_rsvp_stripe_link_pro"
+								   value="<?php echo esc_attr(get_option('event_rsvp_stripe_link_pro')); ?>"
+								   class="regular-text"
 								   placeholder="https://buy.stripe.com/...">
 							<p class="description">Stripe payment link for Pro plan ($39/month)</p>
 						</td>
 					</tr>
+					-->
 				</table>
 				<?php submit_button(); ?>
 			</form>

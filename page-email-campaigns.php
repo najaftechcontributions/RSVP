@@ -371,6 +371,33 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 		let currentCampaignId = null;
 		let templates = [];
 
+		// Check if we should auto-open campaign creation after creating event
+		const urlParams = new URLSearchParams(window.location.search);
+		const isNewEvent = urlParams.get('new_event');
+		const preSelectEventId = urlParams.get('event_id');
+
+		if (isNewEvent === '1') {
+			// Auto-open the create campaign modal
+			setTimeout(function() {
+				$('#createCampaignModal').fadeIn();
+
+				// Pre-select the event if event_id parameter exists
+				if (preSelectEventId) {
+					$('#campaignEvent').val(preSelectEventId);
+
+					// Auto-populate campaign name with event name
+					const eventName = $('#campaignEvent option:selected').text();
+					if (eventName && eventName !== 'Choose an event...') {
+						$('#campaignName').val(eventName + ' - Invitation Campaign');
+					}
+				}
+
+				// Remove the parameters from URL without reloading
+				const newUrl = window.location.origin + window.location.pathname;
+				window.history.replaceState({}, document.title, newUrl);
+			}, 500);
+		}
+
 		function loadTemplates() {
 			$.ajax({
 				url: eventRsvpData.ajax_url,

@@ -550,3 +550,67 @@ function event_rsvp_fullcalendar_events($events) {
 	return $events;
 }
 add_filter('wpfc_events', 'event_rsvp_fullcalendar_events');
+
+/**
+ * Restrict media library access - users can only see their own uploads
+ * Administrators can see all media
+ */
+function event_rsvp_restrict_media_library($query) {
+	// Only apply in admin area
+	if (!is_admin()) {
+		return $query;
+	}
+
+	// Skip if user is administrator
+	if (current_user_can('administrator')) {
+		return $query;
+	}
+
+	// Only apply to attachment queries
+	global $pagenow;
+	if ('upload.php' !== $pagenow && 'admin-ajax.php' !== $pagenow) {
+		return $query;
+	}
+
+	// Restrict to current user's uploads only
+	$user_id = get_current_user_id();
+	if ($user_id) {
+		$query['author'] = $user_id;
+	}
+
+	return $query;
+}
+add_filter('ajax_query_attachments_args', 'event_rsvp_restrict_media_library');
+
+/**
+ * Restrict media library in list view
+ */
+function event_rsvp_restrict_media_library_list_view($query) {
+	// Only apply in admin area
+	if (!is_admin()) {
+		return;
+	}
+
+	// Skip if user is administrator
+	if (current_user_can('administrator')) {
+		return;
+	}
+
+	// Only apply to attachment queries
+	global $pagenow;
+	if ('upload.php' !== $pagenow) {
+		return;
+	}
+
+	// Only for attachment post type
+	if ($query->get('post_type') !== 'attachment') {
+		return;
+	}
+
+	// Restrict to current user's uploads only
+	$user_id = get_current_user_id();
+	if ($user_id) {
+		$query->set('author', $user_id);
+	}
+}
+add_action('pre_get_posts', 'event_rsvp_restrict_media_library_list_view');
