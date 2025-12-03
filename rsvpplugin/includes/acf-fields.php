@@ -16,6 +16,14 @@ function event_rsvp_register_acf_fields() {
 		'title' => 'Event Fields',
 		'fields' => array(
 			array(
+				'key' => 'field_event_host',
+				'label' => 'Event Host',
+				'name' => 'event_host',
+				'type' => 'text',
+				'instructions' => 'Enter the name of the event host (optional). If left empty, the author name will be displayed.',
+				'placeholder' => 'e.g., John Doe or ABC Organization',
+			),
+			array(
 				'key' => 'field_event_date',
 				'label' => 'Event Date',
 				'name' => 'event_date',

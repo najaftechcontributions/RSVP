@@ -13,6 +13,7 @@ while ( have_posts() ) :
 	$event_id = get_the_ID();
 
 	if (!function_exists('get_field')) {
+		$event_host = get_post_meta($event_id, 'event_host', true);
 		$event_date = get_post_meta($event_id, 'event_date', true);
 		$event_end_date = get_post_meta($event_id, 'event_end_date', true);
 		$venue_address = get_post_meta($event_id, 'venue_address', true);
@@ -23,6 +24,7 @@ while ( have_posts() ) :
 		$max_attendees = get_post_meta($event_id, 'max_attendees', true);
 		$qr_schedule_days = get_post_meta($event_id, 'qr_schedule_days', true);
 	} else {
+		$event_host = get_field('event_host');
 		$event_date = get_field('event_date');
 		$event_end_date = get_field('event_end_date');
 		$venue_address = get_field('venue_address');
@@ -45,6 +47,9 @@ while ( have_posts() ) :
 	
 	$author_id = get_the_author_meta('ID');
 	$author_name = get_the_author_meta('display_name');
+
+	$display_host = $event_host;
+	$is_event_host = is_user_logged_in() && (get_current_user_id() == $author_id || current_user_can('administrator'));
 	?>
 
 	<main id="primary" class="site-main single-event-page">
@@ -107,9 +112,11 @@ while ( have_posts() ) :
 								</span>
 							<?php endif; ?>
 							
-							<span class="event-meta-item">
-								👤 Hosted by <?php echo esc_html($author_name); ?>
-							</span>
+							<?php if (!empty($display_host)) : ?>
+								<span class="event-meta-item">
+									👤 Hosted by <?php echo esc_html($display_host); ?>
+								</span>
+							<?php endif; ?>
 						</div>
 
 						<?php if ($event_hashtag) : ?>
@@ -457,6 +464,7 @@ while ( have_posts() ) :
 
 				<aside class="event-sidebar">
 					
+					<?php if ($is_event_host) : ?>
 					<div class="event-share-card">
 						<h3>Share This Event</h3>
 						<p class="share-subtitle">Share this event with your friends and colleagues</p>
@@ -492,6 +500,7 @@ while ( have_posts() ) :
 							<span class="stat-value"><?php echo esc_html($stats['checked_in']); ?></span>
 						</div>
 					</div>
+					<?php endif; ?>
 
 					<div class="rsvp-card">
 						<h3>RSVP for This Event</h3>
@@ -589,7 +598,7 @@ while ( have_posts() ) :
 						<?php endif; ?>
 					</div>
 
-					<?php if (is_user_logged_in() && (get_current_user_id() == $author_id || current_user_can('administrator'))) : ?>
+					<?php if ($is_event_host) : ?>
 						<div class="event-admin-actions">
 							<h4>Event Management</h4>
 							<a href="<?php echo esc_url(home_url('/event-create/?event_id=' . $event_id)); ?>" class="admin-action-button">
