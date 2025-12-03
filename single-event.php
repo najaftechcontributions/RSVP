@@ -189,7 +189,7 @@ while ( have_posts() ) :
 
 					if (!empty($social_links_data)) : ?>
 						<div class="event-social-links">
-							<h3>Share This Event</h3>
+							<h3>Social Media Links</h3>
 							<div class="social-links-list">
 								<?php foreach ($social_links_data as $link) : ?>
 									<a href="<?php echo esc_url($link['url']); ?>" target="_blank" rel="noopener" class="social-link social-link-<?php echo esc_attr(strtolower($link['platform'])); ?>">
