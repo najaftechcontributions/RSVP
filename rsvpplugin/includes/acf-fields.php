@@ -20,7 +20,7 @@ function event_rsvp_register_acf_fields() {
 				'label' => 'Event Host',
 				'name' => 'event_host',
 				'type' => 'text',
-				'instructions' => 'Enter the name of the event host (optional). If left empty, the author name will be displayed.',
+				'instructions' => 'Enter the name of the event host.',
 				'placeholder' => 'e.g., John Doe or ABC Organization',
 			),
 			array(
