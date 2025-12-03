@@ -188,7 +188,7 @@ $user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 			</div>
 
 			<!-- Vendor Plan - Commented Out -->
-			<!-- <div class="pricing-card-wrapper">
+			<div class="pricing-card-wrapper">
 				<div class="pricing-card pricing-card-vendor">
 					<div class="pricing-card-content">
 						<h3 class="plan-name">Vendor</h3>
@@ -204,10 +204,10 @@ $user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 						</ul>
 					</div>
 				</div>
-			</div> -->
+			</div>
 
 			<!-- Pro Plan - Commented Out -->
-			<!-- <div class="pricing-card-wrapper">
+			<div class="pricing-card-wrapper">
 				<div class="pricing-card pricing-card-pro">
 					<div class="pricing-card-content">
 						<h3 class="plan-name">Pro (Both)</h3>
@@ -223,7 +223,7 @@ $user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 						</ul>
 					</div>
 				</div>
-			</div> -->
+			</div>
 
 		</div>
 

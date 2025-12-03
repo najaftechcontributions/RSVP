@@ -363,6 +363,15 @@ function event_rsvp_send_campaign_email($recipient_id)
 		'email_unsubscribe' => $recipient->tracking_token
 	), home_url('/'));
 
+	// Get custom image from campaign custom_data
+	$custom_image = '';
+	if (!empty($campaign->custom_data)) {
+		$custom_data = json_decode($campaign->custom_data, true);
+		if (isset($custom_data['custom_image'])) {
+			$custom_image = $custom_data['custom_image'];
+		}
+	}
+
 	$template_data = array(
 		'event_name' => get_the_title($campaign->event_id),
 		'event_date' => $event_date ? date('F j, Y', strtotime($event_date)) : 'TBD',
@@ -372,7 +381,8 @@ function event_rsvp_send_campaign_email($recipient_id)
 		'host_name' => $host_name,
 		'tracking_url' => $tracking_url,
 		'unsubscribe_url' => $unsubscribe_url,
-		'recipient_name' => $recipient->name ? $recipient->name : 'there'
+		'recipient_name' => $recipient->name ? $recipient->name : 'there',
+		'custom_image' => $custom_image
 	);
 
 	$subject = event_rsvp_parse_email_template($campaign->subject, $template_data);

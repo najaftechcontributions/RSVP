@@ -37,6 +37,7 @@ function event_rsvp_create_email_invitation_tables() {
 		total_clicked int(11) DEFAULT 0,
 		total_yes int(11) DEFAULT 0,
 		total_no int(11) DEFAULT 0,
+		custom_data text DEFAULT NULL,
 		created_at datetime DEFAULT CURRENT_TIMESTAMP,
 		updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		PRIMARY KEY  (id),
@@ -433,5 +434,30 @@ function event_rsvp_maybe_create_email_tables() {
 	$db_version = get_option('event_rsvp_email_db_version');
 	if (!$db_version) {
 		event_rsvp_create_email_invitation_tables();
+	} else {
+		event_rsvp_upgrade_email_tables($db_version);
 	}
+}
+
+function event_rsvp_upgrade_email_tables($current_version) {
+	global $wpdb;
+	$campaigns_table = $wpdb->prefix . 'event_email_campaigns';
+
+	$column_exists = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+			WHERE TABLE_SCHEMA = %s
+			AND TABLE_NAME = %s
+			AND COLUMN_NAME = 'custom_data'",
+			DB_NAME,
+			$campaigns_table
+		)
+	);
+
+	if (empty($column_exists)) {
+		$wpdb->query("ALTER TABLE {$campaigns_table} ADD COLUMN custom_data text DEFAULT NULL AFTER total_no");
+		error_log("Added custom_data column to {$campaigns_table}");
+	}
+
+	update_option('event_rsvp_email_db_version', '1.1');
 }

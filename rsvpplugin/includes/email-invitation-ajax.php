@@ -23,6 +23,7 @@ function event_rsvp_ajax_create_email_campaign()
 	$campaign_name = sanitize_text_field($_POST['campaign_name'] ?? '');
 	$template_id = intval($_POST['template_id'] ?? 0);
 	$subject = sanitize_text_field($_POST['subject'] ?? '');
+	$custom_image = isset($_POST['custom_image']) ? esc_url_raw($_POST['custom_image']) : '';
 
 	if (!$event_id || !$campaign_name || !$subject) {
 		wp_send_json_error('Missing required fields');
@@ -50,6 +51,25 @@ function event_rsvp_ajax_create_email_campaign()
 	));
 
 	if ($campaign_id) {
+		// Save custom image URL as campaign meta if provided
+		if (!empty($custom_image)) {
+			global $wpdb;
+			$campaigns_table = $wpdb->prefix . 'event_email_campaigns';
+			$custom_data = array('custom_image' => $custom_image);
+
+			$update_result = $wpdb->update(
+				$campaigns_table,
+				array('custom_data' => json_encode($custom_data)),
+				array('id' => $campaign_id),
+				array('%s'),
+				array('%d')
+			);
+
+			if ($update_result === false) {
+				error_log("Failed to save custom image for campaign {$campaign_id}: " . $wpdb->last_error);
+			}
+		}
+
 		wp_send_json_success(array(
 			'campaign_id' => $campaign_id,
 			'message' => 'Campaign created successfully!'
@@ -375,8 +395,13 @@ function event_rsvp_ajax_send_test_email()
 	$campaign_id = intval($_POST['campaign_id'] ?? 0);
 	$test_email = sanitize_email($_POST['test_email'] ?? '');
 
-	if (!$campaign_id || !is_email($test_email)) {
-		wp_send_json_error('Invalid parameters');
+	if (!$campaign_id || $campaign_id <= 0) {
+		wp_send_json_error('Invalid campaign ID - Please refresh the page and try again');
+		return;
+	}
+
+	if (!is_email($test_email)) {
+		wp_send_json_error('Invalid email address - Please enter a valid email address');
 		return;
 	}
 
@@ -435,32 +460,39 @@ function event_rsvp_ajax_send_campaign()
 	check_ajax_referer('event_rsvp_email_campaign', 'nonce');
 
 	if (!current_user_can('edit_posts')) {
-		wp_send_json_error('Unauthorized');
+		wp_send_json_error('Unauthorized - You do not have permission to send campaigns');
 		return;
 	}
 
 	$campaign_id = intval($_POST['campaign_id'] ?? 0);
 
-	if (!$campaign_id) {
-		wp_send_json_error('Invalid campaign ID');
+	if (!$campaign_id || $campaign_id <= 0) {
+		wp_send_json_error('Invalid campaign ID - Please refresh the page and try again');
 		return;
 	}
 
 	$campaign = event_rsvp_get_campaign($campaign_id);
 	if (!$campaign) {
-		wp_send_json_error('Campaign not found');
+		wp_send_json_error('Campaign not found - The campaign may have been deleted');
 		return;
 	}
 
 	if (!current_user_can('administrator') && get_current_user_id() != $campaign->host_id) {
-		wp_send_json_error('Unauthorized');
+		wp_send_json_error('Unauthorized - You can only send your own campaigns');
+		return;
+	}
+
+	// Verify event exists
+	$event = get_post($campaign->event_id);
+	if (!$event || $event->post_type !== 'event') {
+		wp_send_json_error('Event not found - The event associated with this campaign may have been deleted');
 		return;
 	}
 
 	$recipients = event_rsvp_get_campaign_recipients($campaign_id);
 
 	if (empty($recipients)) {
-		wp_send_json_error('No recipients added to this campaign');
+		wp_send_json_error('No recipients added - Please add email recipients before sending the campaign');
 		return;
 	}
 
@@ -468,10 +500,17 @@ function event_rsvp_ajax_send_campaign()
 	$smtp_enabled = get_option('event_rsvp_smtp_enabled', false);
 	$smtp_username = get_option('event_rsvp_smtp_username', '');
 	$smtp_password = get_option('event_rsvp_smtp_password', '');
+	$smtp_host = get_option('event_rsvp_smtp_host', '');
 
-	if (!$smtp_enabled || empty($smtp_username) || empty($smtp_password)) {
+	if (!$smtp_enabled) {
+		error_log('Campaign send attempt with SMTP disabled');
+		wp_send_json_error('SMTP is disabled - Please enable SMTP in the email settings before sending campaigns');
+		return;
+	}
+
+	if (empty($smtp_username) || empty($smtp_password) || empty($smtp_host)) {
 		error_log('Campaign send attempt with incomplete SMTP configuration');
-		wp_send_json_error('SMTP is not properly configured. Please configure SMTP settings before sending campaigns.');
+		wp_send_json_error('SMTP is not properly configured - Please configure SMTP host, username, and password in the email settings');
 		return;
 	}
 
@@ -637,6 +676,7 @@ function event_rsvp_ajax_preview_email_template()
 
 	$template_id = intval($_POST['template_id'] ?? 0);
 	$event_id = intval($_POST['event_id'] ?? 0);
+	$custom_image = isset($_POST['custom_image']) ? esc_url_raw($_POST['custom_image']) : '';
 
 	if (!$template_id) {
 		wp_send_json_error('Invalid template ID');
@@ -677,7 +717,8 @@ function event_rsvp_ajax_preview_email_template()
 		'host_name' => $current_user->display_name,
 		'tracking_url' => '#',
 		'unsubscribe_url' => '#',
-		'recipient_name' => 'Guest'
+		'recipient_name' => 'Guest',
+		'custom_image' => $custom_image ? $custom_image : 'https://via.placeholder.com/600x300?text=Event+Image'
 	);
 
 	$html = event_rsvp_parse_email_template($template->html_content, $template_data);
@@ -803,3 +844,203 @@ function event_rsvp_ajax_record_email_attendance()
 }
 add_action('wp_ajax_event_rsvp_record_email_attendance', 'event_rsvp_ajax_record_email_attendance');
 add_action('wp_ajax_nopriv_event_rsvp_record_email_attendance', 'event_rsvp_ajax_record_email_attendance');
+
+function event_rsvp_ajax_get_campaign_preview()
+{
+	check_ajax_referer('event_rsvp_email_campaign', 'nonce');
+
+	if (!current_user_can('edit_posts')) {
+		wp_send_json_error('Unauthorized');
+		return;
+	}
+
+	$campaign_id = intval($_POST['campaign_id'] ?? 0);
+
+	if (!$campaign_id) {
+		wp_send_json_error('Invalid campaign ID');
+		return;
+	}
+
+	$campaign = event_rsvp_get_campaign($campaign_id);
+	if (!$campaign) {
+		wp_send_json_error('Campaign not found');
+		return;
+	}
+
+	if (!current_user_can('administrator') && get_current_user_id() != $campaign->host_id) {
+		wp_send_json_error('Unauthorized');
+		return;
+	}
+
+	$template = null;
+	if ($campaign->template_id) {
+		$template = event_rsvp_get_email_template($campaign->template_id);
+	}
+
+	$event = get_post($campaign->event_id);
+	if (!$event) {
+		wp_send_json_error('Event not found');
+		return;
+	}
+
+	$event_date = get_post_meta($campaign->event_id, 'event_date', true);
+	$event_time = get_post_meta($campaign->event_id, 'event_time', true);
+	$venue_address = get_post_meta($campaign->event_id, 'venue_address', true);
+	$event_description = get_the_excerpt($campaign->event_id);
+
+	$host = get_userdata($campaign->host_id);
+	$host_name = $host ? $host->display_name : get_bloginfo('name');
+
+	// Get custom image from campaign custom_data
+	$custom_image = '';
+	if (!empty($campaign->custom_data)) {
+		$custom_data = json_decode($campaign->custom_data, true);
+		if (isset($custom_data['custom_image'])) {
+			$custom_image = $custom_data['custom_image'];
+		}
+	}
+
+	$template_data = array(
+		'event_name' => get_the_title($campaign->event_id),
+		'event_date' => $event_date ? date('F j, Y', strtotime($event_date)) : 'TBD',
+		'event_time' => $event_time ? $event_time : 'TBD',
+		'event_location' => $venue_address ? $venue_address : 'TBD',
+		'event_description' => $event_description ? $event_description : '',
+		'host_name' => $host_name,
+		'tracking_url' => '#',
+		'unsubscribe_url' => '#',
+		'recipient_name' => 'Guest',
+		'custom_image' => $custom_image ? $custom_image : 'https://via.placeholder.com/600x300?text=Event+Image'
+	);
+
+	if ($template) {
+		$html = event_rsvp_parse_email_template($template->html_content, $template_data);
+	} else {
+		$html = event_rsvp_get_default_email_html($template_data);
+	}
+
+	wp_send_json_success(array(
+		'html' => $html,
+		'template_name' => $template ? $template->name : 'Default Template'
+	));
+}
+add_action('wp_ajax_event_rsvp_get_campaign_preview', 'event_rsvp_ajax_get_campaign_preview');
+
+function event_rsvp_ajax_get_campaign_settings()
+{
+	check_ajax_referer('event_rsvp_email_campaign', 'nonce');
+
+	if (!current_user_can('edit_posts')) {
+		wp_send_json_error('Unauthorized');
+		return;
+	}
+
+	$campaign_id = intval($_POST['campaign_id'] ?? 0);
+
+	if (!$campaign_id) {
+		wp_send_json_error('Invalid campaign ID');
+		return;
+	}
+
+	$campaign = event_rsvp_get_campaign($campaign_id);
+	if (!$campaign) {
+		wp_send_json_error('Campaign not found');
+		return;
+	}
+
+	if (!current_user_can('administrator') && get_current_user_id() != $campaign->host_id) {
+		wp_send_json_error('Unauthorized');
+		return;
+	}
+
+	// Get custom image from campaign custom_data
+	$custom_image = '';
+	if (!empty($campaign->custom_data)) {
+		$custom_data = json_decode($campaign->custom_data, true);
+		if (isset($custom_data['custom_image'])) {
+			$custom_image = $custom_data['custom_image'];
+		}
+	}
+
+	wp_send_json_success(array(
+		'custom_image' => $custom_image,
+		'campaign_name' => $campaign->campaign_name,
+		'subject' => $campaign->subject,
+		'template_id' => $campaign->template_id
+	));
+}
+add_action('wp_ajax_event_rsvp_get_campaign_settings', 'event_rsvp_ajax_get_campaign_settings');
+
+function event_rsvp_ajax_update_campaign_settings()
+{
+	check_ajax_referer('event_rsvp_email_campaign', 'nonce');
+
+	if (!current_user_can('edit_posts')) {
+		wp_send_json_error('Unauthorized');
+		return;
+	}
+
+	$campaign_id = intval($_POST['campaign_id'] ?? 0);
+	$custom_image = isset($_POST['custom_image']) ? esc_url_raw($_POST['custom_image']) : '';
+
+	if (!$campaign_id) {
+		wp_send_json_error('Invalid campaign ID');
+		return;
+	}
+
+	$campaign = event_rsvp_get_campaign($campaign_id);
+	if (!$campaign) {
+		wp_send_json_error('Campaign not found');
+		return;
+	}
+
+	if (!current_user_can('administrator') && get_current_user_id() != $campaign->host_id) {
+		wp_send_json_error('Unauthorized');
+		return;
+	}
+
+	// Only allow updating draft campaigns
+	if ($campaign->status !== 'draft') {
+		wp_send_json_error('Cannot edit campaign that has already been sent');
+		return;
+	}
+
+	global $wpdb;
+	$campaigns_table = $wpdb->prefix . 'event_email_campaigns';
+
+	// Get existing custom_data and merge with new image
+	$existing_custom_data = array();
+	if (!empty($campaign->custom_data)) {
+		$existing_custom_data = json_decode($campaign->custom_data, true);
+		if (!is_array($existing_custom_data)) {
+			$existing_custom_data = array();
+		}
+	}
+
+	// Update only the custom_image field
+	$existing_custom_data['custom_image'] = $custom_image;
+
+	$result = $wpdb->update(
+		$campaigns_table,
+		array('custom_data' => json_encode($existing_custom_data)),
+		array('id' => $campaign_id),
+		array('%s'),
+		array('%d')
+	);
+
+	// Check for database errors
+	if ($result === false) {
+		$error_message = $wpdb->last_error ? $wpdb->last_error : 'Database update failed';
+		error_log("Campaign settings update failed for campaign {$campaign_id}: {$error_message}");
+		wp_send_json_error('Failed to update campaign settings: ' . $error_message);
+		return;
+	}
+
+	// Success - result is 0 (no change) or 1 (updated)
+	wp_send_json_success(array(
+		'message' => 'Campaign settings updated successfully!',
+		'custom_image' => $custom_image,
+		'rows_affected' => $result
+	));
+}
+add_action('wp_ajax_event_rsvp_update_campaign_settings', 'event_rsvp_ajax_update_campaign_settings');

@@ -83,6 +83,9 @@ class EventRSVPPlugin {
 		
 		if (is_page_template('page-email-campaigns.php')) {
 			wp_enqueue_style('email-campaigns-styles', EVENT_RSVP_PLUGIN_URL . '/assets/css/email-campaigns.css', array('event-rsvp-styles'), EVENT_RSVP_VERSION);
+			wp_enqueue_media();
+			wp_enqueue_script('email-campaigns-enhancements', EVENT_RSVP_PLUGIN_URL . '/assets/js/email-campaigns-enhancements.js', array('jquery'), EVENT_RSVP_VERSION, true);
+			wp_enqueue_script('email-campaigns-manage', EVENT_RSVP_PLUGIN_URL . '/assets/js/email-campaigns-manage.js', array('jquery', 'email-campaigns-enhancements'), EVENT_RSVP_VERSION, true);
 		}
 		
 		if (is_page_template('page-check-in.php')) {

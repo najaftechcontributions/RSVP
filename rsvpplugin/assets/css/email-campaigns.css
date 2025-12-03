@@ -591,6 +591,28 @@
 	font-size: 15px;
 }
 
+.campaign-settings-section {
+	padding: 20px;
+	background: #f8f9fa;
+	border-radius: 8px;
+}
+
+.campaign-settings-section h3 {
+	margin: 0 0 20px 0;
+	font-size: 18px;
+	font-weight: 700;
+	color: #2d3748;
+}
+
+#manageCampaignImagePreview img,
+#customImagePreview img {
+	max-width: 100%;
+	height: auto;
+	object-fit: contain;
+	border-radius: 8px;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
 @media (max-width: 768px) {
 	.header-content {
 		flex-direction: column;

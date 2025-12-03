@@ -10,36 +10,12 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Insert Image Upload Template if it doesn't exist
+ * Get the HTML content for the image upload template
+ * 
+ * @return string Template HTML content
  */
-function event_rsvp_add_image_upload_template() {
-	global $wpdb;
-	$templates_table = $wpdb->prefix . 'event_email_templates';
-	
-	// Check if table exists
-	if ($wpdb->get_var("SHOW TABLES LIKE '$templates_table'") != $templates_table) {
-		return;
-	}
-	
-	// Check if template already exists
-	$existing = $wpdb->get_var($wpdb->prepare(
-		"SELECT COUNT(*) FROM $templates_table WHERE name = %s",
-		'Image Upload Template'
-	));
-	
-	if ($existing > 0) {
-		return; // Already exists
-	}
-	
-	// Insert the new template
-	$wpdb->insert(
-		$templates_table,
-		array(
-			'name' => 'Image Upload Template',
-			'description' => 'Template with custom image upload and event button',
-			'subject' => 'You\'re Invited: {{event_name}}',
-			'html_content' => '<!DOCTYPE html>
-<html>
+function event_rsvp_get_image_upload_template_html() {
+	return '<html>
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -58,8 +34,8 @@ function event_rsvp_add_image_upload_template() {
 					</tr>
 					{{#custom_image}}
 					<tr>
-						<td style="padding: 0;">
-							<img src="{{custom_image}}" alt="Event Image" style="width: 100%; height: auto; display: block; max-height: 400px; object-fit: cover;">
+						<td style="padding: 0; text-align: center; background-color: #f8f9fa;">
+							<img src="{{custom_image}}" alt="Event Image" style="width: 100%; height: auto; display: block; object-fit: contain;">
 						</td>
 					</tr>
 					{{/custom_image}}
@@ -108,10 +84,56 @@ function event_rsvp_add_image_upload_template() {
 		</tr>
 	</table>
 </body>
-</html>',
-			'is_default' => 1
+</html>';
+}
+
+/**
+ * Insert Image Upload Template if it doesn't exist
+ */
+function event_rsvp_add_image_upload_template() {
+	global $wpdb;
+	$templates_table = $wpdb->prefix . 'event_email_templates';
+	
+	// Check if table exists
+	if ($wpdb->get_var("SHOW TABLES LIKE '$templates_table'") != $templates_table) {
+		return;
+	}
+	
+	// Check if template already exists
+	$existing = $wpdb->get_var($wpdb->prepare(
+		"SELECT COUNT(*) FROM $templates_table WHERE name = %s",
+		'Image Upload Template'
+	));
+	
+	if ($existing > 0) {
+		// Template exists - update it to ensure it has the latest version
+		$template_html = event_rsvp_get_image_upload_template_html();
+		$wpdb->update(
+			$templates_table,
+			array(
+				'description' => 'Template with custom image upload (full image, not cropped)',
+				'subject' => 'You\'re Invited: {{event_name}}',
+				'html_content' => $template_html
+			),
+			array('name' => 'Image Upload Template'),
+			array('%s', '%s', '%s'),
+			array('%s')
+		);
+		error_log('✓ Image Upload Template updated to latest version');
+		return;
+	}
+	
+	// Insert the new template
+	$template_html = event_rsvp_get_image_upload_template_html();
+	$wpdb->insert(
+		$templates_table,
+		array(
+			'name' => 'Image Upload Template',
+			'description' => 'Template with custom image upload (full image, not cropped)',
+			'subject' => 'You\'re Invited: {{event_name}}',
+			'html_content' => $template_html
 		),
-		array('%s', '%s', '%s', '%s', '%d')
+		array('%s', '%s', '%s', '%s')
 	);
 	
 	if ($wpdb->insert_id) {
@@ -119,5 +141,5 @@ function event_rsvp_add_image_upload_template() {
 	}
 }
 
-// Run on init to ensure template is added
+// Run on init to ensure template is added/updated
 add_action('init', 'event_rsvp_add_image_upload_template', 20);

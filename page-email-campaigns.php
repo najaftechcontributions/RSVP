@@ -273,6 +273,19 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 					</button>
 				</div>
 
+				<div class="form-group" id="customImageUploadGroup" style="display: none;">
+					<label for="customImageUrl">Custom Event Image</label>
+					<div style="display: flex; gap: 10px; align-items: flex-start;">
+						<input type="text" id="customImageUrl" name="custom_image" class="form-input" placeholder="Image URL" style="flex: 1;">
+						<button type="button" id="uploadCustomImageBtn" class="secondary-button">Upload Image</button>
+					</div>
+					<small class="form-help">Upload or paste the URL of an image to display in the email template</small>
+					<div id="customImagePreview" style="margin-top: 15px; display: none;">
+						<img src="" alt="Preview" style="max-width: 100%; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+						<button type="button" id="removeCustomImageBtn" class="secondary-button" style="margin-top: 10px; font-size: 12px; padding: 6px 12px;">Remove Image</button>
+					</div>
+				</div>
+
 				<div class="form-actions">
 					<button type="button" class="secondary-button modal-close">Cancel</button>
 					<button type="submit" class="primary-button">Create Campaign</button>
@@ -291,6 +304,7 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 		<div class="modal-body">
 			<div class="campaign-tabs">
 				<button class="tab-btn active" data-tab="recipients">Recipients</button>
+				<button class="tab-btn" data-tab="settings">Settings</button>
 				<button class="tab-btn" data-tab="preview">Preview</button>
 			</div>
 
@@ -329,9 +343,38 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 				</div>
 			</div>
 
+			<div class="tab-content" id="settingsTab" style="display: none;">
+				<div class="campaign-settings-section">
+					<h3 style="margin: 0 0 20px 0; font-size: 18px; color: #2d3748;">Campaign Settings</h3>
+
+					<div class="form-group">
+						<label for="manageCampaignImage">Event Image</label>
+						<div style="display: flex; gap: 10px; align-items: flex-start;">
+							<input type="text" id="manageCampaignImage" class="form-input" placeholder="Image URL" style="flex: 1;">
+							<button type="button" id="uploadManageCampaignImageBtn" class="secondary-button">Upload Image</button>
+						</div>
+						<small class="form-help">Upload or paste the URL of an image to display in the email template</small>
+						<div id="manageCampaignImagePreview" style="margin-top: 15px; display: none;">
+							<img src="" alt="Preview" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+							<button type="button" id="removeManageCampaignImageBtn" class="secondary-button" style="margin-top: 10px; font-size: 12px; padding: 6px 12px;">Remove Image</button>
+						</div>
+					</div>
+
+					<div class="form-actions">
+						<button type="button" id="saveCampaignSettingsBtn" class="primary-button">Save Settings</button>
+					</div>
+				</div>
+			</div>
+
 			<div class="tab-content" id="previewTab" style="display: none;">
+				<div class="preview-controls" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+					<button type="button" id="refreshPreviewBtn" class="primary-button" style="font-size: 14px; padding: 10px 20px;">
+						🔄 Refresh Preview
+					</button>
+					<p class="form-help" style="margin: 10px 0 0 0;">Preview shows how the email will look with the selected template and event data</p>
+				</div>
 				<div id="emailPreviewContainer" class="email-preview-container">
-					<p>Select a template to preview...</p>
+					<p>Loading preview...</p>
 				</div>
 			</div>
 		</div>

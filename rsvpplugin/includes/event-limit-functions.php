@@ -22,6 +22,11 @@ function event_rsvp_get_event_limit($user_id = null) {
 		return 0;
 	}
 	
+	// Admins get unlimited events
+	if (user_can($user_id, 'administrator')) {
+		return -1;
+	}
+	
 	$plan = Event_RSVP_Simple_Stripe::get_user_plan($user_id);
 	
 	$limits = array(
@@ -134,7 +139,10 @@ function event_rsvp_display_event_limit_notice() {
 	$plan = Event_RSVP_Simple_Stripe::get_user_plan($user_id);
 	
 	if ($limit === -1) {
-		return '<div class="event-limit-notice unlimited-notice">✓ You can create unlimited events!</div>';
+		$message = user_can($user_id, 'administrator') 
+			? '✓ You have unlimited event creation (Administrator)'
+			: '✓ You can create unlimited events!';
+		return '<div class="event-limit-notice unlimited-notice">' . $message . '</div>';
 	}
 	
 	if ($limit === 0) {
