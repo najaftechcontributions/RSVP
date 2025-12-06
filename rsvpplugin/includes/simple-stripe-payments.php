@@ -413,7 +413,13 @@ class Event_RSVP_Simple_Stripe {
 		$message .= "Great news! Your payment was successful and your account has been upgraded to {$plan_name}.\n\n";
 		$message .= "You now have full access to:\n";
 		
-		if ($plan_slug === 'event_host' || $plan_slug === 'pro') {
+		if ($plan_slug === 'pay_as_you_go') {
+			$message .= "- Create up to 1 event\n";
+			$message .= "- Access to event analytics\n";
+		} elseif ($plan_slug === 'event_planner') {
+			$message .= "- Create up to 5 events\n";
+			$message .= "- Access to event analytics\n";
+		} elseif ($plan_slug === 'event_host' || $plan_slug === 'pro') {
 			$message .= "- Create and manage unlimited events\n";
 			$message .= "- Access to event analytics\n";
 		}

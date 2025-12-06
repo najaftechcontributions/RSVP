@@ -18,6 +18,8 @@ $payment_date = get_user_meta($user_id, 'event_rsvp_payment_date', true);
 
 $plan_names = array(
 	'attendee' => 'Free Attendee',
+	'pay_as_you_go' => 'Pay As You Go',
+	'event_planner' => 'Event Planner',
 	'event_host' => 'Event Host',
 	'vendor' => 'Vendor',
 	'pro' => 'Pro (Host + Vendor)'
@@ -52,14 +54,14 @@ get_header();
 					<span class="nav-label">Profile</span>
 				</a>
 				
-				<?php if ($user_plan === 'event_host' || $user_plan === 'pro') : ?>
+				<?php if (in_array($user_plan, array('pay_as_you_go', 'event_planner', 'event_host', 'pro'))) : ?>
 				<a href="#events" class="nav-item" data-tab="events">
 					<span class="nav-icon">📅</span>
 					<span class="nav-label">My Events</span>
 				</a>
 				<?php endif; ?>
 				
-				<?php if ($user_plan === 'vendor' || $user_plan === 'pro') : ?>
+				<?php if (in_array($user_plan, array('vendor', 'pro'))) : ?>
 				<a href="#ads" class="nav-item" data-tab="ads">
 					<span class="nav-icon">📢</span>
 					<span class="nav-label">My Ads</span>
@@ -96,7 +98,7 @@ get_header();
 				</div>
 
 				<div class="stats-grid">
-					<?php if ($user_plan === 'event_host' || $user_plan === 'pro') : 
+					<?php if (in_array($user_plan, array('pay_as_you_go', 'event_planner', 'event_host', 'pro'))) : 
 						$user_events = event_rsvp_get_user_events($user_id);
 						$event_count = count($user_events);
 						$total_rsvps = 0;
@@ -121,7 +123,7 @@ get_header();
 					</div>
 					<?php endif; ?>
 
-					<?php if ($user_plan === 'vendor' || $user_plan === 'pro') : 
+					<?php if (in_array($user_plan, array('vendor', 'pro'))) : 
 						$vendor_ads = get_posts(array(
 							'post_type' => 'vendor_ad',
 							'author' => $user_id,
@@ -180,7 +182,7 @@ get_header();
 				<div class="quick-actions">
 					<h3 class="section-heading">Quick Actions</h3>
 					<div class="action-buttons-grid">
-						<?php if ($user_plan === 'event_host' || $user_plan === 'pro') : ?>
+						<?php if (in_array($user_plan, array('pay_as_you_go', 'event_planner', 'event_host', 'pro'))) : ?>
 						<a href="<?php echo home_url('/event-create/'); ?>" class="action-button create-event">
 							<span class="button-icon">➕</span>
 							<span class="button-text">Create Event</span>
@@ -191,7 +193,7 @@ get_header();
 						</a>
 						<?php endif; ?>
 
-						<?php if ($user_plan === 'vendor' || $user_plan === 'pro') : ?>
+						<?php if (in_array($user_plan, array('vendor', 'pro'))) : ?>
 						<a href="<?php echo home_url('/ad-create/'); ?>" class="action-button create-ad">
 							<span class="button-icon">📢</span>
 							<span class="button-text">Create Ad</span>
@@ -249,7 +251,7 @@ get_header();
 				</div>
 			</div>
 
-			<?php if ($user_plan === 'event_host' || $user_plan === 'pro') : ?>
+			<?php if (in_array($user_plan, array('pay_as_you_go', 'event_planner', 'event_host', 'pro'))) : ?>
 			<div id="tab-events" class="tab-content">
 				<div class="content-header">
 					<h2 class="content-title">My Events</h2>
@@ -296,7 +298,7 @@ get_header();
 			</div>
 			<?php endif; ?>
 
-			<?php if ($user_plan === 'vendor' || $user_plan === 'pro') : ?>
+			<?php if (in_array($user_plan, array('vendor', 'pro'))) : ?>
 			<div id="tab-ads" class="tab-content">
 				<div class="content-header">
 					<h2 class="content-title">My Ads</h2>
@@ -433,6 +435,8 @@ get_header();
 							<?php
 							$plan_icons = array(
 								'attendee' => '🎫',
+								'pay_as_you_go' => '📅',
+								'event_planner' => '📅',
 								'event_host' => '📅',
 								'vendor' => '📢',
 								'pro' => '⭐'
@@ -468,12 +472,20 @@ get_header();
 							<ul class="features-list">
 								<li>✓ Browse and RSVP to events</li>
 								<li>✓ Receive QR code tickets</li>
-								<?php if ($user_plan === 'event_host' || $user_plan === 'pro') : ?>
+								<?php if ($user_plan === 'pay_as_you_go') : ?>
+								<li>✓ Create up to 1 event</li>
+								<li>✓ Manage attendees</li>
+								<li>✓ Event analytics</li>
+								<?php elseif ($user_plan === 'event_planner') : ?>
+								<li>✓ Create up to 5 events</li>
+								<li>✓ Manage attendees</li>
+								<li>✓ Event analytics</li>
+								<?php elseif (in_array($user_plan, array('event_host', 'pro'))) : ?>
 								<li>✓ Create unlimited events</li>
 								<li>✓ Manage attendees</li>
 								<li>✓ Event analytics</li>
 								<?php endif; ?>
-								<?php if ($user_plan === 'vendor' || $user_plan === 'pro') : ?>
+								<?php if (in_array($user_plan, array('vendor', 'pro'))) : ?>
 								<li>✓ Post advertisements</li>
 								<li>✓ Track ad performance</li>
 								<?php endif; ?>

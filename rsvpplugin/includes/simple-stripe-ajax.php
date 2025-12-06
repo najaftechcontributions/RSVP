@@ -150,12 +150,14 @@ function event_rsvp_verify_payment_token() {
 	
 	if ($result['success']) {
 		$redirect_map = array(
+			'pay_as_you_go' => home_url('/my-account/?welcome=1'),
+			'event_planner' => home_url('/my-account/?welcome=1'),
 			'event_host' => home_url('/my-account/?welcome=1'),
 			'vendor' => home_url('/my-account/?welcome=1'),
 			'pro' => home_url('/my-account/?welcome=1&pro=1')
 		);
 		
-		$redirect = isset($redirect_map[$plan]) ? $redirect_map[$plan] : home_url('/my-account/');
+		$redirect = isset($redirect_map[$plan]) ? $redirect_map[$plan] : home_url('/my-account/?welcome=1');
 		
 		wp_send_json_success(array(
 			'message' => 'Payment verified! Your account has been upgraded.',

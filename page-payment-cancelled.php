@@ -9,6 +9,8 @@ get_header();
 
 $plan = isset($_GET['plan']) ? sanitize_text_field($_GET['plan']) : '';
 $plan_names = array(
+	'pay_as_you_go' => 'Pay As You Go',
+	'event_planner' => 'Event Planner',
 	'event_host' => 'Event Host',
 	'vendor' => 'Vendor',
 	'pro' => 'Pro (Host + Vendor)'
