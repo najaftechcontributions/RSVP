@@ -1,8 +1,36 @@
 <?php
 /**
  * Email Functions
- * 
+ *
  * @package EventRSVPPlugin
+ *
+ * SMTP Configuration Notes:
+ * ========================
+ *
+ * Hostinger SMTP Settings:
+ * - SMTP Host: smtp.hostinger.com
+ * - SMTP Port: 465 (SSL) or 587 (TLS)
+ * - Encryption: SSL for port 465, TLS for port 587
+ * - Username: Your full email address (e.g., ceo@aqbrandingstudio.com)
+ * - From Email: MUST match SMTP username to avoid "Sender address rejected" errors
+ *
+ * CNAME Records for Email Autodiscovery:
+ * ======================================
+ * Add these CNAME records in your domain's DNS settings:
+ *
+ * 1. Autodiscover (Outlook/Exchange):
+ *    Type: CNAME
+ *    Host: autodiscover
+ *    Value: autodiscover.mail.hostinger.com
+ *    TTL: 300
+ *
+ * 2. Autoconfig (Thunderbird/other clients):
+ *    Type: CNAME
+ *    Host: autoconfig
+ *    Value: autoconfig.mail.hostinger.com
+ *    TTL: 300
+ *
+ * These records help email clients automatically configure settings.
  */
 
 if (!defined('ABSPATH')) {
@@ -105,7 +133,7 @@ function event_rsvp_configure_smtp($phpmailer) {
 		return;
 	}
 
-	$smtp_host = get_option('event_rsvp_smtp_host', 'smtp.gmail.com');
+	$smtp_host = get_option('event_rsvp_smtp_host', '');
 	$smtp_port = get_option('event_rsvp_smtp_port', 587);
 	$smtp_username = get_option('event_rsvp_smtp_username', '');
 	$smtp_password = get_option('event_rsvp_smtp_password', '');
@@ -113,23 +141,79 @@ function event_rsvp_configure_smtp($phpmailer) {
 	$smtp_from_name = get_option('event_rsvp_smtp_from_name', 'Event RSVP');
 	$smtp_secure = get_option('event_rsvp_smtp_secure', 'tls');
 
-	if (empty($smtp_host) || empty($smtp_username) || empty($smtp_password)) {
-		error_log('Event RSVP: SMTP credentials not configured properly');
+	if (empty($smtp_host)) {
+		error_log('Event RSVP: SMTP host not configured');
 		return;
 	}
 
 	try {
 		$phpmailer->isSMTP();
 		$phpmailer->Host = $smtp_host;
-		$phpmailer->SMTPAuth = true;
 		$phpmailer->Port = intval($smtp_port);
-		$phpmailer->Username = $smtp_username;
-		$phpmailer->Password = $smtp_password;
-		$phpmailer->SMTPSecure = $smtp_secure;
-		$phpmailer->From = !empty($smtp_from_email) ? $smtp_from_email : $smtp_username;
-		$phpmailer->FromName = $smtp_from_name;
+
+		if (!empty($smtp_username) && !empty($smtp_password)) {
+			$phpmailer->SMTPAuth = true;
+			$phpmailer->Username = $smtp_username;
+			$phpmailer->Password = $smtp_password;
+		} else {
+			$phpmailer->SMTPAuth = false;
+		}
+
+		// Auto-detect encryption based on port if not explicitly set
+		// Port 465 = SSL, Port 587 = TLS, Port 25 = None
+		$port = intval($smtp_port);
+
+		if (!empty($smtp_secure) && in_array(strtolower($smtp_secure), array('tls', 'ssl'))) {
+			$phpmailer->SMTPSecure = strtolower($smtp_secure);
+		} elseif ($port === 465) {
+			// Port 465 requires SSL encryption
+			$phpmailer->SMTPSecure = 'ssl';
+			error_log('Event RSVP: Auto-detected SSL encryption for port 465');
+		} elseif ($port === 587) {
+			// Port 587 requires TLS encryption
+			$phpmailer->SMTPSecure = 'tls';
+			error_log('Event RSVP: Auto-detected TLS encryption for port 587');
+		} else {
+			// Port 25 or custom port - no encryption
+			$phpmailer->SMTPSecure = false;
+			$phpmailer->SMTPAutoTLS = false;
+		}
+
+		// CRITICAL: FROM address MUST match SMTP username for most providers
+		// This prevents "Sender address rejected" errors
+
+		// Check if this is a known provider that requires matching FROM and username
+		$requires_match = false;
+		$known_providers = array('hostinger.com', 'gmail.com', 'outlook.com', 'yahoo.com', 'office365.com', 'mail.yahoo.com');
+		foreach ($known_providers as $provider) {
+			if (strpos($smtp_host, $provider) !== false) {
+				$requires_match = true;
+				break;
+			}
+		}
+
+		// FORCE FROM email to match SMTP username for known providers
+		// This is MANDATORY and CANNOT be overridden
+		if ($requires_match && !empty($smtp_username) && is_email($smtp_username)) {
+			$phpmailer->setFrom($smtp_username, $smtp_from_name);
+			$phpmailer->From = $smtp_username; // Force override
+			$phpmailer->Sender = $smtp_username; // Set sender path
+			error_log('Event RSVP: ENFORCING FROM address to SMTP username (' . $smtp_username . ') for ' . $smtp_host);
+		} elseif (!empty($smtp_from_email) && is_email($smtp_from_email)) {
+			// Use configured FROM email for other providers
+			$phpmailer->setFrom($smtp_from_email, $smtp_from_name);
+			$phpmailer->From = $smtp_from_email;
+			error_log('Event RSVP: Using configured FROM address (' . $smtp_from_email . ')');
+		} elseif (!empty($smtp_username) && is_email($smtp_username)) {
+			// Fallback to SMTP username if FROM email not set
+			$phpmailer->setFrom($smtp_username, $smtp_from_name);
+			$phpmailer->From = $smtp_username;
+			error_log('Event RSVP: Using SMTP username as FROM address');
+		}
+
 		$phpmailer->CharSet = 'UTF-8';
 
+		// SSL/TLS options for Hostinger and other providers
 		$phpmailer->SMTPOptions = array(
 			'ssl' => array(
 				'verify_peer' => false,
@@ -139,19 +223,224 @@ function event_rsvp_configure_smtp($phpmailer) {
 		);
 
 		$phpmailer->Timeout = 30;
-		$phpmailer->SMTPKeepAlive = true;
+		$phpmailer->SMTPKeepAlive = false;
 
+		// Enhanced debugging for troubleshooting
 		if (defined('WP_DEBUG') && WP_DEBUG) {
 			$phpmailer->SMTPDebug = 2;
 			$phpmailer->Debugoutput = function($str, $level) {
 				error_log("SMTP Debug [{$level}]: {$str}");
 			};
 		}
+
+		error_log('Event RSVP SMTP Configured: Host=' . $smtp_host . ', Port=' . $smtp_port . ', Encryption=' . ($phpmailer->SMTPSecure ?: 'none') . ', Auth=' . ($phpmailer->SMTPAuth ? 'yes' : 'no'));
+
 	} catch (Exception $e) {
 		error_log('Event RSVP SMTP Configuration Error: ' . $e->getMessage());
 	}
 }
-add_action('phpmailer_init', 'event_rsvp_configure_smtp');
+// Use priority 20 to ensure this runs after other plugins
+add_action('phpmailer_init', 'event_rsvp_configure_smtp', 20);
+
+/**
+ * Override wp_mail FROM address to use SMTP username
+ * This prevents WordPress from using the admin email
+ * CRITICAL: This must run to avoid "Sender address rejected" errors
+ * PRIORITY 1 ensures this runs BEFORE WordPress defaults
+ */
+function event_rsvp_mail_from($original_email_address) {
+	$smtp_enabled = get_option('event_rsvp_smtp_enabled', false);
+
+	if (!$smtp_enabled) {
+		return $original_email_address;
+	}
+
+	$smtp_username = get_option('event_rsvp_smtp_username', '');
+	$smtp_from_email = get_option('event_rsvp_smtp_from_email', '');
+	$smtp_host = get_option('event_rsvp_smtp_host', '');
+	$admin_email = get_option('admin_email', '');
+
+	// NEVER allow admin email to be used as FROM
+	// This is the most common cause of "Sender address rejected" errors
+	if ($original_email_address === $admin_email) {
+		error_log('Event RSVP: BLOCKING admin email from being used as FROM address: ' . $admin_email);
+		$original_email_address = '';
+	}
+
+	// Check if this is a known provider that requires matching FROM and username
+	$requires_match = false;
+	$known_providers = array('hostinger.com', 'gmail.com', 'outlook.com', 'yahoo.com', 'office365.com', 'mail.yahoo.com');
+	foreach ($known_providers as $provider) {
+		if (strpos($smtp_host, $provider) !== false) {
+			$requires_match = true;
+			break;
+		}
+	}
+
+	// ALWAYS use SMTP username as FROM for known providers
+	// This is MANDATORY to avoid "Sender address rejected" errors
+	if ($requires_match && !empty($smtp_username) && is_email($smtp_username)) {
+		if ($original_email_address !== $smtp_username) {
+			error_log('Event RSVP: wp_mail_from filter FORCING FROM to SMTP username: ' . $smtp_username . ' (was: ' . $original_email_address . ')');
+		}
+		return $smtp_username;
+	}
+
+	// Use configured FROM email if set and valid (for non-known providers)
+	if (!empty($smtp_from_email) && is_email($smtp_from_email)) {
+		return $smtp_from_email;
+	}
+
+	// Fallback to SMTP username
+	if (!empty($smtp_username) && is_email($smtp_username)) {
+		error_log('Event RSVP: wp_mail_from using SMTP username as fallback: ' . $smtp_username);
+		return $smtp_username;
+	}
+
+	// Last resort: if we get here, log a warning
+	if (empty($smtp_username)) {
+		error_log('Event RSVP: WARNING - No SMTP username configured, cannot set FROM address properly');
+	}
+
+	return $original_email_address;
+}
+// PRIORITY 1 to run BEFORE WordPress core and other plugins
+add_filter('wp_mail_from', 'event_rsvp_mail_from', 1);
+
+/**
+ * Override wp_mail FROM name
+ */
+function event_rsvp_mail_from_name($original_email_from) {
+	$smtp_enabled = get_option('event_rsvp_smtp_enabled', false);
+
+	if (!$smtp_enabled) {
+		return $original_email_from;
+	}
+
+	$smtp_from_name = get_option('event_rsvp_smtp_from_name', 'Event RSVP');
+
+	return !empty($smtp_from_name) ? $smtp_from_name : $original_email_from;
+}
+add_filter('wp_mail_from_name', 'event_rsvp_mail_from_name', 999);
+
+/**
+ * Pre-send validation to ensure FROM email is never the admin email
+ * This is a final failsafe to prevent "Sender address rejected" errors
+ */
+function event_rsvp_validate_mail_before_send($args) {
+	$smtp_enabled = get_option('event_rsvp_smtp_enabled', false);
+
+	if (!$smtp_enabled) {
+		return $args;
+	}
+
+	$admin_email = get_option('admin_email', '');
+	$smtp_username = get_option('event_rsvp_smtp_username', '');
+
+	// Check if FROM header contains admin email
+	if (!empty($args['headers'])) {
+		$headers = $args['headers'];
+		if (!is_array($headers)) {
+			$headers = explode("\n", str_replace("\r\n", "\n", $headers));
+		}
+
+		$filtered_headers = array();
+		foreach ($headers as $header) {
+			// Remove any FROM headers that use admin email
+			if (stripos($header, 'From:') === 0 && !empty($admin_email)) {
+				if (stripos($header, $admin_email) !== false) {
+					error_log('Event RSVP: BLOCKED admin email in FROM header: ' . $header);
+					// Skip this header - let our filter handle it
+					continue;
+				}
+			}
+			$filtered_headers[] = $header;
+		}
+
+		$args['headers'] = $filtered_headers;
+	}
+
+	return $args;
+}
+add_filter('wp_mail', 'event_rsvp_validate_mail_before_send', 1);
+
+/**
+ * Validate SMTP configuration and provide helpful error messages
+ *
+ * @return array Array with 'valid' (bool) and 'message' (string)
+ */
+function event_rsvp_validate_smtp_config() {
+	$smtp_enabled = get_option('event_rsvp_smtp_enabled', false);
+
+	if (!$smtp_enabled) {
+		return array(
+			'valid' => false,
+			'message' => 'SMTP is not enabled'
+		);
+	}
+
+	$smtp_host = get_option('event_rsvp_smtp_host', '');
+	$smtp_port = get_option('event_rsvp_smtp_port', 587);
+	$smtp_username = get_option('event_rsvp_smtp_username', '');
+	$smtp_password = get_option('event_rsvp_smtp_password', '');
+	$smtp_from_email = get_option('event_rsvp_smtp_from_email', '');
+	$smtp_secure = get_option('event_rsvp_smtp_secure', 'tls');
+
+	$errors = array();
+
+	if (empty($smtp_host)) {
+		$errors[] = 'SMTP Host is required';
+	}
+
+	if (empty($smtp_port)) {
+		$errors[] = 'SMTP Port is required';
+	}
+
+	if (empty($smtp_username)) {
+		$errors[] = 'SMTP Username is required';
+	}
+
+	if (empty($smtp_password)) {
+		$errors[] = 'SMTP Password is required';
+	}
+
+	if (empty($smtp_from_email)) {
+		$errors[] = 'FROM Email is required';
+	} elseif (!is_email($smtp_from_email)) {
+		$errors[] = 'FROM Email is not a valid email address';
+	}
+
+	// Check port and encryption compatibility
+	$port = intval($smtp_port);
+	if ($port === 465 && $smtp_secure !== 'ssl' && $smtp_secure !== '') {
+		$errors[] = 'Port 465 requires SSL encryption. Current setting: ' . ($smtp_secure ?: 'None');
+	} elseif ($port === 587 && $smtp_secure !== 'tls' && $smtp_secure !== '') {
+		$errors[] = 'Port 587 requires TLS encryption. Current setting: ' . ($smtp_secure ?: 'None');
+	}
+
+	// Check FROM email matches username for known providers
+	if (!empty($smtp_from_email) && !empty($smtp_username) && $smtp_from_email !== $smtp_username) {
+		$known_providers = array('hostinger.com', 'gmail.com', 'outlook.com', 'yahoo.com');
+		foreach ($known_providers as $provider) {
+			if (strpos($smtp_host, $provider) !== false) {
+				$errors[] = 'FROM Email must match SMTP Username for ' . $provider . ' to avoid "Sender address rejected" errors';
+				break;
+			}
+		}
+	}
+
+	if (!empty($errors)) {
+		return array(
+			'valid' => false,
+			'message' => implode('; ', $errors)
+		);
+	}
+
+	return array(
+		'valid' => true,
+		'message' => 'SMTP configuration is valid'
+	);
+}
 
 function event_rsvp_send_qr_email_now($attendee_id) {
 	$attendee_email = get_post_meta($attendee_id, 'attendee_email', true);
@@ -172,20 +461,13 @@ function event_rsvp_send_qr_email_now($attendee_id) {
 	$subject = sprintf('✓ RSVP Confirmed: %s', $event_title);
 	$message = event_rsvp_get_confirmation_email_template($attendee_id);
 
-	$smtp_from_email = get_option('event_rsvp_smtp_from_email', '');
-	$smtp_from_name = get_option('event_rsvp_smtp_from_name', 'Event RSVP');
-
-	if (!empty($smtp_from_email) && is_email($smtp_from_email)) {
-		$from_header = sprintf('From: %s <%s>', $smtp_from_name, $smtp_from_email);
-	} else {
-		$site_email = get_option('admin_email');
-		$from_header = sprintf('From: %s <%s>', $smtp_from_name, $site_email);
-	}
+	// Don't set FROM header - let wp_mail_from filter handle it automatically
+	// This prevents conflicts and ensures SMTP username is always used for known providers
+	$smtp_username = get_option('event_rsvp_smtp_username', '');
 
 	$headers = array(
 		'Content-Type: text/html; charset=UTF-8',
-		$from_header,
-		'Reply-To: ' . ($smtp_from_email ?: get_option('admin_email'))
+		'Reply-To: ' . $smtp_username
 	);
 
 	add_action('wp_mail_failed', 'event_rsvp_log_mail_error', 10, 1);
@@ -212,6 +494,70 @@ function event_rsvp_log_mail_error($wp_error) {
 }
 
 add_action('event_rsvp_send_qr_email', 'event_rsvp_send_qr_email_now');
+
+/**
+ * Get SMTP configuration presets for common email providers
+ *
+ * @param string $provider Provider name (hostinger, gmail, outlook, yahoo)
+ * @return array|false Configuration array or false if provider not found
+ */
+function event_rsvp_get_smtp_preset($provider) {
+	$presets = array(
+		'hostinger' => array(
+			'name' => 'Hostinger',
+			'smtp_host' => 'smtp.hostinger.com',
+			'smtp_port' => 465,
+			'smtp_secure' => 'ssl',
+			'notes' => 'Use your full email address as username. FROM email must match username.'
+		),
+		'gmail' => array(
+			'name' => 'Gmail',
+			'smtp_host' => 'smtp.gmail.com',
+			'smtp_port' => 587,
+			'smtp_secure' => 'tls',
+			'notes' => 'Use App Password (not regular password). FROM email must match Gmail address.'
+		),
+		'outlook' => array(
+			'name' => 'Outlook/Office 365',
+			'smtp_host' => 'smtp.office365.com',
+			'smtp_port' => 587,
+			'smtp_secure' => 'tls',
+			'notes' => 'FROM email must match Outlook address.'
+		),
+		'yahoo' => array(
+			'name' => 'Yahoo Mail',
+			'smtp_host' => 'smtp.mail.yahoo.com',
+			'smtp_port' => 587,
+			'smtp_secure' => 'tls',
+			'notes' => 'Use App Password. FROM email must match Yahoo address.'
+		)
+	);
+
+	$provider = strtolower($provider);
+	return isset($presets[$provider]) ? $presets[$provider] : false;
+}
+
+/**
+ * Apply SMTP preset configuration
+ *
+ * @param string $provider Provider name
+ * @return bool True if preset applied, false otherwise
+ */
+function event_rsvp_apply_smtp_preset($provider) {
+	$preset = event_rsvp_get_smtp_preset($provider);
+
+	if (!$preset) {
+		return false;
+	}
+
+	update_option('event_rsvp_smtp_host', $preset['smtp_host']);
+	update_option('event_rsvp_smtp_port', $preset['smtp_port']);
+	update_option('event_rsvp_smtp_secure', $preset['smtp_secure']);
+
+	error_log('Event RSVP: Applied ' . $preset['name'] . ' SMTP preset');
+
+	return true;
+}
 
 function event_rsvp_schedule_qr_email($attendee_id, $event_id) {
 	$event_date = get_post_meta($event_id, 'event_date', true);

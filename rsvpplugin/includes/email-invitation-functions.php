@@ -395,18 +395,30 @@ function event_rsvp_send_campaign_email($recipient_id)
 
 	$smtp_from_email = get_option('event_rsvp_smtp_from_email', '');
 	$smtp_from_name = get_option('event_rsvp_smtp_from_name', $host_name);
+	$smtp_username = get_option('event_rsvp_smtp_username', get_option('admin_email'));
+	$smtp_host = get_option('event_rsvp_smtp_host', '');
 
-	if (!empty($smtp_from_email) && is_email($smtp_from_email)) {
-		$from_header = sprintf('From: %s <%s>', $smtp_from_name, $smtp_from_email);
+	// Check if this is a known provider that requires matching FROM and username
+	$requires_match = false;
+	$known_providers = array('hostinger.com', 'gmail.com', 'outlook.com', 'yahoo.com', 'office365.com', 'mail.yahoo.com');
+	foreach ($known_providers as $provider) {
+		if (strpos($smtp_host, $provider) !== false) {
+			$requires_match = true;
+			break;
+		}
+	}
+
+	if ($requires_match || empty($smtp_from_email) || !is_email($smtp_from_email)) {
+		// Use SMTP username as sender to avoid "Sender address rejected" errors
+		$from_header = sprintf('From: %s <%s>', $smtp_from_name, $smtp_username);
 	} else {
-		$site_email = get_option('admin_email');
-		$from_header = sprintf('From: %s <%s>', $smtp_from_name, $site_email);
+		$from_header = sprintf('From: %s <%s>', $smtp_from_name, $smtp_from_email);
 	}
 
 	$headers = array(
 		'Content-Type: text/html; charset=UTF-8',
 		$from_header,
-		'Reply-To: ' . ($smtp_from_email ?: get_option('admin_email'))
+		'Reply-To: ' . $smtp_username
 	);
 
 	// Enhanced error logging for debugging
