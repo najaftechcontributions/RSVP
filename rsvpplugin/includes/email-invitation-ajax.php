@@ -999,11 +999,8 @@ function event_rsvp_ajax_update_campaign_settings()
 		return;
 	}
 
-	// Only allow updating draft campaigns
-	if ($campaign->status !== 'draft') {
-		wp_send_json_error('Cannot edit campaign that has already been sent');
-		return;
-	}
+	// Allow editing campaigns regardless of status
+	// Note: Recipients cannot be modified for sent campaigns, only settings
 
 	global $wpdb;
 	$campaigns_table = $wpdb->prefix . 'event_email_campaigns';

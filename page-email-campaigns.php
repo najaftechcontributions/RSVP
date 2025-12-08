@@ -187,11 +187,9 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 							<button class="action-btn view-campaign-btn" data-campaign-id="<?php echo $campaign->id; ?>">
 								📊 View Details
 							</button>
-							<?php if ($campaign->status === 'draft') : ?>
-								<button class="action-btn manage-campaign-btn" data-campaign-id="<?php echo $campaign->id; ?>">
-									✏️ Manage
-								</button>
-							<?php endif; ?>
+							<button class="action-btn manage-campaign-btn" data-campaign-id="<?php echo $campaign->id; ?>">
+								<?php echo ($campaign->status === 'draft') ? '✏️ Manage' : '✏️ Edit'; ?>
+							</button>
 							<button class="action-btn delete-campaign-btn" data-campaign-id="<?php echo $campaign->id; ?>">
 							🗑️ Delete
 							</button>

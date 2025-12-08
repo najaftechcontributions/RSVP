@@ -33,6 +33,16 @@ function event_rsvp_register_acf_fields() {
 				'return_format' => 'Y-m-d',
 			),
 			array(
+				'key' => 'field_event_start_time',
+				'label' => 'Event Start Time',
+				'name' => 'event_start_time',
+				'type' => 'time_picker',
+				'required' => 0,
+				'display_format' => 'g:i a',
+				'return_format' => 'H:i:s',
+				'instructions' => 'Select the start time for your event',
+			),
+			array(
 				'key' => 'field_event_end_date',
 				'label' => 'Event End Date',
 				'name' => 'event_end_date',

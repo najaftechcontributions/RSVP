@@ -4499,3 +4499,101 @@ body {
 		width: 100%;
 	}
 }
+
+/* ACF Datepicker and Timepicker z-index fixes */
+.ui-datepicker,
+.ui-timepicker-wrapper,
+.ui-timepicker-list {
+	z-index: 99999 !important;
+	position: relative;
+}
+
+.acf-field .ui-datepicker {
+	background: #ffffff !important;
+	border: 1px solid #ddd !important;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+	padding: 10px !important;
+}
+
+.acf-field .ui-datepicker-header {
+	background: #667eea !important;
+	color: #ffffff !important;
+	border-radius: 4px 4px 0 0 !important;
+	padding: 8px !important;
+}
+
+.acf-field .ui-datepicker-title {
+	color: #ffffff !important;
+}
+
+.acf-field .ui-datepicker-prev,
+.acf-field .ui-datepicker-next {
+	cursor: pointer !important;
+	color: #ffffff !important;
+}
+
+.acf-field .ui-datepicker td {
+	padding: 2px !important;
+}
+
+.acf-field .ui-datepicker td a {
+	text-align: center !important;
+	padding: 6px !important;
+	display: block !important;
+	text-decoration: none !important;
+	border-radius: 4px !important;
+	color: #333 !important;
+}
+
+.acf-field .ui-datepicker td a:hover {
+	background: #667eea !important;
+	color: #ffffff !important;
+}
+
+.acf-field .ui-datepicker td.ui-datepicker-today a {
+	background: #f0f0f0 !important;
+	font-weight: bold !important;
+}
+
+.acf-field .ui-datepicker td.ui-datepicker-current-day a {
+	background: #667eea !important;
+	color: #ffffff !important;
+}
+
+/* ACF Timepicker fixes */
+.acf-field .ui-timepicker-wrapper {
+	background: #ffffff !important;
+	border: 1px solid #ddd !important;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+	max-height: 200px !important;
+	overflow-y: auto !important;
+}
+
+.acf-field .ui-timepicker-list {
+	list-style: none !important;
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
+.acf-field .ui-timepicker-list li {
+	padding: 8px 12px !important;
+	cursor: pointer !important;
+	border-bottom: 1px solid #f0f0f0 !important;
+}
+
+.acf-field .ui-timepicker-list li:hover {
+	background: #667eea !important;
+	color: #ffffff !important;
+}
+
+.acf-field .ui-timepicker-list li.ui-timepicker-selected {
+	background: #667eea !important;
+	color: #ffffff !important;
+}
+
+/* Ensure ACF date and time inputs are properly styled */
+.acf-field[data-type="date_picker"] input,
+.acf-field[data-type="time_picker"] input {
+	position: relative !important;
+	z-index: 1 !important;
+}
