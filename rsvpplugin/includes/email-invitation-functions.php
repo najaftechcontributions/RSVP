@@ -523,7 +523,7 @@ function event_rsvp_get_default_email_html($data)
 							</td>
 						</tr>
 						<tr>
-							<td style="padding: 40px;">
+							<td style="padding: 20px;">
 								<p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #333333;">Hello!</p>
 								<p style="margin: 0 0 30px 0; font-size: 16px; line-height: 1.6; color: #333333;"><?php echo esc_html($data['host_name']); ?> has invited you to:</p>
 

@@ -83,7 +83,7 @@ function event_rsvp_get_confirmation_email_template($attendee_id) {
 							</td>
 						</tr>
 						<tr>
-							<td style="padding: 20px;">
+							<td style="padding: 20px ;">
 								<p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #333333;">Hello <strong><?php echo esc_html($attendee_name); ?></strong>,</p>
 								<p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #333333;">Thank you for your RSVP! We're excited to have you join us for:</p>
 

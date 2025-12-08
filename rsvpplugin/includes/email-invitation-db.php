@@ -143,7 +143,7 @@ function event_rsvp_insert_default_email_templates() {
 						</td>
 					</tr>
 					<tr>
-						<td style="padding: 40px;">
+						<td style="padding: 20px;">
 							<p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #333333;">Hello!</p>
 							<p style="margin: 0 0 30px 0; font-size: 16px; line-height: 1.6; color: #333333;">{{host_name}} has invited you to:</p>
 							
@@ -215,7 +215,7 @@ function event_rsvp_insert_default_email_templates() {
 						</td>
 					</tr>
 					<tr>
-						<td style="padding: 40px;">
+						<td style="padding: 20px;">
 							<p style="margin: 0 0 30px 0; font-size: 16px; line-height: 1.6; color: #333333;">Hi there,</p>
 							<p style="margin: 0 0 30px 0; font-size: 16px; line-height: 1.6; color: #333333;">{{host_name}} would love for you to join:</p>
 							
@@ -294,7 +294,7 @@ function event_rsvp_insert_default_email_templates() {
 						</td>
 					</tr>
 					<tr>
-						<td style="padding: 40px;">
+						<td style="padding: 20px;">
 							<p style="margin: 0 0 20px 0; font-size: 17px; line-height: 1.6; color: #333333;">Hey there! 👋</p>
 							<p style="margin: 0 0 30px 0; font-size: 17px; line-height: 1.6; color: #333333;"><strong>{{host_name}}</strong> is throwing an event and you\'re on the guest list!</p>
 							
