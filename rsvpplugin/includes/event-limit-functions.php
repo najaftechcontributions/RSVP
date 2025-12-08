@@ -150,7 +150,7 @@ function event_rsvp_display_event_limit_notice() {
 	}
 	
 	if ($remaining === 0) {
-		return '<div class="event-limit-notice limit-reached-notice">⚠ You have reached your event limit (' . $limit . ' event' . ($limit > 1 ? 's' : '') . '). <a href="' . home_url('/pricing/') . '">Upgrade your plan</a> or delete old events to create new ones.</div>';
+		return '<div class="event-limit-notice limit-reached-notice">⚠ You have reached your event limit (' . $limit . ' event' . ($limit > 1 ? 's' : '') . '). <a href="' . home_url('/pricing/') . '">Upgrade your plan</a>.</div>';
 	}
 	
 	$notice_class = $remaining <= 1 ? 'low-limit-notice' : 'normal-limit-notice';

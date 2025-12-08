@@ -37,7 +37,7 @@ function event_rsvp_check_event_limit() {
 		if ($limit === 0) {
 			wp_send_json_error('Your plan does not allow event creation. <a href="' . home_url('/pricing/') . '">Upgrade to create events</a>.');
 		} else {
-			wp_send_json_error('You have reached your event limit (' . $limit . ' event' . ($limit > 1 ? 's' : '') . '). <a href="' . home_url('/pricing/') . '">Upgrade your plan</a> or delete old events to create new ones.');
+			wp_send_json_error('You have reached your event limit (' . $limit . ' event' . ($limit > 1 ? 's' : '') . '). <a href="' . home_url('/pricing/') . '">Upgrade your plan</a>.');
 		}
 		return;
 	}

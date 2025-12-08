@@ -65,11 +65,11 @@ get_header();
 							<?php else : ?>
 								You have reached your event limit (<?php echo $current_count; ?> of <?php echo $limit; ?> events created).
 							<?php endif; ?>
-							<a href="<?php echo home_url('/pricing/'); ?>" style="color: #503AA8; font-weight: bold; text-decoration: underline;">Upgrade your plan</a> to create more events<?php if ($limit > 0) : ?>, or delete old events to make room for new ones<?php endif; ?>.
+							<a href="<?php echo home_url('/pricing/'); ?>" style="color: #503AA8; font-weight: bold; text-decoration: underline;">Upgrade your plan</a> to create more events<?php if ($limit > 0) : ?>.<?php endif; ?>.
 						</p>
 					</div>
 					<style>
-						.acf-form { display: none !important; }
+						.event-create-layout { display: none !important; }
 						.event-limit-error {
 							background: #fff3cd;
 							border: 2px solid #ffc107;
