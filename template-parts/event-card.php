@@ -12,6 +12,7 @@ if (!isset($event_id)) {
 if (!function_exists('get_field')) {
 	$event_host = get_post_meta($event_id, 'event_host', true);
 	$event_date = get_post_meta($event_id, 'event_date', true);
+	$event_start_time = get_post_meta($event_id, 'event_start_time', true);
 	$event_end_date = get_post_meta($event_id, 'event_end_date', true);
 	$venue_address = get_post_meta($event_id, 'venue_address', true);
 	$max_attendees = get_post_meta($event_id, 'max_attendees', true);
@@ -19,6 +20,7 @@ if (!function_exists('get_field')) {
 } else {
 	$event_host = get_field('event_host', $event_id);
 	$event_date = get_field('event_date', $event_id);
+	$event_start_time = get_field('event_start_time', $event_id);
 	$event_end_date = get_field('event_end_date', $event_id);
 	$venue_address = get_field('venue_address', $event_id);
 	$max_attendees = get_field('max_attendees', $event_id);
@@ -30,7 +32,16 @@ $available_spots = event_rsvp_get_available_spots($event_id);
 $is_full = event_rsvp_is_event_full($event_id);
 
 $formatted_date = $event_date ? date('M j, Y', strtotime($event_date)) : '';
-$formatted_time = $event_date ? date('g:i A', strtotime($event_date)) : '';
+$formatted_time = '';
+if ($event_start_time) {
+	$time_obj = DateTime::createFromFormat('H:i:s', $event_start_time);
+	if (!$time_obj) {
+		$time_obj = DateTime::createFromFormat('H:i', $event_start_time);
+	}
+	if ($time_obj) {
+		$formatted_time = $time_obj->format('g:i A');
+	}
+}
 
 $is_upcoming = $event_date && strtotime($event_date) >= strtotime('today');
 $is_past = $event_date && strtotime($event_date) < strtotime('today');

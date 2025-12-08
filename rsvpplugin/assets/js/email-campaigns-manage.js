@@ -36,7 +36,7 @@ jQuery(document).ready(function($) {
 		}
 	});
 	
-	// Load campaign settings including custom image
+	// Load campaign settings including all fields
 	function loadCampaignSettings(campaignId) {
 		$.ajax({
 			url: eventRsvpData.ajax_url,
@@ -49,8 +49,20 @@ jQuery(document).ready(function($) {
 			success: function(response) {
 				if (response.success && response.data) {
 					const customImage = response.data.custom_image || '';
+					const campaignName = response.data.campaign_name || '';
+					const subject = response.data.subject || '';
+					const eventId = response.data.event_id || '';
 					
-					// Populate image field
+					// Populate all fields
+					if ($('#manageCampaignName').length) {
+						$('#manageCampaignName').val(campaignName);
+					}
+					if ($('#manageCampaignSubject').length) {
+						$('#manageCampaignSubject').val(subject);
+					}
+					if ($('#manageCampaignEvent').length) {
+						$('#manageCampaignEvent').val(eventId);
+					}
 					$('#manageCampaignImage').val(customImage);
 					
 					// Show preview if image exists
@@ -116,23 +128,41 @@ jQuery(document).ready(function($) {
 		const campaignId = $('#manageCampaignModal').data('current-campaign-id');
 		const customImage = $('#manageCampaignImage').val();
 		
+		// Get campaign name, subject, and event if fields exist
+		const campaignName = $('#manageCampaignName').length ? $('#manageCampaignName').val() : '';
+		const subject = $('#manageCampaignSubject').length ? $('#manageCampaignSubject').val() : '';
+		const eventId = $('#manageCampaignEvent').length ? $('#manageCampaignEvent').val() : '';
+		
 		if (!campaignId) {
 			alert('✗ No campaign selected');
+			return;
+		}
+		
+		// Validate required fields if they exist
+		if ($('#manageCampaignName').length && (!campaignName || !subject || !eventId)) {
+			alert('✗ Please fill in all required fields (Campaign Name, Event, Subject)');
 			return;
 		}
 		
 		const button = $(this);
 		button.prop('disabled', true).text('Saving...');
 		
+		const requestData = {
+			action: 'event_rsvp_update_campaign_settings',
+			nonce: eventRsvpData.email_campaign_nonce,
+			campaign_id: campaignId,
+			custom_image: customImage
+		};
+		
+		// Add optional fields if they have values
+		if (campaignName) requestData.campaign_name = campaignName;
+		if (subject) requestData.subject = subject;
+		if (eventId) requestData.event_id = eventId;
+		
 		$.ajax({
 			url: eventRsvpData.ajax_url,
 			type: 'POST',
-			data: {
-				action: 'event_rsvp_update_campaign_settings',
-				nonce: eventRsvpData.email_campaign_nonce,
-				campaign_id: campaignId,
-				custom_image: customImage
-			},
+			data: requestData,
 			success: function(response) {
 				console.log('Save settings response:', response);
 				
@@ -142,6 +172,13 @@ jQuery(document).ready(function($) {
 					// Refresh preview if on preview tab
 					if ($('.tab-btn[data-tab="preview"]').hasClass('active')) {
 						loadCampaignPreview(campaignId);
+					}
+					
+					// Refresh page to show updated campaign name in the list
+					if (campaignName) {
+						setTimeout(function() {
+							location.reload();
+						}, 1000);
 					}
 				} else {
 					const errorMsg = response.data || 'Failed to save settings';

@@ -15,6 +15,7 @@ while ( have_posts() ) :
 	if (!function_exists('get_field')) {
 		$event_host = get_post_meta($event_id, 'event_host', true);
 		$event_date = get_post_meta($event_id, 'event_date', true);
+		$event_start_time = get_post_meta($event_id, 'event_start_time', true);
 		$event_end_date = get_post_meta($event_id, 'event_end_date', true);
 		$venue_address = get_post_meta($event_id, 'venue_address', true);
 		$venue_map_url = get_post_meta($event_id, 'venue_map_url', true);
@@ -32,6 +33,7 @@ while ( have_posts() ) :
 	} else {
 		$event_host = get_field('event_host');
 		$event_date = get_field('event_date');
+		$event_start_time = get_field('event_start_time');
 		$event_end_date = get_field('event_end_date');
 		$venue_address = get_field('venue_address');
 		$venue_map_url = get_field('venue_map_url');
@@ -54,7 +56,16 @@ while ( have_posts() ) :
 	$is_past = event_rsvp_is_event_past($event_id);
 	
 	$formatted_date = $event_date ? date('F j, Y', strtotime($event_date)) : '';
-	$formatted_time = $event_date ? date('g:i A', strtotime($event_date)) : '';
+	$formatted_time = '';
+	if ($event_start_time) {
+		$time_obj = DateTime::createFromFormat('H:i:s', $event_start_time);
+		if (!$time_obj) {
+			$time_obj = DateTime::createFromFormat('H:i', $event_start_time);
+		}
+		if ($time_obj) {
+			$formatted_time = $time_obj->format('g:i A');
+		}
+	}
 	$formatted_end_date = $event_end_date ? date('F j, Y', strtotime($event_end_date)) : '';
 	
 	$author_id = get_the_author_meta('ID');

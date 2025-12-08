@@ -38,6 +38,7 @@ class EventRSVPPlugin {
 	private function load_dependencies() {
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/post-types.php';
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/user-roles.php';
+		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/admin-redirects.php';
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/acf-fields.php';
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/acf-return-url-filter.php';
 		
@@ -49,6 +50,7 @@ class EventRSVPPlugin {
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/email-functions.php';
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/shortcodes.php';
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/admin-functions.php';
+		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/admin-user-creation.php';
 		
 		// Email Invitation System
 		require_once EVENT_RSVP_PLUGIN_DIR . '/includes/email-invitation-db.php';

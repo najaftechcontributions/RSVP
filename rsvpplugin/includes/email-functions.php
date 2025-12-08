@@ -43,13 +43,25 @@ function event_rsvp_get_confirmation_email_template($attendee_id) {
 	$event_id = get_post_meta($attendee_id, 'linked_event', true);
 	$event_title = html_entity_decode(get_the_title($event_id), ENT_QUOTES, 'UTF-8');
 	$event_date = get_post_meta($event_id, 'event_date', true);
+	$event_start_time = get_post_meta($event_id, 'event_start_time', true);
 	$venue_address = get_post_meta($event_id, 'venue_address', true);
 	$qr_data = get_post_meta($attendee_id, 'qr_data', true);
 	$qr_code_url = event_rsvp_generate_qr_code($qr_data);
 
 	$event_url = get_permalink($event_id);
 	$qr_viewer_url = home_url('/qr-view/?qr=' . urlencode($qr_data));
-	$formatted_date = date('F j, Y \a\t g:i A', strtotime($event_date));
+
+	$formatted_date = $event_date ? date('F j, Y', strtotime($event_date)) : 'TBD';
+	$formatted_time = 'TBD';
+	if ($event_start_time) {
+		$time_obj = DateTime::createFromFormat('H:i:s', $event_start_time);
+		if (!$time_obj) {
+			$time_obj = DateTime::createFromFormat('H:i', $event_start_time);
+		}
+		if ($time_obj) {
+			$formatted_time = $time_obj->format('g:i A');
+		}
+	}
 
 	ob_start();
 	?>
@@ -71,17 +83,20 @@ function event_rsvp_get_confirmation_email_template($attendee_id) {
 							</td>
 						</tr>
 						<tr>
-							<td style="padding: 40px;">
+							<td style="padding: 20px;">
 								<p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #333333;">Hello <strong><?php echo esc_html($attendee_name); ?></strong>,</p>
 								<p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #333333;">Thank you for your RSVP! We're excited to have you join us for:</p>
 
 								<div style="background-color: #f8f9fa; border-left: 4px solid #503AA8; padding: 20px; margin: 30px 0; border-radius: 4px;">
 									<h2 style="margin: 0 0 15px 0; font-size: 20px; color: #503AA8;"><?php echo esc_html($event_title); ?></h2>
 									<p style="margin: 0 0 8px 0; color: #555555; font-size: 14px;">
-										<strong>📅 When:</strong> <?php echo esc_html($formatted_date); ?>
+										<strong>📅 Date:</strong> <?php echo esc_html($formatted_date); ?>
+									</p>
+									<p style="margin: 0 0 8px 0; color: #555555; font-size: 14px;">
+										<strong>🕐 Time:</strong> <?php echo esc_html($formatted_time); ?>
 									</p>
 									<p style="margin: 0; color: #555555; font-size: 14px;">
-										<strong>📍 Where:</strong> <?php echo esc_html($venue_address); ?>
+										<strong>📍 Location:</strong> <?php echo esc_html($venue_address); ?>
 									</p>
 								</div>
 

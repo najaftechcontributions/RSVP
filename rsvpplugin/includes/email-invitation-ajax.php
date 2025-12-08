@@ -700,9 +700,22 @@ function event_rsvp_ajax_preview_email_template()
 		if ($event) {
 			$event_name = get_the_title($event_id);
 			$event_date = get_post_meta($event_id, 'event_date', true);
-			$event_time = get_post_meta($event_id, 'event_time', true);
+			$event_start_time = get_post_meta($event_id, 'event_start_time', true);
 			$venue_address = get_post_meta($event_id, 'venue_address', true);
 			$event_description = get_the_excerpt($event_id);
+
+			// Format event time from 24-hour format to 12-hour format
+			if ($event_start_time) {
+				$time_obj = DateTime::createFromFormat('H:i:s', $event_start_time);
+				if (!$time_obj) {
+					$time_obj = DateTime::createFromFormat('H:i', $event_start_time);
+				}
+				if ($time_obj) {
+					$event_time = $time_obj->format('g:i A');
+				} else {
+					$event_time = $event_start_time;
+				}
+			}
 		}
 	}
 
@@ -884,9 +897,23 @@ function event_rsvp_ajax_get_campaign_preview()
 	}
 
 	$event_date = get_post_meta($campaign->event_id, 'event_date', true);
-	$event_time = get_post_meta($campaign->event_id, 'event_time', true);
+	$event_start_time = get_post_meta($campaign->event_id, 'event_start_time', true);
 	$venue_address = get_post_meta($campaign->event_id, 'venue_address', true);
 	$event_description = get_the_excerpt($campaign->event_id);
+
+	// Format event time from 24-hour format to 12-hour format
+	$event_time = 'TBD';
+	if ($event_start_time) {
+		$time_obj = DateTime::createFromFormat('H:i:s', $event_start_time);
+		if (!$time_obj) {
+			$time_obj = DateTime::createFromFormat('H:i', $event_start_time);
+		}
+		if ($time_obj) {
+			$event_time = $time_obj->format('g:i A');
+		} else {
+			$event_time = $event_start_time;
+		}
+	}
 
 	$host = get_userdata($campaign->host_id);
 	$host_name = $host ? $host->display_name : get_bloginfo('name');
@@ -903,7 +930,7 @@ function event_rsvp_ajax_get_campaign_preview()
 	$template_data = array(
 		'event_name' => get_the_title($campaign->event_id),
 		'event_date' => $event_date ? date('F j, Y', strtotime($event_date)) : 'TBD',
-		'event_time' => $event_time ? $event_time : 'TBD',
+		'event_time' => $event_time,
 		'event_location' => $venue_address ? $venue_address : 'TBD',
 		'event_description' => $event_description ? $event_description : '',
 		'host_name' => $host_name,
@@ -966,7 +993,8 @@ function event_rsvp_ajax_get_campaign_settings()
 		'custom_image' => $custom_image,
 		'campaign_name' => $campaign->campaign_name,
 		'subject' => $campaign->subject,
-		'template_id' => $campaign->template_id
+		'template_id' => $campaign->template_id,
+		'event_id' => $campaign->event_id
 	));
 }
 add_action('wp_ajax_event_rsvp_get_campaign_settings', 'event_rsvp_ajax_get_campaign_settings');
@@ -982,6 +1010,9 @@ function event_rsvp_ajax_update_campaign_settings()
 
 	$campaign_id = intval($_POST['campaign_id'] ?? 0);
 	$custom_image = isset($_POST['custom_image']) ? esc_url_raw($_POST['custom_image']) : '';
+	$campaign_name = isset($_POST['campaign_name']) ? sanitize_text_field($_POST['campaign_name']) : '';
+	$subject = isset($_POST['subject']) ? sanitize_text_field($_POST['subject']) : '';
+	$event_id = isset($_POST['event_id']) ? intval($_POST['event_id']) : 0;
 
 	if (!$campaign_id) {
 		wp_send_json_error('Invalid campaign ID');
@@ -1014,14 +1045,36 @@ function event_rsvp_ajax_update_campaign_settings()
 		}
 	}
 
-	// Update only the custom_image field
+	// Update the custom_image field
 	$existing_custom_data['custom_image'] = $custom_image;
+
+	// Prepare update data
+	$update_data = array('custom_data' => json_encode($existing_custom_data));
+	$update_format = array('%s');
+
+	// Add campaign name if provided
+	if (!empty($campaign_name)) {
+		$update_data['campaign_name'] = $campaign_name;
+		$update_format[] = '%s';
+	}
+
+	// Add subject if provided
+	if (!empty($subject)) {
+		$update_data['subject'] = $subject;
+		$update_format[] = '%s';
+	}
+
+	// Add event_id if provided
+	if ($event_id > 0) {
+		$update_data['event_id'] = $event_id;
+		$update_format[] = '%d';
+	}
 
 	$result = $wpdb->update(
 		$campaigns_table,
-		array('custom_data' => json_encode($existing_custom_data)),
+		$update_data,
 		array('id' => $campaign_id),
-		array('%s'),
+		$update_format,
 		array('%d')
 	);
 
@@ -1037,6 +1090,9 @@ function event_rsvp_ajax_update_campaign_settings()
 	wp_send_json_success(array(
 		'message' => 'Campaign settings updated successfully!',
 		'custom_image' => $custom_image,
+		'campaign_name' => $campaign_name,
+		'subject' => $subject,
+		'event_id' => $event_id,
 		'rows_affected' => $result
 	));
 }

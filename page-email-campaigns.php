@@ -346,6 +346,32 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 					<h3 style="margin: 0 0 20px 0; font-size: 18px; color: #2d3748;">Campaign Settings</h3>
 
 					<div class="form-group">
+						<label for="manageCampaignName">Campaign Name</label>
+						<input type="text" id="manageCampaignName" class="form-input" placeholder="Summer Event Invitations">
+						<small class="form-help">Give your campaign a descriptive name</small>
+					</div>
+
+					<div class="form-group">
+						<label for="manageCampaignSubject">Email Subject</label>
+						<input type="text" id="manageCampaignSubject" class="form-input" placeholder="You're Invited: {{event_name}}">
+						<small class="form-help">Use {{event_name}}, {{event_date}}, {{host_name}} as placeholders</small>
+					</div>
+
+					<div class="form-group">
+						<label for="manageCampaignEvent">Event</label>
+						<select id="manageCampaignEvent" class="form-input">
+							<option value="">Choose an event...</option>
+							<?php
+							$user_events = event_rsvp_get_user_events($user_id);
+							foreach ($user_events as $event) {
+								echo '<option value="' . $event->ID . '">' . esc_html(get_the_title($event->ID)) . '</option>';
+							}
+							?>
+						</select>
+						<small class="form-help">Select the event for this campaign</small>
+					</div>
+
+					<div class="form-group">
 						<label for="manageCampaignImage">Event Image</label>
 						<div style="display: flex; gap: 10px; align-items: flex-start;">
 							<input type="text" id="manageCampaignImage" class="form-input" placeholder="Image URL" style="flex: 1;">
@@ -534,6 +560,7 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 			$('#manualRecipientsForm').hide();
 			$('#manualEmailsList').val('');
 			loadCampaignRecipients(currentCampaignId);
+			loadCampaignSettings(currentCampaignId);
 		});
 
 		$('#addManualRecipientsBtn').click(function() {
@@ -866,6 +893,91 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 
 			$('.tab-content').hide();
 			$('#' + $(this).data('tab') + 'Tab').show();
+		});
+
+		function loadCampaignSettings(campaignId) {
+			$.ajax({
+				url: eventRsvpData.ajax_url,
+				type: 'POST',
+				data: {
+					action: 'event_rsvp_get_campaign_settings',
+					nonce: eventRsvpData.email_campaign_nonce,
+					campaign_id: campaignId
+				},
+				success: function(response) {
+					if (response.success) {
+						const settings = response.data;
+						$('#manageCampaignName').val(settings.campaign_name || '');
+						$('#manageCampaignSubject').val(settings.subject || '');
+						$('#manageCampaignEvent').val(settings.event_id || '');
+						$('#manageCampaignImage').val(settings.custom_image || '');
+
+						if (settings.custom_image) {
+							$('#manageCampaignImagePreview img').attr('src', settings.custom_image);
+							$('#manageCampaignImagePreview').show();
+						} else {
+							$('#manageCampaignImagePreview').hide();
+						}
+					}
+				},
+				error: function() {
+					console.error('Failed to load campaign settings');
+				}
+			});
+		}
+
+		$('#saveCampaignSettingsBtn').click(function() {
+			const button = $(this);
+			const originalText = button.text();
+			button.prop('disabled', true).text('Saving...');
+
+			$.ajax({
+				url: eventRsvpData.ajax_url,
+				type: 'POST',
+				data: {
+					action: 'event_rsvp_update_campaign_settings',
+					nonce: eventRsvpData.email_campaign_nonce,
+					campaign_id: currentCampaignId,
+					campaign_name: $('#manageCampaignName').val(),
+					subject: $('#manageCampaignSubject').val(),
+					event_id: $('#manageCampaignEvent').val(),
+					custom_image: $('#manageCampaignImage').val()
+				},
+				success: function(response) {
+					if (response.success) {
+						alert('✓ Campaign settings saved successfully!');
+
+						// Update the campaign card if name changed
+						const cardName = $('.campaign-card[data-campaign-id="' + currentCampaignId + '"] .campaign-name');
+						if (cardName.length && response.data.campaign_name) {
+							cardName.text(response.data.campaign_name);
+						}
+					} else {
+						alert('✗ Error: ' + response.data);
+					}
+				},
+				error: function() {
+					alert('✗ Failed to save campaign settings. Please try again.');
+				},
+				complete: function() {
+					button.prop('disabled', false).text(originalText);
+				}
+			});
+		});
+
+		$('#manageCampaignImage').on('input', function() {
+			const imageUrl = $(this).val();
+			if (imageUrl) {
+				$('#manageCampaignImagePreview img').attr('src', imageUrl);
+				$('#manageCampaignImagePreview').show();
+			} else {
+				$('#manageCampaignImagePreview').hide();
+			}
+		});
+
+		$('#removeManageCampaignImageBtn').click(function() {
+			$('#manageCampaignImage').val('');
+			$('#manageCampaignImagePreview').hide();
 		});
 
 		function isValidEmail(email) {
