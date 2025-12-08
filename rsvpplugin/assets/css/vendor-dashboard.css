@@ -70,7 +70,7 @@
 }
 
 .vendor-dashboard-page .dashboard-title {
-	font-size: 2.5rem;
+	font-size: 2rem;
 	color:#fff;
 	font-weight: 700;
 	margin: 0;
@@ -151,7 +151,7 @@
 }
 
 .vendor-dashboard-page .stat-icon {
-	font-size: 2.5rem;
+	font-size: 2rem;
 	line-height: 1;
 	filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
@@ -585,7 +585,7 @@
 
 @media (max-width: 768px) {
 	.vendor-dashboard-page .dashboard-title {
-		font-size: 2rem;
+		font-size: 1.75rem;
 	}
 
 	.vendor-dashboard-page .ads-stats-overview {
@@ -619,11 +619,11 @@
 	}
 
 	.vendor-dashboard-page .dashboard-title {
-		font-size: 1.75rem;
+		font-size: 1.5rem;
 	}
 
 	.vendor-dashboard-page .dashboard-subtitle {
-		font-size: 1rem;
+		font-size: 0.9375rem;
 	}
 
 	.vendor-dashboard-page .create-ad-button {

@@ -39,9 +39,9 @@ if (!defined('ABSPATH')) {
 
 function event_rsvp_get_confirmation_email_template($attendee_id) {
 	$attendee_email = get_post_meta($attendee_id, 'attendee_email', true);
-	$attendee_name = get_the_title($attendee_id);
+	$attendee_name = html_entity_decode(get_the_title($attendee_id), ENT_QUOTES, 'UTF-8');
 	$event_id = get_post_meta($attendee_id, 'linked_event', true);
-	$event_title = get_the_title($event_id);
+	$event_title = html_entity_decode(get_the_title($event_id), ENT_QUOTES, 'UTF-8');
 	$event_date = get_post_meta($event_id, 'event_date', true);
 	$venue_address = get_post_meta($event_id, 'venue_address', true);
 	$qr_data = get_post_meta($attendee_id, 'qr_data', true);
@@ -445,8 +445,8 @@ function event_rsvp_validate_smtp_config() {
 function event_rsvp_send_qr_email_now($attendee_id) {
 	$attendee_email = get_post_meta($attendee_id, 'attendee_email', true);
 	$event_id = get_post_meta($attendee_id, 'linked_event', true);
-	$event_title = get_the_title($event_id);
-	$attendee_name = get_the_title($attendee_id);
+	$event_title = html_entity_decode(get_the_title($event_id), ENT_QUOTES, 'UTF-8');
+	$attendee_name = html_entity_decode(get_the_title($attendee_id), ENT_QUOTES, 'UTF-8');
 
 	if (empty($attendee_email)) {
 		error_log("RSVP Email Error: No email address for attendee {$attendee_id}");

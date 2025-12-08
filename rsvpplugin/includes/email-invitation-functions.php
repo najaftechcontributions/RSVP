@@ -373,15 +373,15 @@ function event_rsvp_send_campaign_email($recipient_id)
 	}
 
 	$template_data = array(
-		'event_name' => get_the_title($campaign->event_id),
+		'event_name' => html_entity_decode(get_the_title($campaign->event_id), ENT_QUOTES, 'UTF-8'),
 		'event_date' => $event_date ? date('F j, Y', strtotime($event_date)) : 'TBD',
 		'event_time' => $event_time ? $event_time : 'TBD',
 		'event_location' => $venue_address ? $venue_address : 'TBD',
-		'event_description' => get_the_excerpt($campaign->event_id),
-		'host_name' => $host_name,
+		'event_description' => html_entity_decode(get_the_excerpt($campaign->event_id), ENT_QUOTES, 'UTF-8'),
+		'host_name' => html_entity_decode($host_name, ENT_QUOTES, 'UTF-8'),
 		'tracking_url' => $tracking_url,
 		'unsubscribe_url' => $unsubscribe_url,
-		'recipient_name' => $recipient->name ? $recipient->name : 'there',
+		'recipient_name' => $recipient->name ? html_entity_decode($recipient->name, ENT_QUOTES, 'UTF-8') : 'there',
 		'custom_image' => $custom_image
 	);
 

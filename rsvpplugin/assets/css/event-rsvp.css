@@ -1057,8 +1057,8 @@ body {
 
 .login-title,
 .signup-title {
-	font-size: 2.5rem;
-	font-weight: 800;
+	font-size: 1.875rem;
+	font-weight: 700;
 	margin: 0 0 0.5rem 0;
 	color: var(--event-text);
 }
@@ -1067,7 +1067,7 @@ body {
 .signup-subtitle {
 	color: var(--event-text-light);
 	margin: 0;
-	font-size: 1.1rem;
+	font-size: 1rem;
 }
 
 .login-divider,
@@ -1155,21 +1155,22 @@ body {
 }
 
 .benefit-icon {
-	font-size: 2rem;
+	font-size: 1.5rem;
 	flex-shrink: 0;
 }
 
 .benefit-title {
-	font-size: 1.125rem;
-	font-weight: 700;
-	margin: 0 0 0.5rem 0;
+	font-size: 1rem;
+	font-weight: 600;
+	margin: 0 0 0.375rem 0;
 	color: var(--event-text);
 }
 
 .benefit-description {
 	color: var(--event-text-light);
 	margin: 0;
-	line-height: 1.6;
+	line-height: 1.5;
+	font-size: 0.9375rem;
 }
 
 .features-checklist {
@@ -1209,13 +1210,13 @@ body {
 }
 
 .pricing-title {
-	font-size: 3rem;
+	font-size: 2.25rem;
 	font-weight: 700;
 	margin: 0 0 1rem 0;
 }
 
 .pricing-subtitle {
-	font-size: 1.25rem;
+	font-size: 1.125rem;
 	margin: 0;
 	opacity: 0.95;
 }
@@ -1279,7 +1280,7 @@ body {
 }
 
 .plan-name {
-	font-size: 1.75rem;
+	font-size: 1.5rem;
 	font-weight: 700;
 	margin: 0 0 0.5rem 0;
 	color: var(--event-text);
@@ -1300,7 +1301,7 @@ body {
 }
 
 .price {
-	font-size: 3.5rem;
+	font-size: 2.5rem;
 	font-weight: 700;
 	color: var(--event-text);
 	margin: 0;
@@ -2516,6 +2517,23 @@ body {
 	}
 }
 
+@media (max-width: 968px) {
+	.login-wrapper,
+	.signup-content {
+		grid-template-columns: 1fr;
+		gap: 2rem;
+	}
+
+	.login-title,
+	.signup-title {
+		font-size: 1.75rem;
+	}
+
+	.pricing-title {
+		font-size: 2rem;
+	}
+}
+
 @media (max-width: 768px) {
 	.rsvp-content-layout,
 	.event-create-layout {
@@ -2550,6 +2568,16 @@ body {
 	.signup-content {
 		grid-template-columns: 1fr;
 	}
+
+	.login-card,
+	.signup-card {
+		padding: 2rem 1.5rem;
+	}
+
+	.create-event-title,
+	.dashboard-title {
+		font-size: 2rem;
+	}
 }
 
 @media (max-width: 480px) {
@@ -2558,7 +2586,24 @@ body {
 	.dashboard-title,
 	.checkin-title,
 	.qr-viewer-title {
-		font-size: 1.875rem;
+		font-size: 1.5rem;
+	}
+
+	.login-title,
+	.signup-title {
+		font-size: 1.5rem;
+	}
+
+	.pricing-title {
+		font-size: 1.75rem;
+	}
+
+	.plan-name {
+		font-size: 1.25rem;
+	}
+
+	.price {
+		font-size: 2rem;
 	}
 
 	.event-card-actions {
