@@ -496,6 +496,157 @@ function event_rsvp_log_mail_error($wp_error) {
 add_action('event_rsvp_send_qr_email', 'event_rsvp_send_qr_email_now');
 
 /**
+ * Customize password reset email to use SMTP configuration
+ *
+ * @param string $message Default message
+ * @param string $key The activation key
+ * @param string $user_login The username
+ * @param WP_User $user_data WP_User object
+ * @return string Modified message
+ */
+function event_rsvp_custom_password_reset_email($message, $key, $user_login, $user_data) {
+	$reset_url = network_site_url("wp-login.php?action=rsvp_resetpass&key=$key&login=" . rawurlencode($user_login), 'login');
+
+	$site_name = get_bloginfo('name');
+	$user_email = $user_data->user_email;
+	$user_display_name = $user_data->display_name;
+
+	$message = '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f9fafb; padding: 20px;">';
+	$message .= '<div style="background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">';
+	$message .= '<div style="text-align: center; margin-bottom: 30px;">';
+	$message .= '<h1 style="color: #667eea; margin: 0; font-size: 28px;">🔐 Password Reset</h1>';
+	$message .= '</div>';
+
+	$message .= '<p style="font-size: 16px; color: #1f2937; line-height: 1.6;">Hello <strong>' . esc_html($user_display_name) . '</strong>,</p>';
+	$message .= '<p style="font-size: 16px; color: #1f2937; line-height: 1.6;">Someone requested a password reset for the following account on <strong>' . esc_html($site_name) . '</strong>:</p>';
+
+	$message .= '<div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 25px 0;">';
+	$message .= '<p style="margin: 5px 0; font-size: 14px; color: #6b7280;"><strong>Username:</strong> ' . esc_html($user_login) . '</p>';
+	$message .= '<p style="margin: 5px 0; font-size: 14px; color: #6b7280;"><strong>Email:</strong> ' . esc_html($user_email) . '</p>';
+	$message .= '</div>';
+
+	$message .= '<p style="font-size: 16px; color: #1f2937; line-height: 1.6;">If this was a mistake, just ignore this email and nothing will happen.</p>';
+	$message .= '<p style="font-size: 16px; color: #1f2937; line-height: 1.6;">To reset your password, click the button below:</p>';
+
+	$message .= '<div style="text-align: center; margin: 30px 0;">';
+	$message .= '<a href="' . esc_url($reset_url) . '" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Reset Your Password</a>';
+	$message .= '</div>';
+
+	$message .= '<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 6px; margin: 25px 0;">';
+	$message .= '<p style="margin: 0; font-size: 14px; color: #92400e;"><strong>⚠️ Security Notice:</strong> This link will expire in 24 hours for your security. If you didn\'t request this reset, please secure your account immediately.</p>';
+	$message .= '</div>';
+
+	$message .= '<p style="font-size: 14px; color: #6b7280; line-height: 1.6; margin-top: 30px;">If the button doesn\'t work, copy and paste this link into your browser:</p>';
+	$message .= '<p style="font-size: 12px; color: #9ca3af; word-break: break-all; background: #f9fafb; padding: 10px; border-radius: 4px;">' . esc_url($reset_url) . '</p>';
+
+	$message .= '<div style="border-top: 1px solid #e5e7eb; margin-top: 40px; padding-top: 20px; text-align: center;">';
+	$message .= '<p style="font-size: 12px; color: #9ca3af; margin: 0;">This is an automated email from ' . esc_html($site_name) . '</p>';
+	$message .= '</div>';
+
+	$message .= '</div>';
+	$message .= '</div>';
+
+	return $message;
+}
+add_filter('retrieve_password_message', 'event_rsvp_custom_password_reset_email', 10, 4);
+
+/**
+ * Customize password reset email title/subject
+ */
+function event_rsvp_custom_password_reset_title($title, $user_login, $user_data) {
+	$site_name = get_bloginfo('name');
+	return sprintf('[%s] Password Reset Request', $site_name);
+}
+add_filter('retrieve_password_title', 'event_rsvp_custom_password_reset_title', 10, 3);
+
+/**
+ * Customize password changed notification email
+ */
+function event_rsvp_custom_password_changed_email($message, $key, $user_login, $user_data) {
+	$site_name = get_bloginfo('name');
+	$user_display_name = $user_data->display_name;
+
+	$message = '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f9fafb; padding: 20px;">';
+	$message .= '<div style="background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">';
+	$message .= '<div style="text-align: center; margin-bottom: 30px;">';
+	$message .= '<h1 style="color: #10b981; margin: 0; font-size: 28px;">✓ Password Changed</h1>';
+	$message .= '</div>';
+
+	$message .= '<p style="font-size: 16px; color: #1f2937; line-height: 1.6;">Hello <strong>' . esc_html($user_display_name) . '</strong>,</p>';
+	$message .= '<p style="font-size: 16px; color: #1f2937; line-height: 1.6;">This email confirms that your password was successfully changed on <strong>' . esc_html($site_name) . '</strong>.</p>';
+
+	$message .= '<div style="background: #d1fae5; border-left: 4px solid #10b981; padding: 15px; border-radius: 6px; margin: 25px 0;">';
+	$message .= '<p style="margin: 0; font-size: 14px; color: #065f46;"><strong>✓ Success:</strong> Your password has been updated. You can now log in with your new password.</p>';
+	$message .= '</div>';
+
+	$message .= '<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 6px; margin: 25px 0;">';
+	$message .= '<p style="margin: 0; font-size: 14px; color: #92400e;"><strong>⚠️ Security Alert:</strong> If you didn\'t make this change, please contact our support team immediately and secure your account.</p>';
+	$message .= '</div>';
+
+	$message .= '<div style="text-align: center; margin: 30px 0;">';
+	$message .= '<a href="' . home_url('/login/') . '" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Log In Now</a>';
+	$message .= '</div>';
+
+	$message .= '<div style="border-top: 1px solid #e5e7eb; margin-top: 40px; padding-top: 20px; text-align: center;">';
+	$message .= '<p style="font-size: 12px; color: #9ca3af; margin: 0;">This is an automated email from ' . esc_html($site_name) . '</p>';
+	$message .= '</div>';
+
+	$message .= '</div>';
+	$message .= '</div>';
+
+	return $message;
+}
+
+/**
+ * Override password change notification
+ */
+function event_rsvp_send_password_change_email($user) {
+	$site_name = get_bloginfo('name');
+	$user_display_name = $user->display_name;
+	$user_email = $user->user_email;
+
+	$subject = sprintf('[%s] Password Changed Successfully', $site_name);
+
+	$message = '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f9fafb; padding: 20px;">';
+	$message .= '<div style="background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">';
+	$message .= '<div style="text-align: center; margin-bottom: 30px;">';
+	$message .= '<h1 style="color: #10b981; margin: 0; font-size: 28px;">✓ Password Changed</h1>';
+	$message .= '</div>';
+
+	$message .= '<p style="font-size: 16px; color: #1f2937; line-height: 1.6;">Hello <strong>' . esc_html($user_display_name) . '</strong>,</p>';
+	$message .= '<p style="font-size: 16px; color: #1f2937; line-height: 1.6;">This email confirms that your password was successfully changed on <strong>' . esc_html($site_name) . '</strong>.</p>';
+
+	$message .= '<div style="background: #d1fae5; border-left: 4px solid #10b981; padding: 15px; border-radius: 6px; margin: 25px 0;">';
+	$message .= '<p style="margin: 0; font-size: 14px; color: #065f46;"><strong>✓ Success:</strong> Your password has been updated. You can now log in with your new password.</p>';
+	$message .= '</div>';
+
+	$message .= '<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 6px; margin: 25px 0;">';
+	$message .= '<p style="margin: 0; font-size: 14px; color: #92400e;"><strong>⚠️ Security Alert:</strong> If you didn\'t make this change, please contact our support team immediately and secure your account.</p>';
+	$message .= '</div>';
+
+	$message .= '<div style="text-align: center; margin: 30px 0;">';
+	$message .= '<a href="' . home_url('/login/') . '" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Log In Now</a>';
+	$message .= '</div>';
+
+	$message .= '<div style="border-top: 1px solid #e5e7eb; margin-top: 40px; padding-top: 20px; text-align: center;">';
+	$message .= '<p style="font-size: 12px; color: #9ca3af; margin: 0;">This is an automated email from ' . esc_html($site_name) . '</p>';
+	$message .= '</div>';
+
+	$message .= '</div>';
+	$message .= '</div>';
+
+	$smtp_username = get_option('event_rsvp_smtp_username', '');
+	$headers = array(
+		'Content-Type: text/html; charset=UTF-8',
+		'Reply-To: ' . $smtp_username
+	);
+
+	wp_mail($user_email, $subject, $message, $headers);
+}
+add_action('after_password_reset', 'event_rsvp_send_password_change_email', 10, 1);
+add_action('password_reset', 'event_rsvp_send_password_change_email', 10, 1);
+
+/**
  * Get SMTP configuration presets for common email providers
  *
  * @param string $provider Provider name (hostinger, gmail, outlook, yahoo)

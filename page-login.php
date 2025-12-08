@@ -52,6 +52,12 @@ get_header();
 						</div>
 					<?php endif; ?>
 
+					<?php if (isset($_GET['reset']) && $_GET['reset'] === 'success') : ?>
+						<div class="success-message">
+							Password reset successful! Please log in with your new password.
+						</div>
+					<?php endif; ?>
+
 					<form class="event-login-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
 						<?php wp_nonce_field('event_rsvp_login', 'login_nonce'); ?>
 						<input type="hidden" name="action" value="event_rsvp_login">
@@ -89,7 +95,7 @@ get_header();
 							Don't have an account? <a href="<?php echo esc_url(home_url('/signup/')); ?>" class="signup-link">Create one now</a>
 						</p>
 						<p class="forgot-password">
-							<a href="<?php echo esc_url(wp_lostpassword_url()); ?>" class="forgot-link">Forgot your password?</a>
+							<a href="<?php echo esc_url(home_url('/reset-password/')); ?>" class="forgot-link">Forgot your password?</a>
 						</p>
 					</div>
 				</div>

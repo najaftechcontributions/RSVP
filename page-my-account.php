@@ -76,6 +76,10 @@ get_header();
 					<span class="nav-icon">💳</span>
 					<span class="nav-label">Subscription</span>
 				</a>
+				<a href="#security" class="nav-item" data-tab="security">
+					<span class="nav-icon">🔐</span>
+					<span class="nav-label">Security</span>
+				</a>
 				<a href="<?php echo wp_logout_url(home_url('/')); ?>" class="nav-item logout-item">
 					<span class="nav-icon">🚪</span>
 					<span class="nav-label">Logout</span>
@@ -423,6 +427,91 @@ get_header();
 				<?php endif; ?>
 			</div>
 
+			<div id="tab-security" class="tab-content">
+				<div class="content-header">
+					<h2 class="content-title">Security Settings</h2>
+					<p class="content-subtitle">Manage your password and account security</p>
+				</div>
+
+				<?php
+				if (isset($_GET['password_changed']) && $_GET['password_changed'] === 'success') {
+					echo '<div class="success-message-box">✓ Your password has been changed successfully!</div>';
+				} elseif (isset($_GET['password_error'])) {
+					$error_msg = '';
+					switch ($_GET['password_error']) {
+						case 'mismatch':
+							$error_msg = 'New passwords do not match. Please try again.';
+							break;
+						case 'incorrect':
+							$error_msg = 'Current password is incorrect.';
+							break;
+						case 'failed':
+							$error_msg = 'Failed to update password. Please try again.';
+							break;
+						case 'empty':
+							$error_msg = 'All password fields are required.';
+							break;
+					}
+					if ($error_msg) {
+						echo '<div class="error-message-box">✗ ' . esc_html($error_msg) . '</div>';
+					}
+				}
+				?>
+
+				<div class="security-section">
+					<div class="security-card">
+						<h3 class="section-title">Change Password</h3>
+						<p class="section-description">Update your password to keep your account secure</p>
+
+						<form class="password-change-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+							<?php wp_nonce_field('event_rsvp_change_password', 'password_nonce'); ?>
+							<input type="hidden" name="action" value="event_rsvp_change_password">
+
+							<div class="form-group">
+								<label for="current_password">Current Password <span class="required">*</span></label>
+								<input type="password" id="current_password" name="current_password" class="form-control" required>
+							</div>
+
+							<div class="form-group">
+								<label for="new_password">New Password <span class="required">*</span></label>
+								<input type="password" id="new_password" name="new_password" class="form-control" required minlength="8">
+								<p class="help-text">Password must be at least 8 characters long</p>
+							</div>
+
+							<div class="form-group">
+								<label for="confirm_password">Confirm New Password <span class="required">*</span></label>
+								<input type="password" id="confirm_password" name="confirm_password" class="form-control" required minlength="8">
+							</div>
+
+							<div class="password-strength-indicator">
+								<div class="strength-bar">
+									<div class="strength-bar-fill"></div>
+								</div>
+								<p class="strength-info">Password strength: <span class="strength-value">Too short</span></p>
+							</div>
+
+							<div class="form-submit">
+								<button type="submit" class="change-password-button">
+									<span class="button-icon">🔐</span>
+									<span class="button-text">Update Password</span>
+								</button>
+							</div>
+						</form>
+					</div>
+
+					<div class="security-tips">
+						<h3 class="section-title">Security Tips</h3>
+						<ul class="tips-list">
+							<li><strong>Use a strong password:</strong> Combine letters, numbers, and special characters</li>
+							<li><strong>Don't reuse passwords:</strong> Use a unique password for each account</li>
+							<li><strong>Change regularly:</strong> Update your password every few months</li>
+							<li><strong>Never share:</strong> Keep your password confidential</li>
+							<li><strong>Enable two-factor:</strong> Add an extra layer of security if available</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+
 			<div id="tab-subscription" class="tab-content">
 				<div class="content-header">
 					<h2 class="content-title">Subscription</h2>
@@ -525,6 +614,68 @@ document.addEventListener('DOMContentLoaded', function() {
 			document.getElementById('tab-' + targetTab).classList.add('active');
 		});
 	});
+
+	// Handle hash navigation for direct links (e.g., #security)
+	if (window.location.hash) {
+		const hash = window.location.hash.substring(1);
+		const targetNav = document.querySelector('.nav-item[data-tab="' + hash + '"]');
+		if (targetNav) {
+			targetNav.click();
+		}
+	}
+
+	// Password strength meter
+	const passwordInput = document.querySelector('.password-change-form input[name="new_password"]');
+	if (passwordInput) {
+		const strengthBar = document.querySelector('.strength-bar-fill');
+		const strengthText = document.querySelector('.strength-value');
+
+		passwordInput.addEventListener('input', function() {
+			const password = this.value;
+			const strength = calculatePasswordStrength(password);
+
+			strengthBar.style.width = strength.percent + '%';
+			strengthBar.style.background = strength.color;
+			strengthText.textContent = strength.label;
+		});
+	}
+
+	function calculatePasswordStrength(password) {
+		let strength = 0;
+
+		if (password.length === 0) {
+			return { percent: 0, color: '#dc2626', label: 'Too short' };
+		}
+
+		if (password.length >= 8) strength += 20;
+		if (password.length >= 12) strength += 10;
+		if (password.length >= 16) strength += 10;
+		if (/[a-z]/.test(password)) strength += 15;
+		if (/[A-Z]/.test(password)) strength += 15;
+		if (/[0-9]/.test(password)) strength += 15;
+		if (/[^a-zA-Z0-9]/.test(password)) strength += 15;
+
+		strength = Math.min(strength, 100);
+
+		let label = 'Weak';
+		let color = '#dc2626';
+
+		if (strength >= 80) {
+			label = 'Very Strong';
+			color = '#16a34a';
+		} else if (strength >= 60) {
+			label = 'Strong';
+			color = '#65a30d';
+		} else if (strength >= 40) {
+			label = 'Medium';
+			color = '#f59e0b';
+		} else if (strength >= 20) {
+			label = 'Weak';
+			color = '#dc2626';
+		}
+
+		return { percent: strength, color: color, label: label };
+	}
 });
 </script>
 
