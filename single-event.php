@@ -253,7 +253,10 @@ while ( have_posts() ) :
 								<button class="attendee-tab-btn active" data-tab="all">All (<?php echo count($attendees); ?>)</button>
 								<button class="attendee-tab-btn" data-tab="yes">Attending (<?php echo count($attendees_yes); ?>)</button>
 								<button class="attendee-tab-btn" data-tab="maybe">Maybe (<?php echo count($attendees_maybe); ?>)</button>
-								<button class="attendee-tab-btn" data-tab="no">Not Attending (<?php echo count($attendees_no); ?>)</button>
+								<?php if (!empty($attendees_no)) : ?>
+										<button class="attendee-tab-btn" data-tab="no">Not Attending (<?php echo count($attendees_no); ?>)</button>
+									<?php else : ?>
+								<?php endif; ?>
 							</div>
 
 							<div class="attendees-list-container">
@@ -599,8 +602,8 @@ while ( have_posts() ) :
 								</div>
 								
 								<div class="form-group">
-									<label for="attendee-phone">Phone Number</label>
-									<input type="tel" id="attendee-phone" name="attendee-phone">
+									<label for="attendee-phone">Phone Number *</label>
+									<input type="tel" id="attendee-phone" name="attendee-phone" required>
 								</div>
 								
 								<div class="form-group">
@@ -643,8 +646,8 @@ while ( have_posts() ) :
 								</div>
 								
 								<div class="form-group">
-									<label for="attendee-phone">Phone Number</label>
-									<input type="tel" id="attendee-phone" name="attendee-phone">
+									<label for="attendee-phone">Phone Number *</label>
+									<input type="tel" id="attendee-phone" name="attendee-phone" required>
 								</div>
 								
 								<div class="form-group">
@@ -834,7 +837,7 @@ while ( have_posts() ) :
 	}
 
 	.email-rsvp-modal-body {
-		padding: 40px 30px;
+		padding: 0 30px 40px 30px;
 	}
 
 	.modal-question-text {
@@ -878,8 +881,8 @@ while ( have_posts() ) :
 	}
 
 	.email-attendee-form-container {
-		margin-top: 24px;
-		padding-top: 24px;
+		margin-top: 0;
+		padding-top: 0;
 		border-top: 2px solid #f0f0f0;
 	}
 
@@ -1355,8 +1358,8 @@ document.addEventListener('DOMContentLoaded', function() {
 							<input type="email" id="email-attendee-email" name="attendee_email" required>
 						</div>
 						<div class="form-group">
-							<label for="email-attendee-phone">Phone Number</label>
-							<input type="tel" id="email-attendee-phone" name="attendee_phone">
+							<label for="email-attendee-phone">Phone Number *</label>
+							<input type="tel" id="email-attendee-phone" name="attendee_phone" required>
 						</div>
 						<button type="submit" class="email-attendee-submit-btn">Submit RSVP</button>
 					</form>

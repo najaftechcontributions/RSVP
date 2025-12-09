@@ -915,8 +915,26 @@ function event_rsvp_ajax_get_campaign_preview()
 		}
 	}
 
-	$host = get_userdata($campaign->host_id);
-	$host_name = $host ? $host->display_name : get_bloginfo('name');
+	// Get event host name from event meta, fallback to event creator
+	$event_host_name = '';
+	if (function_exists('get_field')) {
+		$event_host_name = get_field('event_host', $campaign->event_id);
+	} else {
+		$event_host_name = get_post_meta($campaign->event_id, 'event_host', true);
+	}
+
+	// If event host is not set, use event creator (post author)
+	if (empty($event_host_name)) {
+		$event_author_id = get_post_field('post_author', $campaign->event_id);
+		if ($event_author_id) {
+			$author = get_userdata($event_author_id);
+			$event_host_name = $author ? $author->display_name : get_bloginfo('name');
+		} else {
+			$event_host_name = get_bloginfo('name');
+		}
+	}
+
+	$host_name = $event_host_name;
 
 	// Get custom image from campaign custom_data
 	$custom_image = '';
