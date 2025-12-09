@@ -10,7 +10,7 @@ jQuery(document).ready(function($) {
 		currentManageCampaignId = $(this).data('campaign-id');
 		
 		if (!currentManageCampaignId) {
-			alert('✗ Invalid campaign ID');
+			window.showToast('Invalid campaign ID', 'error');
 			return;
 		}
 		
@@ -52,6 +52,7 @@ jQuery(document).ready(function($) {
 					const campaignName = response.data.campaign_name || '';
 					const subject = response.data.subject || '';
 					const eventId = response.data.event_id || '';
+					const templateId = response.data.template_id || 0;
 					
 					// Populate all fields
 					if ($('#manageCampaignName').length) {
@@ -62,6 +63,11 @@ jQuery(document).ready(function($) {
 					}
 					if ($('#manageCampaignEvent').length) {
 						$('#manageCampaignEvent').val(eventId);
+					}
+					if ($('#manageCampaignTemplate').length) {
+						$('#manageCampaignTemplate').val(templateId);
+						// Trigger change to show/hide image field
+						$('#manageCampaignTemplate').trigger('change');
 					}
 					$('#manageCampaignImage').val(customImage);
 					
@@ -80,7 +86,7 @@ jQuery(document).ready(function($) {
 		});
 	}
 	
-	// Upload image button for manage campaign
+	// Upload image button for manage campaign - uses input field only
 	$('#uploadManageCampaignImageBtn').on('click', function(e) {
 		e.preventDefault();
 		
@@ -101,7 +107,7 @@ jQuery(document).ready(function($) {
 			
 			frame.open();
 		} else {
-			alert('WordPress media library is not available. Please enter image URL manually.');
+			window.showToast('WordPress media library is not available. Please enter image URL in the field above.', 'warning');
 		}
 	});
 	
@@ -128,19 +134,20 @@ jQuery(document).ready(function($) {
 		const campaignId = $('#manageCampaignModal').data('current-campaign-id');
 		const customImage = $('#manageCampaignImage').val();
 		
-		// Get campaign name, subject, and event if fields exist
+		// Get campaign name, subject, event, and template if fields exist
 		const campaignName = $('#manageCampaignName').length ? $('#manageCampaignName').val() : '';
 		const subject = $('#manageCampaignSubject').length ? $('#manageCampaignSubject').val() : '';
 		const eventId = $('#manageCampaignEvent').length ? $('#manageCampaignEvent').val() : '';
+		const templateId = $('#manageCampaignTemplate').length ? $('#manageCampaignTemplate').val() : 0;
 		
 		if (!campaignId) {
-			alert('✗ No campaign selected');
+			window.showToast('No campaign selected', 'error');
 			return;
 		}
 		
 		// Validate required fields if they exist
 		if ($('#manageCampaignName').length && (!campaignName || !subject || !eventId)) {
-			alert('✗ Please fill in all required fields (Campaign Name, Event, Subject)');
+			window.showToast('Please fill in all required fields (Campaign Name, Event, Subject)', 'error');
 			return;
 		}
 		
@@ -158,6 +165,7 @@ jQuery(document).ready(function($) {
 		if (campaignName) requestData.campaign_name = campaignName;
 		if (subject) requestData.subject = subject;
 		if (eventId) requestData.event_id = eventId;
+		if (templateId !== undefined) requestData.template_id = templateId;
 		
 		$.ajax({
 			url: eventRsvpData.ajax_url,
@@ -167,7 +175,7 @@ jQuery(document).ready(function($) {
 				console.log('Save settings response:', response);
 				
 				if (response.success) {
-					alert('✓ Campaign settings saved successfully!');
+					window.showToast('Campaign settings saved successfully!', 'success');
 					
 					// Refresh preview if on preview tab
 					if ($('.tab-btn[data-tab="preview"]').hasClass('active')) {
@@ -178,11 +186,11 @@ jQuery(document).ready(function($) {
 					if (campaignName) {
 						setTimeout(function() {
 							location.reload();
-						}, 1000);
+						}, 1500);
 					}
 				} else {
 					const errorMsg = response.data || 'Failed to save settings';
-					alert('✗ Error: ' + errorMsg);
+					window.showToast('Error: ' + errorMsg, 'error');
 					console.error('Server error:', errorMsg);
 				}
 			},
@@ -203,7 +211,7 @@ jQuery(document).ready(function($) {
 					errorMessage = 'Server error. Please contact support.';
 				}
 				
-				alert('✗ ' + errorMessage);
+				window.showToast(errorMessage, 'error');
 			},
 			complete: function() {
 				button.prop('disabled', false).text('Save Settings');

@@ -5,18 +5,75 @@
 
 jQuery(document).ready(function($) {
 	
-	// Template selection change handler
+	// Toast notification system
+	function showToast(message, type = 'success') {
+		// Create toast container if it doesn't exist
+		if (!$('.toast-container').length) {
+			$('body').append('<div class="toast-container"></div>');
+		}
+		
+		const icons = {
+			success: '✓',
+			error: '✗',
+			info: 'ℹ',
+			warning: '⚠'
+		};
+		
+		const toast = $('<div class="toast toast-' + type + '">' +
+			'<span class="toast-icon">' + icons[type] + '</span>' +
+			'<span class="toast-message">' + message + '</span>' +
+			'<button class="toast-close">&times;</button>' +
+			'</div>');
+		
+		$('.toast-container').append(toast);
+		
+		// Close button handler
+		toast.find('.toast-close').on('click', function() {
+			toast.addClass('hiding');
+			setTimeout(function() {
+				toast.remove();
+			}, 300);
+		});
+		
+		// Auto-remove after 5 seconds
+		setTimeout(function() {
+			toast.addClass('hiding');
+			setTimeout(function() {
+				toast.remove();
+			}, 300);
+		}, 5000);
+	}
+	
+	// Make showToast available globally
+	window.showToast = showToast;
+	
+	// Template selection change handler - show image field ONLY for Image Upload Template
 	$('#campaignTemplate').on('change', function() {
 		const selectedOption = $(this).find('option:selected');
 		const templateName = selectedOption.text();
 		
-		// Show/hide custom image upload field for Image Upload Template
-		if (templateName.includes('Image Upload Template')) {
+		// Show custom image upload field ONLY for Image Upload Template
+		if (templateName.toLowerCase().includes('image upload')) {
 			$('#customImageUploadGroup').slideDown();
 		} else {
 			$('#customImageUploadGroup').slideUp();
 			$('#customImageUrl').val('');
 			$('#customImagePreview').hide();
+		}
+	});
+	
+	// Template change handler for manage campaign - show image field ONLY for Image Upload Template
+	$('#manageCampaignTemplate').on('change', function() {
+		const selectedOption = $(this).find('option:selected');
+		const templateName = selectedOption.text();
+		
+		// Show image field ONLY for Image Upload Template
+		if (templateName.toLowerCase().includes('image upload')) {
+			$('#manageCampaignImageGroup').slideDown();
+		} else {
+			$('#manageCampaignImageGroup').slideUp();
+			$('#manageCampaignImage').val('');
+			$('#manageCampaignImagePreview').hide();
 		}
 	});
 	
@@ -41,7 +98,7 @@ jQuery(document).ready(function($) {
 			
 			frame.open();
 		} else {
-			alert('WordPress media library is not available. Please enter image URL manually.');
+			showToast('WordPress media library is not available. Please enter image URL manually.', 'warning');
 		}
 	});
 	
@@ -83,14 +140,16 @@ jQuery(document).ready(function($) {
 			data: Object.fromEntries(formData),
 			success: function(response) {
 				if (response.success) {
-					alert('Campaign created successfully!');
-					location.reload();
+					showToast('Campaign created successfully!', 'success');
+					setTimeout(function() {
+						location.reload();
+					}, 1000);
 				} else {
-					alert('Error: ' + response.data);
+					showToast('Error: ' + response.data, 'error');
 				}
 			},
 			error: function() {
-				alert('Error creating campaign. Please try again.');
+				showToast('Error creating campaign. Please try again.', 'error');
 			}
 		});
 	});
@@ -102,7 +161,7 @@ jQuery(document).ready(function($) {
 		const customImage = $('#customImageUrl').val();
 
 		if (!templateId || templateId == '0') {
-			alert('Please select a template first');
+			showToast('Please select a template first', 'warning');
 			return;
 		}
 

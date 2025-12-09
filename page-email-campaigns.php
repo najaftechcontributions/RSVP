@@ -66,6 +66,8 @@ $user_id = get_current_user_id();
 $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 ?>
 
+<div class="toast-container"></div>
+
 <main class="email-campaigns-page">
 	<div class="container">
 
@@ -372,6 +374,22 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 					</div>
 
 					<div class="form-group">
+						<label for="manageCampaignTemplate">Email Template</label>
+						<select id="manageCampaignTemplate" class="form-input">
+							<option value="0">Use Default HTML Template</option>
+							<?php
+							$available_templates = event_rsvp_get_email_templates();
+							if (!empty($available_templates)) {
+								foreach ($available_templates as $tmpl) {
+									echo '<option value="' . $tmpl->id . '">' . esc_html($tmpl->name) . '</option>';
+								}
+							}
+							?>
+						</select>
+						<small class="form-help">Choose an email template for this campaign</small>
+					</div>
+
+					<div class="form-group" id="manageCampaignImageGroup">
 						<label for="manageCampaignImage">Event Image</label>
 						<div style="display: flex; gap: 10px; align-items: flex-start;">
 							<input type="text" id="manageCampaignImage" class="form-input" placeholder="Image URL" style="flex: 1;">
@@ -539,10 +557,20 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 				data: Object.fromEntries(formData),
 				success: function(response) {
 					if (response.success) {
-						alert('Campaign created successfully!');
-						location.reload();
+						if (typeof window.showToast === 'function') {
+							window.showToast('Campaign created successfully!', 'success');
+						} else {
+							alert('Campaign created successfully!');
+						}
+						setTimeout(function() {
+							location.reload();
+						}, 1000);
 					} else {
-						alert('Error: ' + response.data);
+						if (typeof window.showToast === 'function') {
+							window.showToast('Error: ' + response.data, 'error');
+						} else {
+							alert('Error: ' + response.data);
+						}
 					}
 				}
 			});
@@ -552,7 +580,11 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 			currentCampaignId = $(this).data('campaign-id');
 
 			if (!currentCampaignId) {
-				alert('✗ Invalid campaign ID');
+				if (typeof window.showToast === 'function') {
+					window.showToast('Invalid campaign ID', 'error');
+				} else {
+					alert('✗ Invalid campaign ID');
+				}
 				return;
 			}
 
@@ -576,7 +608,11 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 			const emails = $('#manualEmailsList').val();
 
 			if (!emails.trim()) {
-				alert('✗ Please enter at least one email address');
+				if (typeof window.showToast === 'function') {
+					window.showToast('Please enter at least one email address', 'warning');
+				} else {
+					alert('✗ Please enter at least one email address');
+				}
 				return;
 			}
 
@@ -599,7 +635,11 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 			}
 
 			if (!hasValidEmail) {
-				alert('✗ No valid email addresses found. Please check the format:\nemail@example.com\nor\nemail@example.com, Name');
+				if (typeof window.showToast === 'function') {
+					window.showToast('No valid email addresses found. Please check the format: email@example.com or email@example.com, Name', 'error');
+				} else {
+					alert('✗ No valid email addresses found. Please check the format:\nemail@example.com\nor\nemail@example.com, Name');
+				}
 				return;
 			}
 
@@ -617,16 +657,28 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 				},
 				success: function(response) {
 					if (response.success) {
-						alert('✓ ' + response.data.message);
+						if (typeof window.showToast === 'function') {
+							window.showToast(response.data.message, 'success');
+						} else {
+							alert('✓ ' + response.data.message);
+						}
 						$('#manualRecipientsForm').slideUp();
 						$('#manualEmailsList').val('');
 						loadCampaignRecipients(currentCampaignId);
 					} else {
-						alert('✗ Error: ' + response.data);
+						if (typeof window.showToast === 'function') {
+							window.showToast('Error: ' + response.data, 'error');
+						} else {
+							alert('✗ Error: ' + response.data);
+						}
 					}
 				},
 				error: function(xhr, status, error) {
-					alert('✗ Failed to add recipients. Please try again or contact support.');
+					if (typeof window.showToast === 'function') {
+						window.showToast('Failed to add recipients. Please try again or contact support.', 'error');
+					} else {
+						alert('✗ Failed to add recipients. Please try again or contact support.');
+					}
 					console.error('AJAX Error:', status, error, xhr.responseText);
 				},
 				complete: function() {
@@ -657,10 +709,18 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 				contentType: false,
 				success: function(response) {
 					if (response.success) {
-						alert(response.data.message);
+						if (typeof window.showToast === 'function') {
+							window.showToast(response.data.message, 'success');
+						} else {
+							alert(response.data.message);
+						}
 						loadCampaignRecipients(currentCampaignId);
 					} else {
-						alert('Error: ' + response.data);
+						if (typeof window.showToast === 'function') {
+							window.showToast('Error: ' + response.data, 'error');
+						} else {
+							alert('Error: ' + response.data);
+						}
 					}
 				}
 			});
@@ -710,7 +770,11 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 			const email = $('#testEmailAddress').val();
 
 			if (!email || !isValidEmail(email)) {
-				alert('Please enter a valid email address');
+				if (typeof window.showToast === 'function') {
+					window.showToast('Please enter a valid email address', 'warning');
+				} else {
+					alert('Please enter a valid email address');
+				}
 				return;
 			}
 
@@ -725,9 +789,17 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 				},
 				success: function(response) {
 					if (response.success) {
-						alert('Test email sent!');
+						if (typeof window.showToast === 'function') {
+							window.showToast('Test email sent!', 'success');
+						} else {
+							alert('Test email sent!');
+						}
 					} else {
-						alert('Error: ' + response.data);
+						if (typeof window.showToast === 'function') {
+							window.showToast('Error: ' + response.data, 'error');
+						} else {
+							alert('Error: ' + response.data);
+						}
 					}
 				}
 			});
@@ -748,10 +820,20 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 				},
 				success: function(response) {
 					if (response.success) {
-						alert(response.data.message);
-						location.reload();
+						if (typeof window.showToast === 'function') {
+							window.showToast(response.data.message, 'success');
+						} else {
+							alert(response.data.message);
+						}
+						setTimeout(function() {
+							location.reload();
+						}, 1000);
 					} else {
-						alert('Error: ' + response.data);
+						if (typeof window.showToast === 'function') {
+							window.showToast('Error: ' + response.data, 'error');
+						} else {
+							alert('Error: ' + response.data);
+						}
 					}
 				}
 			});
@@ -851,10 +933,20 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 				},
 				success: function(response) {
 					if (response.success) {
-						alert('Campaign deleted!');
-						location.reload();
+						if (typeof window.showToast === 'function') {
+							window.showToast('Campaign deleted!', 'success');
+						} else {
+							alert('Campaign deleted!');
+						}
+						setTimeout(function() {
+							location.reload();
+						}, 1000);
 					} else {
-						alert('Error: ' + response.data);
+						if (typeof window.showToast === 'function') {
+							window.showToast('Error: ' + response.data, 'error');
+						} else {
+							alert('Error: ' + response.data);
+						}
 					}
 				}
 			});
@@ -863,11 +955,20 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 		$('#previewTemplateBtn').click(function() {
 			const templateId = $('#campaignTemplate').val();
 			const eventId = $('#campaignEvent').val();
+			const customImage = $('#customImageUrl').val();
 
-			if (!templateId || templateId == '0') {
-				alert('Please select a template first');
+			// Allow previewing default template (template_id = 0)
+			if (!templateId && templateId !== '0') {
+				if (typeof window.showToast === 'function') {
+					window.showToast('Please select a template first', 'warning');
+				} else {
+					alert('Please select a template first');
+				}
 				return;
 			}
+
+			$('#templatePreviewContent').html('<div class="loading-spinner">Loading preview...</div>');
+			$('#templatePreviewModal').fadeIn();
 
 			$.ajax({
 				url: eventRsvpData.ajax_url,
@@ -875,14 +976,19 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 				data: {
 					action: 'event_rsvp_preview_email_template',
 					nonce: eventRsvpData.email_campaign_nonce,
-					template_id: templateId,
-					event_id: eventId || 0
+					template_id: templateId || 0,
+					event_id: eventId || 0,
+					custom_image: customImage || ''
 				},
 				success: function(response) {
 					if (response.success) {
 						$('#templatePreviewContent').html(response.data.html);
-						$('#templatePreviewModal').fadeIn();
+					} else {
+						$('#templatePreviewContent').html('<div class="error-message">Failed to load preview: ' + (response.data || 'Unknown error') + '</div>');
 					}
+				},
+				error: function() {
+					$('#templatePreviewContent').html('<div class="error-message">Failed to load preview. Please try again.</div>');
 				}
 			});
 		});
@@ -891,8 +997,14 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 			$('.tab-btn').removeClass('active');
 			$(this).addClass('active');
 
+			const tab = $(this).data('tab');
 			$('.tab-content').hide();
-			$('#' + $(this).data('tab') + 'Tab').show();
+			$('#' + tab + 'Tab').show();
+
+			// Load preview when switching to preview tab
+			if (tab === 'preview' && currentCampaignId) {
+				loadCampaignPreview(currentCampaignId);
+			}
 		});
 
 		function loadCampaignSettings(campaignId) {
@@ -910,7 +1022,11 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 						$('#manageCampaignName').val(settings.campaign_name || '');
 						$('#manageCampaignSubject').val(settings.subject || '');
 						$('#manageCampaignEvent').val(settings.event_id || '');
+						$('#manageCampaignTemplate').val(settings.template_id || '0');
 						$('#manageCampaignImage').val(settings.custom_image || '');
+
+						// Show/hide image field based on template
+						updateImageFieldVisibility('#manageCampaignTemplate', '#manageCampaignImageGroup', settings.template_needs_image);
 
 						if (settings.custom_image) {
 							$('#manageCampaignImagePreview img').attr('src', settings.custom_image);
@@ -924,6 +1040,60 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 					console.error('Failed to load campaign settings');
 				}
 			});
+		}
+
+		function loadCampaignPreview(campaignId) {
+			$('#emailPreviewContainer').html('<div class="loading-spinner">Loading preview...</div>');
+
+			$.ajax({
+				url: eventRsvpData.ajax_url,
+				type: 'POST',
+				data: {
+					action: 'event_rsvp_get_campaign_preview',
+					nonce: eventRsvpData.email_campaign_nonce,
+					campaign_id: campaignId
+				},
+				success: function(response) {
+					if (response.success) {
+						$('#emailPreviewContainer').html(response.data.html);
+					} else {
+						$('#emailPreviewContainer').html('<div class="error-message">Failed to load preview: ' + (response.data || 'Unknown error') + '</div>');
+					}
+				},
+				error: function() {
+					$('#emailPreviewContainer').html('<div class="error-message">Failed to load preview. Please try again.</div>');
+				}
+			});
+		}
+
+		function updateImageFieldVisibility(templateSelector, imageGroupSelector, forceShow) {
+			const templateId = $(templateSelector).val();
+
+			// Check if we should show the image field
+			let shouldShow = forceShow || false;
+
+			// Check if selected template needs custom image
+			if (templateId && templateId !== '0' && templates.length > 0) {
+				const selectedTemplate = templates.find(t => t.id == templateId);
+				if (selectedTemplate) {
+					// Check if template HTML contains {{custom_image}} placeholder
+					if (selectedTemplate.html_content &&
+					    selectedTemplate.html_content.indexOf('{{custom_image}}') !== -1) {
+						shouldShow = true;
+					}
+					// Also check if template name contains "image"
+					if (selectedTemplate.name &&
+					    selectedTemplate.name.toLowerCase().indexOf('image') !== -1) {
+						shouldShow = true;
+					}
+				}
+			}
+
+			if (shouldShow) {
+				$(imageGroupSelector).slideDown();
+			} else {
+				$(imageGroupSelector).slideUp();
+			}
 		}
 
 		$('#saveCampaignSettingsBtn').click(function() {
@@ -941,16 +1111,24 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 					campaign_name: $('#manageCampaignName').val(),
 					subject: $('#manageCampaignSubject').val(),
 					event_id: $('#manageCampaignEvent').val(),
+					template_id: $('#manageCampaignTemplate').val(),
 					custom_image: $('#manageCampaignImage').val()
 				},
 				success: function(response) {
 					if (response.success) {
-						alert('✓ Campaign settings saved successfully!');
-
 						// Update the campaign card if name changed
 						const cardName = $('.campaign-card[data-campaign-id="' + currentCampaignId + '"] .campaign-name');
 						if (cardName.length && response.data.campaign_name) {
 							cardName.text(response.data.campaign_name);
+						}
+
+						// Update the campaign card event name if changed
+						const cardEvent = $('.campaign-card[data-campaign-id="' + currentCampaignId + '"] .campaign-event');
+						if (cardEvent.length && response.data.event_id) {
+							const eventName = $('#manageCampaignEvent option:selected').text();
+							if (eventName) {
+								cardEvent.text('Event: ' + eventName);
+							}
 						}
 					} else {
 						alert('✗ Error: ' + response.data);
@@ -963,6 +1141,23 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 					button.prop('disabled', false).text(originalText);
 				}
 			});
+		});
+
+		// Refresh preview button
+		$('#refreshPreviewBtn').click(function() {
+			if (currentCampaignId) {
+				loadCampaignPreview(currentCampaignId);
+			}
+		});
+
+		// Template change handler for create campaign modal
+		$('#campaignTemplate').change(function() {
+			updateImageFieldVisibility('#campaignTemplate', '#customImageUploadGroup');
+		});
+
+		// Template change handler for manage campaign modal
+		$('#manageCampaignTemplate').change(function() {
+			updateImageFieldVisibility('#manageCampaignTemplate', '#manageCampaignImageGroup');
 		});
 
 		$('#manageCampaignImage').on('input', function() {
@@ -978,6 +1173,22 @@ $campaigns = event_rsvp_get_campaigns_by_host($user_id);
 		$('#removeManageCampaignImageBtn').click(function() {
 			$('#manageCampaignImage').val('');
 			$('#manageCampaignImagePreview').hide();
+		});
+
+		// Custom image preview for create campaign modal
+		$('#customImageUrl').on('input', function() {
+			const imageUrl = $(this).val();
+			if (imageUrl) {
+				$('#customImagePreview img').attr('src', imageUrl);
+				$('#customImagePreview').show();
+			} else {
+				$('#customImagePreview').hide();
+			}
+		});
+
+		$('#removeCustomImageBtn').click(function() {
+			$('#customImageUrl').val('');
+			$('#customImagePreview').hide();
 		});
 
 		function isValidEmail(email) {

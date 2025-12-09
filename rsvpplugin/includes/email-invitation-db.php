@@ -346,6 +346,82 @@ function event_rsvp_insert_default_email_templates() {
 			'is_default' => 1
 		),
 		array(
+			'name' => 'Image Banner Template',
+			'description' => 'Event invitation with custom image banner at the top',
+			'subject' => 'You\'re Invited: {{event_name}}',
+			'html_content' => '<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Event Invitation</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; background-color: #f5f5f5;">
+	<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+		<tr>
+			<td align="center">
+				<table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+					{{#custom_image}}
+					<tr>
+						<td style="padding: 0;">
+							<img src="{{custom_image}}" alt="Event Banner" style="width: 100%; height: auto; display: block; max-height: 300px; object-fit: cover;">
+						</td>
+					</tr>
+					{{/custom_image}}
+					<tr>
+						<td style="background-color: #503AA8; padding: 30px 40px; text-align: center;">
+							<h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">You\'re Invited!</h1>
+						</td>
+					</tr>
+					<tr>
+						<td style="padding: 40px;">
+							<p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #333333;">Hello!</p>
+							<p style="margin: 0 0 30px 0; font-size: 16px; line-height: 1.6; color: #333333;">{{host_name}} has invited you to:</p>
+
+							<div style="background-color: #f8f9fa; padding: 25px; margin: 30px 0; border-radius: 8px; border-left: 4px solid #503AA8;">
+								<h2 style="margin: 0 0 15px 0; font-size: 22px; color: #503AA8;">{{event_name}}</h2>
+								<p style="margin: 0 0 10px 0; color: #555555; font-size: 15px;">
+									<strong>📅 Date:</strong> {{event_date}}
+								</p>
+								<p style="margin: 0 0 10px 0; color: #555555; font-size: 15px;">
+									<strong>🕐 Time:</strong> {{event_time}}
+								</p>
+								<p style="margin: 0; color: #555555; font-size: 15px;">
+									<strong>📍 Location:</strong> {{event_location}}
+								</p>
+							</div>
+
+							{{#event_description}}
+							<p style="margin: 30px 0; font-size: 15px; line-height: 1.7; color: #555555;">{{event_description}}</p>
+							{{/event_description}}
+
+							<div style="text-align: center; margin: 40px 0;">
+								<a href="{{tracking_url}}" style="display: inline-block; padding: 14px 36px; background-color: #503AA8; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">View Event & RSVP</a>
+							</div>
+
+							<p style="margin: 30px 0 0 0; font-size: 14px; line-height: 1.6; color: #666666; text-align: center;">
+								See you there!<br>
+								<strong>{{host_name}}</strong>
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<td style="background-color: #f8f9fa; padding: 25px 40px; text-align: center; border-top: 1px solid #e0e0e0;">
+							<p style="margin: 0; font-size: 12px; color: #999999; line-height: 1.6;">
+								This invitation was sent by {{host_name}}<br>
+								<a href="{{unsubscribe_url}}" style="color: #999999; text-decoration: underline;">Unsubscribe</a>
+							</p>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>',
+			'is_default' => 1
+		),
+		array(
 			'name' => 'Professional Event',
 			'description' => 'Corporate and professional event invitation',
 			'subject' => 'Invitation: {{event_name}}',

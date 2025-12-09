@@ -678,15 +678,14 @@ function event_rsvp_ajax_preview_email_template()
 	$event_id = intval($_POST['event_id'] ?? 0);
 	$custom_image = isset($_POST['custom_image']) ? esc_url_raw($_POST['custom_image']) : '';
 
-	if (!$template_id) {
-		wp_send_json_error('Invalid template ID');
-		return;
-	}
-
-	$template = event_rsvp_get_email_template($template_id);
-	if (!$template) {
-		wp_send_json_error('Template not found');
-		return;
+	// Allow template_id = 0 for default template
+	$template = null;
+	if ($template_id > 0) {
+		$template = event_rsvp_get_email_template($template_id);
+		if (!$template) {
+			wp_send_json_error('Template not found');
+			return;
+		}
 	}
 
 	$event_date = '';
@@ -719,7 +718,32 @@ function event_rsvp_ajax_preview_email_template()
 		}
 	}
 
-	$current_user = wp_get_current_user();
+	// Get event host name from event meta, fallback to event creator
+	$event_host_name = '';
+	if ($event_id > 0) {
+		if (function_exists('get_field')) {
+			$event_host_name = get_field('event_host', $event_id);
+		} else {
+			$event_host_name = get_post_meta($event_id, 'event_host', true);
+		}
+
+		// If event host is not set, use event creator (post author)
+		if (empty($event_host_name)) {
+			$event_author_id = get_post_field('post_author', $event_id);
+			if ($event_author_id) {
+				$author = get_userdata($event_author_id);
+				$event_host_name = $author ? $author->display_name : get_bloginfo('name');
+			} else {
+				$event_host_name = get_bloginfo('name');
+			}
+		}
+	}
+
+	// Fallback to current user if no event selected
+	if (empty($event_host_name)) {
+		$current_user = wp_get_current_user();
+		$event_host_name = $current_user->display_name;
+	}
 
 	$template_data = array(
 		'event_name' => $event_name,
@@ -727,17 +751,25 @@ function event_rsvp_ajax_preview_email_template()
 		'event_time' => $event_time ? $event_time : '7:00 PM',
 		'event_location' => $venue_address ? $venue_address : '123 Main Street, City',
 		'event_description' => $event_description ? $event_description : 'Join us for an amazing event!',
-		'host_name' => $current_user->display_name,
+		'host_name' => $event_host_name,
 		'tracking_url' => '#',
 		'unsubscribe_url' => '#',
 		'recipient_name' => 'Guest',
 		'custom_image' => $custom_image ? $custom_image : 'https://via.placeholder.com/600x300?text=Event+Image'
 	);
 
-	$html = event_rsvp_parse_email_template($template->html_content, $template_data);
+	// Handle both template and default template
+	if ($template) {
+		$html = event_rsvp_parse_email_template($template->html_content, $template_data);
+		$template_name = $template->name;
+	} else {
+		$html = event_rsvp_get_default_email_html($template_data);
+		$template_name = 'Default HTML Template';
+	}
 
 	wp_send_json_success(array(
 		'html' => $html,
+		'template_name' => $template_name,
 		'template' => $template
 	));
 }
@@ -958,15 +990,18 @@ function event_rsvp_ajax_get_campaign_preview()
 		'custom_image' => $custom_image ? $custom_image : 'https://via.placeholder.com/600x300?text=Event+Image'
 	);
 
+	// Handle both template and default template
 	if ($template) {
 		$html = event_rsvp_parse_email_template($template->html_content, $template_data);
+		$template_name = $template->name;
 	} else {
 		$html = event_rsvp_get_default_email_html($template_data);
+		$template_name = 'Default HTML Template';
 	}
 
 	wp_send_json_success(array(
 		'html' => $html,
-		'template_name' => $template ? $template->name : 'Default Template'
+		'template_name' => $template_name
 	));
 }
 add_action('wp_ajax_event_rsvp_get_campaign_preview', 'event_rsvp_ajax_get_campaign_preview');
@@ -1007,12 +1042,22 @@ function event_rsvp_ajax_get_campaign_settings()
 		}
 	}
 
+	// Get template info to check if it needs custom image
+	$template_needs_image = false;
+	if ($campaign->template_id) {
+		$template = event_rsvp_get_email_template($campaign->template_id);
+		if ($template && strpos($template->html_content, '{{custom_image}}') !== false) {
+			$template_needs_image = true;
+		}
+	}
+
 	wp_send_json_success(array(
 		'custom_image' => $custom_image,
 		'campaign_name' => $campaign->campaign_name,
 		'subject' => $campaign->subject,
-		'template_id' => $campaign->template_id,
-		'event_id' => $campaign->event_id
+		'template_id' => $campaign->template_id ? $campaign->template_id : 0,
+		'event_id' => $campaign->event_id,
+		'template_needs_image' => $template_needs_image
 	));
 }
 add_action('wp_ajax_event_rsvp_get_campaign_settings', 'event_rsvp_ajax_get_campaign_settings');
@@ -1031,6 +1076,7 @@ function event_rsvp_ajax_update_campaign_settings()
 	$campaign_name = isset($_POST['campaign_name']) ? sanitize_text_field($_POST['campaign_name']) : '';
 	$subject = isset($_POST['subject']) ? sanitize_text_field($_POST['subject']) : '';
 	$event_id = isset($_POST['event_id']) ? intval($_POST['event_id']) : 0;
+	$template_id = isset($_POST['template_id']) ? intval($_POST['template_id']) : null;
 
 	if (!$campaign_id) {
 		wp_send_json_error('Invalid campaign ID');
@@ -1088,6 +1134,12 @@ function event_rsvp_ajax_update_campaign_settings()
 		$update_format[] = '%d';
 	}
 
+	// Add template_id if provided (allow 0 for default template)
+	if (isset($_POST['template_id'])) {
+		$update_data['template_id'] = $template_id > 0 ? $template_id : null;
+		$update_format[] = $template_id > 0 ? '%d' : '%s';
+	}
+
 	$result = $wpdb->update(
 		$campaigns_table,
 		$update_data,
@@ -1111,6 +1163,7 @@ function event_rsvp_ajax_update_campaign_settings()
 		'campaign_name' => $campaign_name,
 		'subject' => $subject,
 		'event_id' => $event_id,
+		'template_id' => $template_id,
 		'rows_affected' => $result
 	));
 }
