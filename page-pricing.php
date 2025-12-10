@@ -77,7 +77,7 @@ $user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 						
 						<div class="price-container">
 							<p class="price">$29.99</p>
-							<p class="price-period">per month</p>
+							<p class="price-period">One Time</p>
 						</div>
 						
 						<ul class="features-list">
@@ -158,7 +158,7 @@ $user_plan = $is_logged_in ? Event_RSVP_Simple_Stripe::get_user_plan() : '';
 			<div class="pricing-card-wrapper">
 				<div class="pricing-card pricing-card-pro">
 					<div class="pricing-card-content">
-						<h3 class="plan-name">Verbiage</h3>
+						<h3 class="plan-name">Elite Planner</h3>
 						<p class="plan-description">For high-volume event organizers</p>
 						
 						<div class="price-container">

@@ -571,7 +571,7 @@ while ( have_posts() ) :
 						</div>
 					</div>
 					<?php endif; ?>
-
+					<?php if (!$is_event_host) : ?>
 					<div class="rsvp-card">
 						<h3>RSVP for This Event</h3>
 						
@@ -667,6 +667,7 @@ while ( have_posts() ) :
 							</form>
 						<?php endif; ?>
 					</div>
+					<?php endif; ?>
 
 					<?php if ($is_event_host) : ?>
 						<div class="event-admin-actions">
@@ -949,12 +950,12 @@ while ( have_posts() ) :
 
 	.success-title {
 		margin: 0 0 16px 0;
-		color: #2d3748;
+		color: #fff;
 	}
 
 	.success-description {
 		margin: 0;
-		color: #718096;
+		color: #fff;
 	}
 
 	@media (max-width: 600px) {
