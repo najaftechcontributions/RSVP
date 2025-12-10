@@ -901,9 +901,7 @@
 	transition: all 0.3s ease;
 }
 
-.single-event-page .attendee-card:hover {
-	opacity: 0.6;
-}
+
 
 .single-event-page .attendee-info {
 	margin-bottom: 15px;
