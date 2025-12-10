@@ -69,8 +69,7 @@
 }
 
 .single-event-page .event-hashtag-item:hover {
-	background-color: rgba(80, 58, 168, 0.2);
-	transform: translateY(-2px);
+	opacity: 0.6;
 }
 
 .single-event-page .event-content {
@@ -115,8 +114,7 @@
 }
 
 .single-event-page .social-link:hover {
-	background-color: var(--event-dark-hover);
-	transform: translateY(-2px);
+	opacity: 0.6;
 }
 
 .single-event-page .event-map-section {
@@ -246,9 +244,7 @@
 }
 
 .single-event-page .rsvp-submit-button:hover {
-	background-color: var(--event-primary-hover);
-	transform: translateY(-2px);
-	box-shadow: var(--event-shadow-md);
+	opacity: 0.6;
 }
 
 .single-event-page .form-note {
@@ -277,9 +273,7 @@
 }
 
 .single-event-page .admin-action-button:hover {
-	background-color: var(--event-dark);
-	color: #ffffff;
-	transform: translateY(-2px);
+	opacity: 0.6;
 }
 
 /* Events Archive Page */
@@ -323,9 +317,7 @@
 }
 
 .events-archive-page .dashboard-button:hover {
-	background-color: var(--event-dark);
-	color: #ffffff;
-	transform: translateY(-2px);
+	opacity: 0.6;
 }
 
 .events-archive-page .events-filter-bar {
@@ -354,10 +346,13 @@
 	color: var(--event-text);
 }
 
-.events-archive-page .filter-button.active,
-.events-archive-page .filter-button:hover {
+.events-archive-page .filter-button.active {
 	background-color: var(--event-primary);
 	color: var(--event-dark);
+}
+
+.events-archive-page .filter-button:hover {
+	opacity: 0.6;
 }
 
 .events-archive-page .view-toggle {
@@ -375,10 +370,13 @@
 	color: var(--event-text);
 }
 
-.events-archive-page .view-button.active,
-.events-archive-page .view-button:hover {
+.events-archive-page .view-button.active {
 	background-color: var(--event-dark);
 	color: #ffffff;
+}
+
+.events-archive-page .view-button:hover {
+	opacity: 0.6;
 }
 
 .events-archive-page .events-grid {
@@ -407,7 +405,6 @@
 
 .events-archive-page .event-card:hover {
 	box-shadow: var(--event-shadow-md);
-	transform: translateY(-5px);
 }
 
 .events-archive-page .event-card.event-past {
@@ -509,7 +506,7 @@
 }
 
 .events-archive-page .event-card-title a:hover {
-	color: #503AA8;
+	opacity: 0.6;
 }
 
 .events-archive-page .event-card-meta {
@@ -570,8 +567,7 @@
 }
 
 .events-archive-page .event-card-button:hover {
-	background-color: var(--event-primary-hover);
-	transform: translateY(-2px);
+	opacity: 0.6;
 }
 
 .events-archive-page .no-events-message {
@@ -623,7 +619,7 @@
 }
 
 .events-archive-page .pagination .page-numbers:hover:not(.current) {
-	background-color: var(--event-secondary);
+	opacity: 0.6;
 }
 
 /* Hashtag Styling */
@@ -643,8 +639,7 @@
 }
 
 .event-hashtag-link a:hover {
-	background-color: var(--event-primary);
-	color: var(--event-dark);
+	opacity: 0.6;
 }
 
 /* Map Embed Styling */
@@ -876,8 +871,7 @@
 }
 
 .single-event-page .attendee-tab-btn:hover {
-	color: var(--event-text);
-	border-bottom-color: var(--event-primary-light);
+	opacity: 0.6;
 }
 
 .single-event-page .attendee-tab-btn.active {
@@ -908,8 +902,7 @@
 }
 
 .single-event-page .attendee-card:hover {
-	box-shadow: var(--event-shadow-md);
-	transform: translateY(-3px);
+	opacity: 0.6;
 }
 
 .single-event-page .attendee-info {
@@ -1041,11 +1034,7 @@
 }
 
 .single-event-page .attendee-action-btn:hover {
-	background-color: var(--event-primary);
-	border-color: var(--event-primary);
-	color: #ffffff;
-	transform: translateY(-2px);
-	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+	opacity: 0.6;
 }
 
 .single-event-page .attendee-action-btn:disabled {
@@ -1069,8 +1058,7 @@
 }
 
 .single-event-page .view-qr-btn:hover {
-	background-color: #0066cc;
-	color: #ffffff;
+	opacity: 0.6;
 }
 
 .single-event-page .download-qr-btn {
@@ -1080,8 +1068,7 @@
 }
 
 .single-event-page .download-qr-btn:hover {
-	background-color: #28a745;
-	color: #ffffff;
+	opacity: 0.6;
 }
 
 .single-event-page .send-email-btn {
@@ -1091,8 +1078,7 @@
 }
 
 .single-event-page .send-email-btn:hover {
-	background-color: #ff9800;
-	color: #ffffff;
+	opacity: 0.6;
 }
 
 .single-event-page .no-attendees {
@@ -1224,7 +1210,7 @@
 }
 
 .host-dashboard-page .attendees-table tbody tr:hover {
-	background-color: var(--event-secondary);
+	opacity: 0.6;
 }
 
 .host-dashboard-page .attendees-table tbody td {
@@ -1288,10 +1274,7 @@
 }
 
 .host-dashboard-page .qr-action-button:hover {
-	background-color: var(--event-primary);
-	color: var(--event-dark);
-	transform: translateY(-2px);
-	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+	opacity: 0.6;
 }
 
 .host-dashboard-page .qr-action-button:disabled {

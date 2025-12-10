@@ -396,16 +396,9 @@
 				eventIdInput.value = eventId;
 			}
 
-			rsvpForm.addEventListener('submit', (e) => {
-				const name = document.getElementById('attendee-name');
-				const email = document.getElementById('attendee-email');
-				
-				if (!name || !name.value || !email || !email.value) {
-					e.preventDefault();
-					this.showMessage('Please fill in all required fields', 'error');
-					return false;
-				}
-			});
+			// Form validation - check for first name, last name, and email
+			// HTML5 required attributes will handle the actual validation
+			// This is just to provide custom messaging if needed
 		},
 
 		getEventIdFromURL: function() {
