@@ -614,3 +614,26 @@ function event_rsvp_restrict_media_library_list_view($query) {
 	}
 }
 add_action('pre_get_posts', 'event_rsvp_restrict_media_library_list_view');
+
+/**
+ * Get the appropriate redirect URL for RSVP submissions
+ * Checks if user came from RSVP page or single event page
+ */
+function event_rsvp_get_rsvp_redirect_url($event_id, $status, $extra_args = array()) {
+	// Check if there's a referrer and if it contains the RSVP page
+	$referer = wp_get_referer();
+	$rsvp_page = get_page_by_path('rsvp');
+
+	// Build query args
+	$args = array_merge(array('rsvp' => $status), $extra_args);
+
+	// If referrer contains RSVP page or has event_id parameter, redirect to RSVP page
+	if ($referer && $rsvp_page && (strpos($referer, 'rsvp') !== false || strpos($referer, 'event_id=') !== false)) {
+		$args['event_id'] = $event_id;
+		$redirect_url = get_permalink($rsvp_page->ID);
+		return add_query_arg($args, $redirect_url);
+	}
+
+	// Default: redirect to single event page
+	return add_query_arg($args, get_permalink($event_id));
+}

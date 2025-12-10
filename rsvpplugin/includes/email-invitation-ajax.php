@@ -806,11 +806,14 @@ function event_rsvp_ajax_record_email_attendance()
 
 	$token = sanitize_text_field($_POST['token'] ?? '');
 	$event_id = intval($_POST['event_id'] ?? 0);
-	$attendee_name = sanitize_text_field($_POST['attendee_name'] ?? '');
+	$attendee_first_name = sanitize_text_field($_POST['attendee_first_name'] ?? '');
+	$attendee_last_name = sanitize_text_field($_POST['attendee_last_name'] ?? '');
 	$attendee_email = sanitize_email($_POST['attendee_email'] ?? '');
 	$attendee_phone = sanitize_text_field($_POST['attendee_phone'] ?? '');
 
-	if (!$token || !$event_id || !$attendee_name || !$attendee_email) {
+	$attendee_name = trim($attendee_first_name . ' ' . $attendee_last_name);
+
+	if (!$token || !$event_id || !$attendee_first_name || !$attendee_last_name || !$attendee_email) {
 		wp_send_json_error('Missing required fields');
 		return;
 	}
@@ -832,6 +835,8 @@ function event_rsvp_ajax_record_email_attendance()
 			'post_title' => $attendee_name
 		));
 
+		update_post_meta($attendee_id, 'attendee_first_name', $attendee_first_name);
+		update_post_meta($attendee_id, 'attendee_last_name', $attendee_last_name);
 		update_post_meta($attendee_id, 'attendee_phone', $attendee_phone);
 		update_post_meta($attendee_id, 'rsvp_status', 'yes');
 	} else {
@@ -847,6 +852,8 @@ function event_rsvp_ajax_record_email_attendance()
 			return;
 		}
 
+		update_post_meta($attendee_id, 'attendee_first_name', $attendee_first_name);
+		update_post_meta($attendee_id, 'attendee_last_name', $attendee_last_name);
 		update_post_meta($attendee_id, 'attendee_email', $attendee_email);
 		update_post_meta($attendee_id, 'attendee_phone', $attendee_phone);
 		update_post_meta($attendee_id, 'rsvp_status', 'yes');

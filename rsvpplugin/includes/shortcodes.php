@@ -32,8 +32,13 @@ function event_rsvp_form_shortcode($atts) {
 			<input type="hidden" name="event-id" value="<?php echo esc_attr($event_id); ?>">
 			
 			<div class="form-group">
-				<label for="attendee-name">Full Name *</label>
-				<input type="text" id="attendee-name" name="attendee-name" required>
+				<label for="attendee-first-name">First Name *</label>
+				<input type="text" id="attendee-first-name" name="attendee-first-name" required>
+			</div>
+			
+			<div class="form-group">
+				<label for="attendee-last-name">Last Name *</label>
+				<input type="text" id="attendee-last-name" name="attendee-last-name" required>
 			</div>
 			
 			<div class="form-group">

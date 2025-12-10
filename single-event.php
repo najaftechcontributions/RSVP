@@ -592,8 +592,13 @@ while ( have_posts() ) :
 								<input type="hidden" name="event-id" value="<?php echo esc_attr($event_id); ?>">
 								
 								<div class="form-group">
-									<label for="attendee-name">Full Name *</label>
-									<input type="text" id="attendee-name" name="attendee-name" required>
+									<label for="attendee-first-name">First Name *</label>
+									<input type="text" id="attendee-first-name" name="attendee-first-name" required>
+								</div>
+
+								<div class="form-group">
+									<label for="attendee-last-name">Last Name *</label>
+									<input type="text" id="attendee-last-name" name="attendee-last-name" required>
 								</div>
 								
 								<div class="form-group">
@@ -631,13 +636,22 @@ while ( have_posts() ) :
 								
 								<?php
 								$current_user = wp_get_current_user();
-								$user_name = $current_user->display_name ?: $current_user->user_login;
+								$user_first_name = $current_user->first_name ?: '';
+								$user_last_name = $current_user->last_name ?: '';
+								if (empty($user_first_name) && empty($user_last_name)) {
+									$user_first_name = $current_user->display_name ?: $current_user->user_login;
+								}
 								$user_email = $current_user->user_email;
 								?>
 								
 								<div class="form-group">
-									<label for="attendee-name">Full Name *</label>
-									<input type="text" id="attendee-name" name="attendee-name" value="<?php echo esc_attr($user_name); ?>" required>
+									<label for="attendee-first-name">First Name *</label>
+									<input type="text" id="attendee-first-name" name="attendee-first-name" value="<?php echo esc_attr($user_first_name); ?>" required>
+								</div>
+
+								<div class="form-group">
+									<label for="attendee-last-name">Last Name *</label>
+									<input type="text" id="attendee-last-name" name="attendee-last-name" value="<?php echo esc_attr($user_last_name); ?>" required>
 								</div>
 								
 								<div class="form-group">
@@ -1351,8 +1365,12 @@ document.addEventListener('DOMContentLoaded', function() {
 					<h3>Great! Please provide your details:</h3>
 					<form id="emailAttendeeForm">
 						<div class="form-group">
-							<label for="email-attendee-name">Full Name *</label>
-							<input type="text" id="email-attendee-name" name="attendee_name" required>
+							<label for="email-attendee-first-name">First Name *</label>
+							<input type="text" id="email-attendee-first-name" name="attendee_first_name" required>
+						</div>
+						<div class="form-group">
+							<label for="email-attendee-last-name">Last Name *</label>
+							<input type="text" id="email-attendee-last-name" name="attendee_last_name" required>
 						</div>
 						<div class="form-group">
 							<label for="email-attendee-email">Email Address *</label>

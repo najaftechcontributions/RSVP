@@ -39,7 +39,14 @@ if (!defined('ABSPATH')) {
 
 function event_rsvp_get_confirmation_email_template($attendee_id) {
 	$attendee_email = get_post_meta($attendee_id, 'attendee_email', true);
+	$attendee_first_name = get_post_meta($attendee_id, 'attendee_first_name', true);
+	$attendee_last_name = get_post_meta($attendee_id, 'attendee_last_name', true);
 	$attendee_name = html_entity_decode(get_the_title($attendee_id), ENT_QUOTES, 'UTF-8');
+
+	if (empty($attendee_first_name) && empty($attendee_last_name)) {
+		$attendee_first_name = $attendee_name;
+	}
+
 	$event_id = get_post_meta($attendee_id, 'linked_event', true);
 	$event_title = html_entity_decode(get_the_title($event_id), ENT_QUOTES, 'UTF-8');
 	$event_date = get_post_meta($event_id, 'event_date', true);
@@ -84,7 +91,7 @@ function event_rsvp_get_confirmation_email_template($attendee_id) {
 						</tr>
 						<tr>
 							<td style="padding: 20px ;">
-								<p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #333333;">Hello <strong><?php echo esc_html($attendee_name); ?></strong>,</p>
+								<p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #333333;">Hello <strong><?php echo esc_html($attendee_first_name); ?></strong>,</p>
 								<p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #333333;">Thank you for your RSVP! We're excited to have you join us for:</p>
 
 								<div style="background-color: #f8f9fa; border-left: 4px solid #503AA8; padding: 20px; margin: 30px 0; border-radius: 4px;">
@@ -459,9 +466,15 @@ function event_rsvp_validate_smtp_config() {
 
 function event_rsvp_send_qr_email_now($attendee_id) {
 	$attendee_email = get_post_meta($attendee_id, 'attendee_email', true);
+	$attendee_first_name = get_post_meta($attendee_id, 'attendee_first_name', true);
+	$attendee_last_name = get_post_meta($attendee_id, 'attendee_last_name', true);
 	$event_id = get_post_meta($attendee_id, 'linked_event', true);
 	$event_title = html_entity_decode(get_the_title($event_id), ENT_QUOTES, 'UTF-8');
 	$attendee_name = html_entity_decode(get_the_title($attendee_id), ENT_QUOTES, 'UTF-8');
+
+	if (empty($attendee_first_name) && empty($attendee_last_name)) {
+		$attendee_first_name = $attendee_name;
+	}
 
 	if (empty($attendee_email)) {
 		error_log("RSVP Email Error: No email address for attendee {$attendee_id}");
@@ -757,7 +770,23 @@ function event_rsvp_handle_cf7_submission($contact_form) {
 	$posted_data = $submission->get_posted_data();
 
 	if (isset($posted_data['event-rsvp']) && $posted_data['event-rsvp'] === '1') {
-		$attendee_name = sanitize_text_field($posted_data['attendee-name'] ?? '');
+		// Support both new (first_name/last_name) and legacy (name) field formats
+		$attendee_first_name = sanitize_text_field($posted_data['attendee-first-name'] ?? '');
+		$attendee_last_name = sanitize_text_field($posted_data['attendee-last-name'] ?? '');
+		$attendee_name = '';
+
+		// If first/last name provided, use them
+		if (!empty($attendee_first_name) && !empty($attendee_last_name)) {
+			$attendee_name = trim($attendee_first_name . ' ' . $attendee_last_name);
+		} elseif (!empty($posted_data['attendee-name'])) {
+			// Fallback to legacy single name field
+			$attendee_name = sanitize_text_field($posted_data['attendee-name']);
+			// Try to split into first/last for storage
+			$name_parts = explode(' ', $attendee_name, 2);
+			$attendee_first_name = $name_parts[0] ?? '';
+			$attendee_last_name = $name_parts[1] ?? '';
+		}
+
 		$attendee_email = sanitize_email($posted_data['attendee-email'] ?? '');
 		$attendee_phone = sanitize_text_field($posted_data['attendee-phone'] ?? '');
 		$rsvp_status = sanitize_text_field($posted_data['rsvp-status'] ?? 'yes');
@@ -774,6 +803,8 @@ function event_rsvp_handle_cf7_submission($contact_form) {
 		));
 
 		if (!is_wp_error($attendee_id)) {
+			update_post_meta($attendee_id, 'attendee_first_name', $attendee_first_name);
+			update_post_meta($attendee_id, 'attendee_last_name', $attendee_last_name);
 			update_post_meta($attendee_id, 'attendee_email', $attendee_email);
 			update_post_meta($attendee_id, 'attendee_phone', $attendee_phone);
 			update_post_meta($attendee_id, 'rsvp_status', $rsvp_status);

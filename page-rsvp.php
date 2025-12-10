@@ -116,13 +116,23 @@ if (isset($_GET['rsvp'])) {
 							<form class="event-rsvp-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
 								<div class="form-row">
 									<div class="form-field">
-										<label for="attendee-name">Full Name <span class="required">*</span></label>
+										<label for="attendee-first-name">First Name <span class="required">*</span></label>
 										<div class="input-with-icon">
 											<span class="input-icon">👤</span>
-											<input type="text" id="attendee-name" name="attendee-name" placeholder="Enter your full name" required>
+											<input type="text" id="attendee-first-name" name="attendee-first-name" placeholder="Enter your first name" required>
 										</div>
 									</div>
 									
+									<div class="form-field">
+										<label for="attendee-last-name">Last Name <span class="required">*</span></label>
+										<div class="input-with-icon">
+											<span class="input-icon">👤</span>
+											<input type="text" id="attendee-last-name" name="attendee-last-name" placeholder="Enter your last name" required>
+										</div>
+									</div>
+								</div>
+								
+								<div class="form-row">
 									<div class="form-field">
 										<label for="attendee-email">Email Address <span class="required">*</span></label>
 										<div class="input-with-icon">
@@ -130,9 +140,7 @@ if (isset($_GET['rsvp'])) {
 											<input type="email" id="attendee-email" name="attendee-email" placeholder="your.email@example.com" required>
 										</div>
 									</div>
-								</div>
-								
-								<div class="form-row">
+									
 									<div class="form-field">
 										<label for="attendee-phone">Phone Number</label>
 										<div class="input-with-icon">
@@ -140,8 +148,10 @@ if (isset($_GET['rsvp'])) {
 											<input type="tel" id="attendee-phone" name="attendee-phone" placeholder="+1 (555) 123-4567">
 										</div>
 									</div>
-									
-									<div class="form-field">
+								</div>
+								
+								<div class="form-row">
+									<div class="form-field" style="grid-column: 1 / -1;">
 										<label for="rsvp-status">RSVP Status <span class="required">*</span></label>
 										<select id="rsvp-status" name="rsvp-status" required>
 											<option value="">Select your response</option>

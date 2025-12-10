@@ -72,13 +72,22 @@ $modal_id = 'join-event-modal-' . $event_id;
 						
 						<?php
 						$current_user = wp_get_current_user();
-						$user_name = $current_user->display_name ?: ($current_user->first_name . ' ' . $current_user->last_name);
+						$user_first_name = $current_user->first_name ?: '';
+						$user_last_name = $current_user->last_name ?: '';
+						if (empty($user_first_name) && empty($user_last_name)) {
+							$user_first_name = $current_user->display_name ?: $current_user->user_login;
+						}
 						$user_email = $current_user->user_email;
 						?>
 						
 						<div class="form-field">
-							<label for="attendee-name-<?php echo $event_id; ?>">Full Name <span class="required">*</span></label>
-							<input type="text" id="attendee-name-<?php echo $event_id; ?>" name="attendee-name" value="<?php echo esc_attr($user_name); ?>" required>
+							<label for="attendee-first-name-<?php echo $event_id; ?>">First Name <span class="required">*</span></label>
+							<input type="text" id="attendee-first-name-<?php echo $event_id; ?>" name="attendee-first-name" value="<?php echo esc_attr($user_first_name); ?>" required>
+						</div>
+
+						<div class="form-field">
+							<label for="attendee-last-name-<?php echo $event_id; ?>">Last Name <span class="required">*</span></label>
+							<input type="text" id="attendee-last-name-<?php echo $event_id; ?>" name="attendee-last-name" value="<?php echo esc_attr($user_last_name); ?>" required>
 						</div>
 						
 						<div class="form-field">
@@ -153,8 +162,13 @@ $modal_id = 'join-event-modal-' . $event_id;
 						<input type="hidden" name="event-id" value="<?php echo esc_attr($event_id); ?>">
 						
 						<div class="form-field">
-							<label for="guest-attendee-name-<?php echo $event_id; ?>">Full Name <span class="required">*</span></label>
-							<input type="text" id="guest-attendee-name-<?php echo $event_id; ?>" name="attendee-name" required>
+							<label for="guest-attendee-first-name-<?php echo $event_id; ?>">First Name <span class="required">*</span></label>
+							<input type="text" id="guest-attendee-first-name-<?php echo $event_id; ?>" name="attendee-first-name" required>
+						</div>
+
+						<div class="form-field">
+							<label for="guest-attendee-last-name-<?php echo $event_id; ?>">Last Name <span class="required">*</span></label>
+							<input type="text" id="guest-attendee-last-name-<?php echo $event_id; ?>" name="attendee-last-name" required>
 						</div>
 						
 						<div class="form-field">

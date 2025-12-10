@@ -14,41 +14,51 @@ function event_rsvp_handle_rsvp_submission() {
 		wp_die('Security check failed');
 	}
 
-	$attendee_name = sanitize_text_field($_POST['attendee-name'] ?? '');
+	$attendee_first_name = sanitize_text_field($_POST['attendee-first-name'] ?? '');
+	$attendee_last_name = sanitize_text_field($_POST['attendee-last-name'] ?? '');
 	$attendee_email = sanitize_email($_POST['attendee-email'] ?? '');
 	$attendee_phone = sanitize_text_field($_POST['attendee-phone'] ?? '');
 	$rsvp_status = sanitize_text_field($_POST['rsvp-status'] ?? 'yes');
 	$event_id = intval($_POST['event-id'] ?? 0);
 
-	if (empty($attendee_name) || empty($attendee_email) || !$event_id) {
-		wp_redirect(add_query_arg('rsvp', 'error', get_permalink($event_id)));
+	$attendee_name = trim($attendee_first_name . ' ' . $attendee_last_name);
+
+	if (empty($attendee_first_name) || empty($attendee_last_name) || empty($attendee_email) || !$event_id) {
+		$redirect_url = event_rsvp_get_rsvp_redirect_url($event_id, 'error');
+		wp_redirect($redirect_url);
 		exit;
 	}
 
 	if (event_rsvp_is_event_past($event_id)) {
-		wp_redirect(add_query_arg('rsvp', 'past', get_permalink($event_id)));
+		$redirect_url = event_rsvp_get_rsvp_redirect_url($event_id, 'past');
+		wp_redirect($redirect_url);
 		exit;
 	}
 
 	if (event_rsvp_is_event_full($event_id)) {
-		wp_redirect(add_query_arg('rsvp', 'full', get_permalink($event_id)));
+		$redirect_url = event_rsvp_get_rsvp_redirect_url($event_id, 'full');
+		wp_redirect($redirect_url);
 		exit;
 	}
 
 	$existing = event_rsvp_get_attendee_by_email($attendee_email, $event_id);
 
 	if ($existing) {
+		update_post_meta($existing->ID, 'attendee_first_name', $attendee_first_name);
+		update_post_meta($existing->ID, 'attendee_last_name', $attendee_last_name);
 		update_post_meta($existing->ID, 'rsvp_status', $rsvp_status);
 		update_post_meta($existing->ID, 'attendee_phone', $attendee_phone);
+		wp_update_post(array('ID' => $existing->ID, 'post_title' => $attendee_name));
 		$attendee_id = $existing->ID;
 
 		$email_sent = event_rsvp_send_qr_email_now($attendee_id);
 
 		if ($email_sent) {
-			wp_redirect(add_query_arg(array('rsvp' => 'success', 'email' => 'sent'), get_permalink($event_id)));
+			$redirect_url = event_rsvp_get_rsvp_redirect_url($event_id, 'success', array('email' => 'sent'));
 		} else {
-			wp_redirect(add_query_arg(array('rsvp' => 'success', 'email' => 'failed'), get_permalink($event_id)));
+			$redirect_url = event_rsvp_get_rsvp_redirect_url($event_id, 'success', array('email' => 'failed'));
 		}
+		wp_redirect($redirect_url);
 		exit;
 	} else {
 		$attendee_id = wp_insert_post(array(
@@ -58,10 +68,13 @@ function event_rsvp_handle_rsvp_submission() {
 		));
 
 		if (is_wp_error($attendee_id)) {
-			wp_redirect(add_query_arg('rsvp', 'error', get_permalink($event_id)));
+			$redirect_url = event_rsvp_get_rsvp_redirect_url($event_id, 'error');
+			wp_redirect($redirect_url);
 			exit;
 		}
 
+		update_post_meta($attendee_id, 'attendee_first_name', $attendee_first_name);
+		update_post_meta($attendee_id, 'attendee_last_name', $attendee_last_name);
 		update_post_meta($attendee_id, 'attendee_email', $attendee_email);
 		update_post_meta($attendee_id, 'attendee_phone', $attendee_phone);
 		update_post_meta($attendee_id, 'rsvp_status', $rsvp_status);
@@ -80,14 +93,16 @@ function event_rsvp_handle_rsvp_submission() {
 		$email_sent = event_rsvp_send_qr_email_now($attendee_id);
 
 		if ($email_sent) {
-			wp_redirect(add_query_arg(array('rsvp' => 'success', 'email' => 'sent'), get_permalink($event_id)));
+			$redirect_url = event_rsvp_get_rsvp_redirect_url($event_id, 'success', array('email' => 'sent'));
 		} else {
-			wp_redirect(add_query_arg(array('rsvp' => 'success', 'email' => 'failed'), get_permalink($event_id)));
+			$redirect_url = event_rsvp_get_rsvp_redirect_url($event_id, 'success', array('email' => 'failed'));
 		}
+		wp_redirect($redirect_url);
 		exit;
 	}
 
-	wp_redirect(add_query_arg('rsvp', 'success', get_permalink($event_id)));
+	$redirect_url = event_rsvp_get_rsvp_redirect_url($event_id, 'success');
+	wp_redirect($redirect_url);
 	exit;
 }
 add_action('admin_post_nopriv_event_rsvp_submit', 'event_rsvp_handle_rsvp_submission');
